@@ -1,0 +1,190 @@
+/* PadmasiniChat.css */
+
+.chat-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #00a321;
+  color: white;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 50px;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 999;
+  
+}
+
+.chat-toggle:hover {
+  background-color: #007f19;
+}
+
+.chat-widget {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 420px;         /* ⬅️ Increased from 320px to 420px */
+  height: 100%; /* Full height */
+  max-height: 600px;    /* ⬅️ Increased from 500px to 600px */
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+
+.chat-header {
+  background: linear-gradient(to right, #009f2d, #066a06);
+  color: white;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+}
+.chat-header-info p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: normal;
+  color: #e4ffe3;
+}
+
+.chat-header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.chat-header-actions button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.chat-header-actions button:hover {
+  color: #ffdddd;
+}
+.chat-body {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 20px;
+  font-size: 14px;
+  background-color: #f9f9f9;
+  max-height: calc(600px - 60px); /* Subtract header height */
+}
+.chat-body-header {
+  display: flex;
+  justify-content: flex-end; /* 👈 aligns button to the right */
+  padding-right: 10px;
+  margin-bottom: 6px;
+}
+
+.chat-clear {
+  background-color: #00871d;
+  border: none;
+  font-size: 20px;
+  color: #555;
+  cursor: pointer;
+  position: relative;
+  margin-top: 10px;
+  border-radius: 5px;
+}
+
+.chat-clear:hover {
+  background-color: red;
+  color: #000;
+}
+
+.chat-clear::after {
+  content: "Clear Chat";
+  position: absolute;
+  bottom: 120%;
+  right: 0;
+  background-color: #333;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.chat-clear:hover::after {
+  opacity: 1;
+}
+
+
+.chat-btn {
+  width: 100%;
+  padding: 10px;
+  background: #00a321;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  margin-top: 10px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.chat-btn:hover {
+  background-color: #00871d;
+}
+
+.chat-search {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: 12px;
+}
+
+.help-list {
+  list-style: none;
+  padding: 0;
+}
+
+.help-list li {
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+ul li a {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  padding: 6px 0;
+}
+.chat-input-box {
+  display: flex;
+  gap: 5px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.chat-input-box input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.chat-input-box button {
+  padding: 8px 12px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

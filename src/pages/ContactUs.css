@@ -1,0 +1,277 @@
+/* Overall Contact Container */
+.contact-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+  margin-top: 100px;
+}
+
+/* Heading */
+.contact-container h2 {
+  background-color: #09601f;
+  color: white;
+  font-size: 24px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* Form Box */
+.contact-form-box {
+  width: 100%;
+  max-width: 600px; /* Increased width */
+  background: linear-gradient(to bottom, #d1fad7, #cbd7c3);flex: 1;
+  padding: 40px 40px; /* Increased padding */
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  margin: 20px auto; 
+}
+
+/* Form Layout */
+form {
+  display: flex;
+  flex-direction: column;
+
+}
+
+/* Input Fields */
+form input,
+form textarea {
+ width: 100%;
+  padding: 14px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+  
+}
+form input:hover,
+form textarea:hover {
+  border-color: #00ff26; /* Change border color on hover */
+}
+/* Special class for Name input (optional but included since you had "form-name") */
+.form-name {
+  font-weight: 500;
+}
+
+/* Textarea Specifics */
+form textarea {
+  height: 120px;
+  resize: vertical;
+}
+
+/* Placeholder styling */
+form input::placeholder,
+form textarea::placeholder {
+  font-size: 14px;
+  color: #999;
+}
+
+/* Submit Button */
+.form-requirements {
+  text-align: center; /* Optional: helps ensure centering in some layouts */
+}
+
+.form-requirements button[type="submit"] {
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto; /* centers the button horizontally */
+  padding: 12px;
+  background-color: #28a745;
+  color: #fff;
+  font-size: 17px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.form-requirements button[type="submit"]:hover {
+  background-color: #1c7e32;
+}
+
+/* Popup Overlay */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+/* Popup Content */
+.popup-content {
+  background: #ffffff;
+  padding: 30px 40px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 90%;
+}
+
+/* Popup Heading */
+.popup-content h2 {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: #333;
+  background-color: #1e49f600;
+}
+
+/* Popup Paragraph */
+.popup-content p {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+/* Close Button */
+.popup-close-button {
+  background-color: #157f2c;
+  color: white;
+  padding: 12px 25px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.popup-close-button:hover {
+  background-color: #00b351;
+}
+
+/* WhatsApp Chat Button */
+.whatsapp-chat-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #07d252;
+  color: white;
+  border-radius: 50px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, background-color 0.3s ease;
+  z-index: 1000;
+  animation: bounce 2s infinite;
+}
+
+/* Hover effect */
+.whatsapp-chat-button:hover {
+  background-color: #1ebe5d;
+  transform: scale(1.05);
+  animation-play-state: paused; /* Pause bounce on hover */
+}
+
+/* WhatsApp icon size */
+.whatsapp-icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* Fade-in Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* Bounce Animation */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+  50% {
+    transform: translateY(0px);
+  }
+  70% {
+    transform: translateY(-5px);
+  }
+}
+
+@media (max-width: 768px) {
+  .contact-container {
+    padding: 20px;
+    margin-top: 80px;
+    margin-bottom: 100px;
+    height: auto;
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .contact-container h2 {
+    font-size: 20px;
+    padding: 8px 16px;
+  }
+
+  .contact-form-box {
+    padding: 20px;
+    box-shadow: none;
+    border-radius: 12px;
+  }
+
+  form input,
+  form textarea {
+    font-size: 14px;
+    padding: 12px;
+    margin: 8px 0;
+  }
+
+  form button {
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  .popup-content {
+    padding: 20px;
+    width: 90%;
+  }
+
+  .popup-content h2 {
+    font-size: 20px;
+  }
+
+  .popup-content p {
+    font-size: 14px;
+  }
+
+  .popup-close-button {
+    font-size: 14px;
+    padding: 10px 20px;
+  }
+
+  .whatsapp-chat-button {
+    padding: 10px 14px;
+    font-size: 13px;
+    gap: 6px;
+    bottom: 15px;
+    right: 15px;
+  }
+
+  .whatsapp-icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+

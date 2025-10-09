@@ -1,0 +1,368 @@
+/* Main Container */
+.explanation-container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+  border-radius: 15px;
+  margin-top: -10px;
+  font-family: 'Arial', sans-serif;
+  color: #333;
+  
+}
+
+/* Title Styling */
+.explanation-content h2 {
+  font-size: 28px;
+  color: #05630e;
+  margin-bottom: 15px;
+  text-align: center;
+  margin-bottom: 10px;
+  background-color: transparent;
+}
+
+/* Text Content */
+.explanation-content p {
+  font-size: 18px;
+  line-height: 1.7;
+  margin-bottom: 20px;
+  text-align: justify;
+}
+.subject-info {
+  padding: 10px;
+  background-color: #f0f8ff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+/* Voice Controls */
+.voice-controls-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 15px;
+  background-color: #a3fcb8;
+  flex-wrap: wrap;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Play/Pause Button */
+.voice-play-button {
+  width: 50px;
+  height: 50px;
+  font-size: 18px;
+  border-radius: 50%;
+  background-color: #206d0d;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.voice-play-button:hover {
+  background-color: #07ae12;
+}
+
+/* Speech Rate Control */
+.rate-control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 600px;
+
+}
+
+.rate-control label {
+  font-weight: 500;
+  font-size: 16px;
+ color: #10540a;
+}
+
+.rate-control input[type="range"] {
+  width: 100%;
+  height: 8px;
+  border-radius: 10px;
+  background: linear-gradient(to right, #00ff3c 50%, #ddd 50%);
+  outline: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.rate-control input[type="range"]:focus {
+  background-color: #21f32f;
+}
+
+.rate-control input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  height: 16px;
+  width: 16px;
+  background-color: #41f321;
+  border-radius: 50%;
+}
+
+.rate-control input[type="range"]::-moz-range-thumb {
+  height: 16px;
+  width: 16px;
+  background-color: #21f333;
+  border-radius: 50%;
+}
+.audio-files {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.audio-files audio {
+  width: 100%;
+  outline: none;
+  border-radius: 5px;
+}
+
+/* Centered Buttons */
+.centered-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin-top: 20px;
+  
+}
+
+/* Mark Complete Button */
+.complete-btn {
+  background-color: #0c8905;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  width: 240px;
+  margin-top: 10px;
+}
+
+.complete-btn:hover:not(:disabled) {
+ background-color: #07ae12;
+}
+
+.complete-btn:disabled,
+.complete-btn.completed {
+ background-color: #32d409;
+  cursor: default;
+  color: white;
+  opacity: 0.9;
+}
+
+/* Back Button */
+.back-btn {
+  background-color: #07ae12;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 240px;
+}
+
+.back-btn:hover {
+   background-color: #07ae12;
+}
+
+.check-icon {
+  font-size: 18px;
+  color: white;
+}
+
+/* MOBILE VIEW STYLES */
+@media (max-width: 768px) {
+  /* General Explanation Container */
+  .explanation-container {
+    padding: 16px;
+    max-width: 100%;
+    margin: 10px auto;
+    background-color: transparent;
+  }
+.explanation-content{
+  background-color: transparent;
+}
+  .explanation-content h2 {
+    font-size: 1.25rem;
+    margin-top: -10px;
+    }
+
+  .explanation-content p {
+    font-size: 0.95rem;
+  }
+.centered-buttons {
+    width: 100%;
+    padding: 0 10px;
+    margin-top: -10px;
+  }
+
+  .complete-btn, .back-btn {
+    width: 100%;
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  /* Voice Controls */
+  .voice-controls-wrapper {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    margin-top: -10px;
+    margin-bottom: 10px;
+  }
+
+  .voice-play-button {
+    width: 10px;
+    height: 40px;
+    font-size: 16px;
+    padding: 10px 0;
+  margin-top: 10px;
+  align-self: center; 
+  }
+ /* Voice Controls */
+.voice-controls-wrapper {
+  flex-direction: column;
+  align-items: center; /* Center horizontally */
+  gap: 12px;
+  padding: 12px 16px;
+  margin-top: 20px;
+}
+
+.voice-play-button {
+  width: 30%;
+  font-size: 16px;
+  padding: 10px 0;
+  margin-top: 10px;
+  align-self: center; /* Ensure the button is centered */
+}
+
+
+  .rate-control {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 90%;  /* Reduced width */
+    max-width: 600px;  /* Maximum width */
+    margin-top: 10px;
+  }
+
+  .rate-control input[type="range"] {
+    width: 100%;
+  }
+  .audio-files {
+    padding: 8px;
+  }
+
+  .audio-files audio {
+    max-width: 100%;
+  }
+  /* Back Button */
+  .back-button-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .back-button {
+    width: 100%;
+    font-size: 16px;
+    padding: 10px 0;
+    background-color: #07ae12;
+    color: white;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .back-button:hover {
+    background-color: #00b31b;
+  }
+
+  /* Mobile Specific Adjustments */
+  .complete-btn {
+    background-color: #09ff00;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    width: 100%;
+    margin-top: 15px;
+  }
+
+  .complete-btn:hover:not(:disabled) {
+    background-color: #00b300;
+  }
+
+  .complete-btn:disabled,
+  .complete-btn.completed {
+    background-color: #28a745;
+    cursor: default;
+    color: white;
+    opacity: 0.9;
+  }
+
+  .check-icon {
+    font-size: 18px;
+    color: white;
+  }
+
+  /* Video Container */
+  .video-container {
+    width: 90%;  /* Reduced width */
+    max-width: 600px;  /* Maximum width */
+    margin: 20px auto;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .video-container video {
+    width: 100%;
+    height: auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+.iframe-wrapper {
+  margin: 20px 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.embedded-iframe {
+  width: 100%;
+  max-width: 960px;
+  height: 800px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+

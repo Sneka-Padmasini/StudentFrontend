@@ -1,0 +1,373 @@
+/* General Styles */
+.quiz-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 5px 75px;
+  min-height: 100vh;
+}
+
+.quiz-container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 0px 75px;
+  background-color: #eefcea;
+  border-radius: 15px;
+  font-family: 'Arial', sans-serif;
+  color: #333;
+}
+
+/* Heading */
+.quiz-container h2 {
+  font-size: 28px;
+  color: #062c08;
+  text-align: center;
+  margin-bottom: 20px;
+  background-color: #06060600;
+}
+
+/* Start Screen */
+.start-screen {
+  text-align: center;
+  padding: 5px 75px;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  font-size: 1.3rem;
+}
+
+.start-screen p {
+  font-size: 30px;
+}
+
+.start-btn {
+  padding: 15px 30px;
+  font-size: 1.5rem;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.start-btn:hover {
+  background-color: #45a049;
+}
+
+/* Question Styles */
+.quiz-question {
+  margin-bottom: 30px;
+}
+
+.question-text {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  color: #345e46;
+}
+
+/* Buttons */
+.complete-btn,
+.back-btn {
+  width: 50%;
+  padding: 15px 0;
+  font-size: 18px;
+  margin: 20px auto;
+  display: block;
+  border-radius: 8px;
+  background-color: #1fb817;
+  color: white;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s;
+}
+
+.complete-btn:hover,
+.back-btn:hover {
+  background-color: #118b27;
+}
+
+.complete-btn.completed {
+  background-color: #28a745;
+  cursor: not-allowed;
+}
+
+/* Options Styling */
+.options-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.option-label {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background-color: #ecf1ed;
+  transition: background-color 0.2s, transform 0.2s;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+  position: relative;
+  user-select: none;
+}
+
+.option-label:hover {
+  background-color: #dce3e8;
+  transform: scale(1.01);
+}
+
+.option-label input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 2px solid #999;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  outline: none;
+  margin-right: 15px;
+  position: relative;
+  flex-shrink: 0;
+  background-color: white;
+}
+
+.option-label input[type="radio"]:checked::before {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: #1ae832;
+  border-radius: 100%;
+  top: 50%;
+  left: 7px;
+  transform: translateY(-50%);
+}
+
+.correct {
+  background-color: #bcf5c9 !important;
+  border: 1px solid #28a745 !important;
+}
+
+.incorrect {
+  background-color: #fabbc0 !important;
+  border: 1px solid #dc3545 !important;
+}
+
+/* Feedback */
+.feedback-msg {
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.feedback-msg.correct {
+  color: #28a745;
+}
+
+.feedback-msg.incorrect {
+  color: #dc3545;
+}
+
+/* Navigation Buttons */
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.nav-btn,
+.submit-btn {
+  width: 100px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 6px;
+  background-color: #0f750d;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.nav-btn:disabled {
+  background-color: #c0c0c0;
+  cursor: not-allowed;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background-color: #00b315;
+}
+
+.submit-btn {
+  background-color: #00ff11;
+  color: #062c08;
+}
+
+.submit-btn:hover {
+  background-color: #03b300;
+}
+
+.submit-btn:disabled {
+  background-color: #c0c0c0;
+  cursor: not-allowed;
+}
+
+/* Confirmation Popup */
+.confirmation-popup {
+  background-color: rgba(248, 253, 250, 0.804);
+  color: rgb(6, 0, 0);
+  padding: 30px;
+  border-radius: 10px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  text-align: center;
+}
+
+.confirmation-popup p {
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+.confirmation-popup .confirm-btn,
+.confirmation-popup .cancel-btn {
+  padding: 10px 20px;
+  margin: 5px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.confirmation-popup .confirm-btn {
+  background-color: #28a745;
+}
+
+.confirmation-popup .cancel-btn {
+  background-color: #dc3545;
+}
+
+.confirmation-popup .confirm-btn:hover {
+  background-color: #218838;
+}
+
+.confirmation-popup .cancel-btn:hover {
+  background-color: #c82333;
+}
+
+/* Timer */
+.timer {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #b8f9b8;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  margin-top: 10px;
+}
+
+.timer p {
+  margin: 0;
+  font-size: 24px;
+  color: #e74c3c;
+}
+
+/* Result Popup */
+.result-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.result-popup-content {
+  background: white;
+  padding: 30px 40px;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.result-popup-content h3 {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.not-eligible-msg {
+  color: #e63946;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .quiz-wrapper {
+    padding: 1px 0px;
+  }
+
+  .quiz-container {
+    padding: 0px;
+  }
+
+  .quiz-container h2 {
+    font-size: 1.5rem;
+  }
+
+  .question-text {
+    font-size: 1rem;
+  }
+
+  .start-screen p {
+    font-size: 20px;
+  }
+
+  .option-label {
+    font-size: 0.95rem;
+    padding: 8px 12px;
+  }
+
+  .nav-buttons {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .nav-buttons button {
+    flex: 1;
+    max-width: 100px;
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .confirm-dialog {
+    padding: 20px;
+    width: 90%;
+  }
+}
+
+@media (max-width: 600px) {
+  .timer {
+    font-size: 18px;
+    padding: 8px;
+  }
+
+  .timer p {
+    font-size: 20px;
+  }
+}

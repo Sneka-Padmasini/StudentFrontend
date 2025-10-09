@@ -1,0 +1,398 @@
+/* Reset list styles */
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+body {
+  padding-top: 100px;
+  font-family: 'Calibri', sans-serif;
+}
+
+.dropdown-icon {
+  margin-top: 7px;
+  font-size: 1.2rem;
+  color: #0a5a0a;
+  transition: transform 0.3s ease;
+}
+
+/* Navbar Base */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 70px;
+  /* fixed height */
+  padding: 0 20px;
+  /* only horizontal padding */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  background: linear-gradient(to bottom, #e9fdec, #ffffff);
+  transition: background 0.4s ease, box-shadow 0.3s ease;
+}
+
+
+/* Scrolled Navbar */
+.navbar.scrolled {
+  background: linear-gradient(to bottom, #ffffff, #e9fdec);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  color: #0a5a0a;
+}
+
+/* Ensure nav items & dropdowns stay above background */
+.logo,
+.nav-links,
+.menu-icon {
+  position: relative;
+  z-index: 2;
+}
+
+
+/* Logo */
+.logo img {
+  height: 60px;
+  width: auto;
+  transition: height 0.3s ease;
+}
+
+.navbar.scrolled .logo img {
+  height: 60px;
+}
+
+/* Menu Icon (Mobile) */
+.menu-icon {
+  display: none;
+  font-size: 2.2rem;
+  cursor: pointer;
+  color: #07650b;
+  /*toggle*/
+}
+
+.navbar.scrolled .menu-icon {
+  color: #0a5a0a;
+}
+
+/* Nav Links */
+.nav-links {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.nav-links li a,
+.dropdown-toggle {
+  color: #07570a;
+  text-decoration: none;
+  font-size: 18px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.nav-links li a:hover,
+.dropdown-toggle:hover {
+  background-color: #bef1be;
+}
+
+/* Scrolled nav links */
+.navbar.scrolled .nav-links li a,
+.navbar.scrolled .dropdown-toggle {
+  color: #0a5a0a;
+}
+
+/* Dropdown */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: linear-gradient(to bottom, #f0fdf0, #d1f7d1); /* lighter green gradient */
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px;            /* smaller padding */
+  list-style: none;
+  min-width: 180px;         /* smaller width */
+  z-index: 1000;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08); /* softer shadow */
+  text-align: left;
+}
+
+.dropdown-menu li a {
+  display: block;
+  padding: 8px 12px;   /* smaller padding */
+  font-size: 15px;      /* slightly smaller font */
+  color: #0a3d0a;       /* dark green text */
+  background-color: transparent; /* remove gray box */
+  margin-bottom: 3px;   /* smaller spacing */
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.dropdown-menu li a:hover {
+  background-color: #e6f8e6; /* subtle hover highlight */
+}
+
+.user-details-dropdown li {
+  padding: 6px 12px;
+  font-size: 14px;
+  color: #333;
+}
+
+.user-details-dropdown li strong {
+  color: #000;
+}
+
+.logout-btn {
+  background-color: #f44336;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  margin-top: 8px;
+  cursor: pointer;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.logout-btn:hover {
+  background-color: #d32f2f;
+}
+
+.user-details-dropdown img {
+  border: 2px solid #ddd;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.user-details-header {
+  background-color: #cecdcd;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  align-items: center;
+  border-radius: 5px;
+}
+
+.upgrade-btn {
+  background-color: #03b55c;
+  color: rgb(8, 8, 8);
+  padding: 6px 12px;
+  width: 100%;
+  border: none;
+  border-radius: 4px;
+  margin-bottom: -5px;
+  cursor: pointer;
+}
+
+.upgrade-btn:hover {
+  background-color: #218838;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .menu-icon {
+    display: block;
+  }
+
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    gap: 15px;
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    background: #ffffff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    color: #0a5a0a;
+  }
+
+  .nav-links.active {
+    display: flex;
+  }
+
+  .nav-links li,
+  .dropdown-toggle {
+    width: 100%;
+    padding: 14px 20px;
+    box-sizing: border-box;
+    font-size: 18px;
+  }
+
+  .dropdown-menu {
+    position: static;
+    box-shadow: none;
+    width: 100%;
+    background-color: #c7facc;
+  }
+
+  .dropdown-menu li a {
+    color: #0b661f;
+    background-color: #ffffff;
+    padding-left: 30px;
+    font-size: 16px;
+  }
+
+  .dropdown-menu li a:hover {
+    background-color: #a8f5a8;
+  }
+
+  .navbar.scrolled .nav-links {
+    background-color: #ffffff;
+  }
+
+  .navbar.scrolled .nav-links li a,
+  .navbar.scrolled .dropdown-toggle {
+    color: #0a5a0a;
+  }
+}
+
+.user-photo {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 3px solid #013704;
+  display: block;
+  margin: 0 auto 10px;
+}
+
+/* Keyframes for continuous bounce */
+@keyframes bounceText {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Target only the text part inside dropdown-toggle */
+.dropdown-toggle span:first-child {
+  display: inline-block;
+}
+
+/* When hovered, apply infinite bounce */
+.dropdown-toggle:hover span:first-child {
+  animation: bounceText 0.6s ease-in-out infinite;
+}
+
+@keyframes floatLogo {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.logo:hover img {
+  animation: floatLogo 2s ease-in-out infinite;
+}
+
+.user-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-icon {
+  color: #0a5a0a;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: color 0.2s ease;
+}
+
+.edit-icon:hover {
+  color: #b9b429;
+}
+
+/* --- New Animations --- */
+
+/* Fade-down for dropdown */
+@keyframes fadeDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Slide-in for mobile nav */
+@keyframes slideInRight {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Glow on hover for links */
+@keyframes glow {
+  0% {
+    text-shadow: 0 0 2px #0a5a0a, 0 0 5px #0a5a0a;
+  }
+
+  100% {
+    text-shadow: 0 0 8px #21c421, 0 0 15px #0a5a0a;
+  }
+}
+
+/* Slight scale hover effect */
+@keyframes scaleUp {
+  0% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+/* --- Apply Animations --- */
+
+/* Dropdown animation */
+.dropdown-menu {
+  animation: fadeDown 0.4s ease forwards;
+}
+
+/* Mobile nav links */
+.nav-links.active {
+  animation: slideInRight 0.4s ease forwards;
+}
+
+/* Hover glow for nav links */
+.nav-links li a:hover,
+.dropdown-toggle:hover {
+  animation: glow 0.6s ease-in-out alternate infinite;
+}
+
+/* Button hover (upgrade, logout) */
+.upgrade-btn:hover,
+.logout-btn:hover {
+  animation: scaleUp 0.2s ease forwards;
+}

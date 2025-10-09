@@ -1,0 +1,140 @@
+/* General container for the Terms page */
+  .terms-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  margin: 0 auto; /* 🔄 Center horizontally */
+  width: 100%;
+  max-width: 1300px;
+  margin-top: 90px; /* Optional: offset if fixed header */
+}
+
+  
+  /* Content box for the terms */
+  .terms-content {
+  background: linear-gradient(to bottom, #e9fdec, #ffffff);flex: 1;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-width: 1500px;
+    width: 100%;
+  }
+  
+  /* Title of the page */
+  .terms-content h1 {
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+    
+  }
+  
+  /* Sections inside the content */
+  .terms-content section {
+    margin-bottom: 20px;
+  }
+  
+  .terms-content h2 {
+    font-size: 20px;
+    color: #fefcfc;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    text-align: left;
+    background-color: #0e651f;
+  }
+  
+  .terms-content p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #363636;
+  }
+  
+  .terms-content a {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .terms-content a:hover {
+    text-decoration: underline;
+  }
+  
+ /* Button Section */
+.agree-button {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.agree-button button {
+  padding: 12px 24px;
+  background-color: #228B22; /* Green */
+  color: white;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.agree-button button:hover {
+  background-color: #2ecc71; /* Lighter green on hover */
+}
+
+/* WhatsApp Chat Button */
+.whatsapp-chat-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #07d252;
+  color: white;
+  border-radius: 50px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, background-color 0.3s ease;
+  z-index: 1000;
+  animation: bounce 2s infinite;
+}
+
+/* Hover effect */
+.whatsapp-chat-button:hover {
+  background-color: #1ebe5d;
+  transform: scale(1.05);
+  animation-play-state: paused; /* Pause bounce on hover */
+}
+
+/* WhatsApp icon size */
+.whatsapp-icon {
+  width: 24px;
+  height: 24px;
+}
+  /* Responsive design for smaller screens */
+  @media (max-width: 768px) {
+    .terms-container {
+      padding: 10px;
+      margin-top: 90px;
+    }
+  
+    .terms-content {
+      padding: 20px;
+    }
+  
+    .terms-content h1 {
+      font-size: 24px;
+    }
+  
+    .terms-content h2 {
+      font-size: 18px;
+    }
+  
+    .terms-content p {
+      font-size: 14px;
+    }
+  }
+  

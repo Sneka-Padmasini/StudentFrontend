@@ -1,0 +1,410 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Main Container */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin-top: 80px;
+}
+
+/* Outer Box (single green box that holds both left and right) */
+.login {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 90%;
+  max-width: 1000px;
+  margin: auto;
+  padding: 50px 30px;
+  border-radius: 20px;
+  background: linear-gradient(to bottom, #e9fdec, #ffffff);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  gap: 24px;
+  position: relative;
+}
+
+/* Divider line */
+.divider {
+  width: 1px;
+  /* thickness of line */
+  background-color: #ccc;
+  /* same light gray */
+  height: auto;
+  /* full height of container */
+  align-self: stretch;
+  /* stretch to flex container height */
+  margin: 0 20px;
+  /* spacing from sides */
+}
+
+/* Left Side - Illustration (inside the same outer box) */
+.login-illustration {
+  flex: 1;
+  padding: 20px 30px;
+  color: rgb(9, 9, 9);
+  text-align: center;
+}
+
+.login-illustration img {
+  max-width: 80%;
+  height: auto;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+.login-illustration h1 {
+  margin-top: 20px;
+  font-size: 28px;
+  color: #222;
+}
+
+.login-illustration p {
+  margin-top: 10px;
+  font-size: 16px;
+  color: #444;
+}
+
+/* Right Side - Login Form Section (inside the same outer box) */
+.login-form-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Title styling (kept from your original) */
+.login h2 {
+  color: #0e651f;
+  /* keep your theme color */
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  margin-top: -10px;
+  /* moves it up */
+  margin-bottom: 20px;
+  /* adjust spacing below if needed */
+}
+
+/* Inputs */
+form input[type="email"],
+form input[type="password"],
+.password-container input {
+  width: 100%;
+  padding: 14px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
+/* Password Icon */
+.password-container {
+  position: relative;
+}
+
+.icon.inside {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 18px;
+  color: #333;
+}
+
+/* Button container */
+.login-form-actions {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+/* Login button smaller on desktop (kept original sizes/behavior) */
+.login-form-actions button[type="submit"] {
+  width: auto;
+  /* remove full width */
+  max-width: 200px;
+  /* optional, limits max width */
+  padding: 10px 20px;
+  /* smaller padding */
+  font-size: 14px;
+  /* slightly smaller text */
+  display: block;
+  /* center horizontally with margin */
+  margin: 10px auto;
+  /* center the button */
+  border-radius: 6px;
+  /* keep rounded corners */
+  background-color: #28a745;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.login-form-actions button[type="submit"]:hover {
+  background-color: #1c7e32;
+  transform: scale(1.05);
+  /* optional subtle hover effect */
+}
+
+/* Forgot Password */
+.login-forgot-password {
+  color: #1e49f6;
+  font-size: 15px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.login-forgot-password:hover {
+  color: #1537c1;
+}
+
+/* Register Link */
+.login-text {
+  font-size: 14px;
+  text-align: center;
+  margin-top: 10px;
+  color: #333;
+}
+
+.login-text a {
+  color: #1dad0d;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.login-text a:hover {
+  text-decoration: underline;
+}
+
+/* WhatsApp Chat Button */
+.whatsapp-chat-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #07d252;
+  color: white;
+  border-radius: 50px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, background-color 0.3s ease;
+  z-index: 1000;
+  animation: bounce 2s infinite;
+}
+
+/* keep compatibility if other code references .whatsapp-chat */
+.whatsapp-chat {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+}
+
+/* Hover effect */
+.whatsapp-chat-button:hover {
+  background-color: #1ebe5d;
+  transform: scale(1.05);
+  animation-play-state: paused;
+  /* Pause bounce on hover */
+}
+
+/* WhatsApp icon size */
+.whatsapp-icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 20px 0;
+    margin-top: 60px;
+    height: auto;
+  }
+
+  /* Stack the outer box vertically and make inner content flow */
+  .login {
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .login-illustration,
+  .login-form-section {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .login-illustration img {
+    max-width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .login-illustration h1 {
+    font-size: 22px;
+  }
+
+  .login-illustration p {
+    font-size: 14px;
+  }
+
+  .login h2 {
+    font-size: 20px;
+    padding: 8px 16px;
+  }
+
+  form input[type="email"],
+  form input[type="password"],
+  .password-container input {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .login-form-actions {
+    gap: 14px;
+  }
+
+  .login-form-actions button[type="submit"] {
+    padding: 12px;
+    font-size: 15px;
+  }
+
+  .login-forgot-password {
+    font-size: 14px;
+  }
+
+  .login-text {
+    font-size: 13px;
+  }
+
+  .whatsapp-chat-button {
+    padding: 10px 14px;
+    font-size: 13px;
+    bottom: 15px;
+    right: 15px;
+  }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(60px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+
+  60% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* small bounce keyframes for WhatsApp button */
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@media (max-width: 768px) {
+  .divider {
+    display: none;  /* hide on mobile */
+  }
+}
+
+
+/* Apply Animations */
+.login-illustration {
+  animation: slideInRight 1s ease forwards;
+}
+
+.login h2 {
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+
+.login-form-actions button[type="submit"] {
+  animation: bounceIn 0.9s ease forwards;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-form-actions button[type="submit"]:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 14px rgba(28, 126, 50, 0.4);
+}
+
+/* Smooth fade for forgot password and register links */
+.login-forgot-password,
+.login-text {
+  animation: fadeInUp 1.2s ease forwards;
+}
+
+/* Animate the entire login form */
+.login-form-section form {
+  animation: zoomIn 1s ease forwards;
+}

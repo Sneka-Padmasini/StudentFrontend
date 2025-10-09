@@ -1,0 +1,37 @@
+/* Global Variables */
+:root {
+  --primary-color: #4ce51e; /* Blue */
+  --primary-gradient: linear-gradient(45deg, #21f348, #64b5f6); /* Blue gradient */
+  --secondary-color: #28d219; /* Deeper blue */
+  --text-color: #333;
+  
+  background: linear-gradient(to right, #014e0f, #ffffff); /* Background blue gradient */
+  background: linear-gradient(to left, #309333, #ffffff);
+}
+
+/* Global font style */
+body {
+  font-family: 'Calibri', sans-serif;
+}
+
+/* App Container */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-color); /* You can also assign a new var for bg-color if needed */
+}
+
+/* Page Content */
+.app-container > * {
+  flex: 1;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .app-container > * {
+    padding: 15px;
+  }
+}
