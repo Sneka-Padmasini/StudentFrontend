@@ -37,13 +37,18 @@ body {
 }
 
 .head-image {
-  width: 1900px; /* Adjust size */
+  width: 100%;
+  max-width: 1900px;
   height: auto;
+  min-height: 500px;       /* Reserve vertical space for loading */
   border-radius: 8px;
   margin-top: 160px;
   margin-bottom: 55px;
-
+  opacity: 0;
+  animation: zoomInImage 1.2s ease-in-out forwards;
+  background-color: #e0f0e5; /* Placeholder color while loading */
 }
+
 
 .head-content {
   display: flex;
@@ -798,6 +803,7 @@ details[open] p {
     height: auto;
     margin-top: 65px;
     margin-bottom: 0px;
+    min-height: 250px; /* smaller reserved space on mobile */
   }
 
   .head-content {

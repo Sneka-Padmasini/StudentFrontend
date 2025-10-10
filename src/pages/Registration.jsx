@@ -5,6 +5,7 @@ import "./Registration.css";
 import registerIllustration from "../assets/registerIllustration.jpg";
 import whatsappIcon from "../assets/WhatsApp_icon.png";
 import { API_BASE_URL } from "../config";
+import { useRef } from "react";
 
 const RegistrationFlow = () => {
   const [step, setStep] = useState(1);
@@ -27,10 +28,19 @@ const RegistrationFlow = () => {
   const [photo, setPhoto] = useState(null);
   const [dob, setDob] = useState("");
   const [gender, setGender] = useState("");
+  // const [selectedCourses, setSelectedCourses] = useState([]); // ["JEE","NEET"]
+  // const [selectedStandards, setSelectedStandards] = useState([]); // ["11th","12th"]
+  // const [selectedCourse, setSelectedCourse] = useState("");
+  // const [selectedStandard, setSelectedStandard] = useState("");
   const [selectedCourses, setSelectedCourses] = useState([]); // ["JEE","NEET"]
   const [selectedStandards, setSelectedStandards] = useState([]); // ["11th","12th"]
+  const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
+  const [standardDropdownOpen, setStandardDropdownOpen] = useState(false);
 
   const [photoPreview, setPhotoPreview] = useState(null);
+
+  const courseDropdownRef = useRef(null);
+  const standardDropdownRef = useRef(null);
 
   // Step 3 states
   const [selectedPlan, setSelectedPlan] = useState("");
@@ -57,9 +67,6 @@ const RegistrationFlow = () => {
     //   console.log("user already logged in")
     //   navigate('/home')
     // }
-
-
-
     const useMe1 = localStorage.getItem("registeredUser")
     if (useMe1) {
       console.log("useMe1")
@@ -78,6 +85,25 @@ const RegistrationFlow = () => {
     }
 
   }, [])
+
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (courseDropdownRef.current && !courseDropdownRef.current.contains(event.target)) {
+        setCourseDropdownOpen(false);
+      }
+      if (standardDropdownRef.current && !standardDropdownRef.current.contains(event.target)) {
+        setStandardDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     if (stepFromURL === 2) setStep(2);
     if (stepFromURL === 3) setStep(3);
@@ -118,17 +144,33 @@ const RegistrationFlow = () => {
       setPhotoPreview(localUrl); // preview photo on UI
     }
   };
+  // const toggleCourse = (course) => {
+  //   setSelectedCourses((prev) =>
+  //     prev.includes(course) ? prev.filter((c) => c !== course) : [...prev, course]
+  //   );
+  // };
+
+  // const toggleStandard = (std) => {
+  //   setSelectedStandards((prev) =>
+  //     prev.includes(std) ? prev.filter((s) => s !== std) : [...prev, std]
+  //   );
+  // };
+
+  // Toggle functions
   const toggleCourse = (course) => {
     setSelectedCourses((prev) =>
       prev.includes(course) ? prev.filter((c) => c !== course) : [...prev, course]
     );
+    setCourseDropdownOpen(false); // ✅ closes dropdown
   };
 
   const toggleStandard = (std) => {
     setSelectedStandards((prev) =>
       prev.includes(std) ? prev.filter((s) => s !== std) : [...prev, std]
     );
+    setStandardDropdownOpen(false); // ✅ closes dropdown
   };
+
 
   const sendUserDetails = async () => {
     const formData = new FormData();
@@ -179,8 +221,10 @@ const RegistrationFlow = () => {
       navigate('/home')
     }
   };
+
   const handleFinalSubmit = (e) => {
     e.preventDefault();
+
     if (!isUpgrade) {
       if (!dob || !gender || selectedCourses.length === 0 || selectedStandards.length === 0) {
         return alert("Please fill in all required fields.");
@@ -190,38 +234,23 @@ const RegistrationFlow = () => {
         return alert("Please select your course and standard.");
       }
     }
+
     const updatedUser = JSON.parse(localStorage.getItem("registeredUser") || "{}");
 
-    let courseObject = updatedUser.selectedCourse || {};
-    selectedCourses.forEach((course) => {
-      courseObject[course] = [...new Set([...(courseObject[course] || []), ...selectedStandards])];
-    });
-    // if ( !dob || !gender || !selectedCourse) return alert("Please fill in all required fields.");//removed !photo||
-    //    if (
-    //   (selectedCourse === "JEE" ||
-    //     selectedCourse === "NEET" ||
-    //     selectedCourse === "Both") &&
-    //   !selectedStandard
-    // ) {
-    //   return alert("Please select your standard (11th, 12th or Both).");
-    // }
-    //    // if ((selectedCourse === "JEE" || selectedCourse === "NEET") && !selectedStandard) return alert("Please select your standard (11th or 12th).");
-    //  let normalizedStandard = selectedStandard;
-    // if (selectedStandard === "Both (11th + 12th)") {
-    //   normalizedStandard = "both";
-    // }
-    //const updatedUser = JSON.parse(localStorage.getItem("registeredUser") || "{}");
     updatedUser.dob = dob;
     updatedUser.gender = gender;
-    updatedUser.selectedCourse = courseObject;
+    updatedUser.selectedCourses = selectedCourses; // ✅ updated for arrays
+    updatedUser.selectedStandards = selectedStandards; // ✅ updated for arrays
+
     if (!isUpgrade) {
       updatedUser.photo = photo;
     }
 
     localStorage.setItem("registeredUser", JSON.stringify(updatedUser));
-
     setStep(3);
   };
+
+
 
   const completePayment = (method) => {
     setPaymentMethod(method);
@@ -572,7 +601,7 @@ const RegistrationFlow = () => {
                         </>
                       )}
 
-                      <div className="checkbox-section">
+                      {/* <div className="checkbox-section">
                         <p>Select Course:</p>
                         <div className="options">
                           <label>
@@ -616,7 +645,58 @@ const RegistrationFlow = () => {
                             </label>
                           </div>
                         </div>
+                      )} */}
+
+                      <div ref={courseDropdownRef} className="dropdown-wrapper">
+                        <label>Course(s):</label>
+                        <div
+                          className="dropdown-display"
+                          onClick={() => setCourseDropdownOpen(!courseDropdownOpen)}
+                        >
+                          {selectedCourses.length > 0 ? selectedCourses.join(", ") : "Select Course(s)"}
+                        </div>
+                        {courseDropdownOpen && (
+                          <div className="dropdown-menu">
+                            {["JEE", "NEET"].map((course) => (
+                              <label key={course} className="dropdown-item">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedCourses.includes(course)}
+                                  onChange={() => toggleCourse(course)}
+                                />
+                                {course}
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {selectedCourses.length > 0 && (
+                        <div ref={standardDropdownRef} className="dropdown-wrapper">
+                          <label>Standard(s):</label>
+                          <div
+                            className="dropdown-display"
+                            onClick={() => setStandardDropdownOpen(!standardDropdownOpen)}
+                          >
+                            {selectedStandards.length > 0 ? selectedStandards.join(", ") : "Select Standard(s)"}
+                          </div>
+                          {standardDropdownOpen && (
+                            <div className="dropdown-menu">
+                              {["11th", "12th"].map((std) => (
+                                <label key={std} className="dropdown-item">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedStandards.includes(std)}
+                                    onChange={() => toggleStandard(std)}
+                                  />
+                                  {std}
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       )}
+
 
                       <div className="student-navigation-buttons">
                         <button

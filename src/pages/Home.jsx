@@ -141,7 +141,7 @@ const Home = () => {
             <p className="sub-text">
               It is a powerful learning app designed to help aspiring students crack any competitive exam like NEET, JEE with ease. With expert-curated study materials, mock tests, and AI-driven personalized learning, we ensure you stay ahead in your preparation.
             </p>
-            <button
+            {/* <button
               className="course-button"
               onClick={() => {
                 const section = document.getElementById("course-section");
@@ -151,7 +151,11 @@ const Home = () => {
               }}
             >
               Course
+            </button> */}
+            <button className="explore-btn">
+              Learn More
             </button>
+
           </div>
         </div>
       </div>
