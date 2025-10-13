@@ -113,38 +113,82 @@ const NeetLearn = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    const courseName = "professional";
-    const subjectName = subject;
-    const stringStandard = localStorage.getItem("currentClass");
-    const standard = stringStandard?.replace(/\D/g, "");
-    console.log(localStorage.getItem("currentClass"));
+  // useEffect(() => {
+  //   const getAllSubjectDetails = () => {
+  //     const subjectName = subject; // Physics, Chemistry, etc.
+  //     const stringStandard = localStorage.getItem("currentClass");
+  //     const standard = stringStandard?.replace(/\D/g, "");
 
+  //     fetch(`${API_BASE_URL}/getSubjectDetails?subjectName=${subjectName}&standard=${standard}`, {
+  //       method: "GET",
+  //       credentials: "include",
+  //     })
+  //       .then((resp) => resp.json())
+  //       .then((data) => {
+  //         console.log(`✅ ${subjectName} data fetched:`, data);
+  //         setFetchedUnits(data); // set the data from MongoDB
+  //       })
+  //       .catch((err) => {
+  //         console.error("❌ Error fetching subject details:", err);
+  //         setFetchedUnits([]);
+  //       });
+  //   };
+
+  //   getAllSubjectDetails();
+  // }, [subject]);
+
+
+  useEffect(() => {
     const getAllSubjectDetails = () => {
+      const subjectName = subject;
+      const stringStandard = localStorage.getItem("currentClass");
+      // const standard = stringStandard?.replace(/\D/g, "");
+      const standard = String(stringStandard?.replace(/\D/g, ""));
+
+
+      // 🧭 Dynamically map the user's course type to the MongoDB folder
+      const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      let courseName = "professional"; // default
+
+      if (currentUser?.coursetype) {
+        const type = currentUser.coursetype.toLowerCase();
+        if (type.includes("neet")) courseName = "professional";
+        else if (type.includes("jee")) courseName = "professional";
+        else if (type.includes("school")) courseName = "local";
+      }
+
+      console.log("📘 Fetching details for:", { courseName, subjectName, standard });
+
       fetch(
-        // `https://studentpadmasini.onrender.com/getSubjectDetails?courseName=${courseName}&subjectName=${subjectName}&standard=${standard}`,
-        `${API_BASE_URL}/getSubjectDetails?courseName=${courseName}&subjectName=${subjectName}&standard=${standard}`,
+        `${API_BASE_URL}/getSubjectDetails?courseName=${encodeURIComponent(courseName)}&subjectName=${encodeURIComponent(subjectName)}&standard=${standard}`,
         {
           method: "GET",
           credentials: "include",
         }
       )
-        .then((resp) => resp.json())
-        .then((data) => {
-          console.log("details of units: ", data);
-          setFetchedUnits(data);
+        .then(async (resp) => {
+          if (!resp.ok) {
+            const text = await resp.text();
+            console.error("❌ Server error:", text);
+            throw new Error(text);
+          }
+          return resp.json();
         })
-        .catch((err) => console.log("getting units error: ", err));
+        .then((data) => {
+          console.log(`✅ ${subjectName} data fetched:`, data);
+          setFetchedUnits(Array.isArray(data) ? data : []);
+        })
+        .catch((err) => {
+          console.error("❌ Error fetching subject details:", err);
+          setFetchedUnits([]);
+        });
     };
 
     getAllSubjectDetails();
+  }, [subject]);
 
-    // Load saved progress from localStorage
-    const savedProgress = JSON.parse(
-      localStorage.getItem(`completedSubtopics_${userId}_neet`) || "{}"
-    );
-    setCompletedSubtopics(savedProgress);
-  }, []);
+
+
 
   // Recursively flatten all subtopics in a topic
   const collectAllSubtopics = (subs = []) =>

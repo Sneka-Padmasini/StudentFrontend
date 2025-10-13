@@ -121,18 +121,34 @@ const Navbar = () => {
   let selectedCourse = [];
   let selectedStandard = [];
 
+  // if (currentUser) {
+  //   // If backend sends selectedCourse object, use it
+  //   if (currentUser.selectedCourse && typeof currentUser.selectedCourse === "object") {
+  //     selectedCourse = Object.keys(currentUser.selectedCourse);
+  //     selectedStandard = [...new Set(Object.values(currentUser.selectedCourse).flat())];
+  //   } else {
+  //     // Fallback: derive from courseName / coursetype
+  //     if (currentUser.courseName) selectedCourse = [currentUser.courseName];
+  //     if (currentUser.coursetype) {
+  //       const match = currentUser.coursetype.match(/\(([^)]+)\)/);
+  //       if (match) selectedStandard = [match[1]];
+  //     }
+  //   }
+  // }
+
   if (currentUser) {
-    // If backend sends selectedCourse object, use it
-    if (currentUser.selectedCourse && typeof currentUser.selectedCourse === "object") {
-      selectedCourse = Object.keys(currentUser.selectedCourse);
-      selectedStandard = [...new Set(Object.values(currentUser.selectedCourse).flat())];
-    } else {
-      // Fallback: derive from courseName / coursetype
-      if (currentUser.courseName) selectedCourse = [currentUser.courseName];
-      if (currentUser.coursetype) {
-        const match = currentUser.coursetype.match(/\(([^)]+)\)/);
-        if (match) selectedStandard = [match[1]];
-      }
+    // ✅ Preferred: use backend data directly
+    if (currentUser.coursetype) {
+      selectedCourse = currentUser.coursetype.split(",").map(c => c.trim());
+    } else if (currentUser.courseName) {
+      selectedCourse = currentUser.courseName.split(",").map(c => c.trim());
+    }
+
+    // ✅ Standards array (if available)
+    if (Array.isArray(currentUser.standards)) {
+      selectedStandard = currentUser.standards;
+    } else if (typeof currentUser.standards === "string" && currentUser.standards.length > 0) {
+      selectedStandard = currentUser.standards.split(",").map(s => s.trim());
     }
   }
 

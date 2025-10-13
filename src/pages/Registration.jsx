@@ -183,7 +183,9 @@ const RegistrationFlow = () => {
     formData.append('dob', dob);
     formData.append('gender', gender);
     formData.append('selectedCourses', JSON.stringify(selectedCourses));
-    formData.append('selectedStandards', JSON.stringify(selectedStandards));
+    formData.append('selectedStandard', JSON.stringify(selectedStandards)); // ✅ singular
+
+    // formData.append('selectedStandards', JSON.stringify(selectedStandards));
 
     // append photo only if selected
     if (photo) {
@@ -240,7 +242,9 @@ const RegistrationFlow = () => {
     updatedUser.dob = dob;
     updatedUser.gender = gender;
     updatedUser.selectedCourses = selectedCourses; // ✅ updated for arrays
-    updatedUser.selectedStandards = selectedStandards; // ✅ updated for arrays
+    updatedUser.selectedStandard = selectedStandards; // ✅ singular
+
+    // updatedUser.selectedStandards = selectedStandards; // ✅ updated for arrays
 
     if (!isUpgrade) {
       updatedUser.photo = photo;
@@ -279,6 +283,7 @@ const RegistrationFlow = () => {
       const res = await fetch(`${API_BASE_URL}/auth/send-otp`, { // ✅ updated
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email }),
       });
       console.log("status:", res.status);
@@ -303,9 +308,11 @@ const RegistrationFlow = () => {
     try {
       // const res = await fetch("http://localhost:3000/auth/verify-otp", {
       // const res = await fetch("https://studentpadmasini.onrender.com/auth/verify-otp", {
+      console.log("Verifying OTP", { email, otp });
       const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, { // ✅ updated
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, otp }),
       });
 

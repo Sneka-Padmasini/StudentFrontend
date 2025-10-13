@@ -29,7 +29,33 @@ const Subjects = () => {
     console.log(JSON.parse(localStorage.getItem("currentUser")))
     const storedUser = JSON.parse(localStorage.getItem("currentUser"));
     if (storedUser) {
-      let stdData = storedUser.selectedCourse?.NEET;
+      // let stdData = storedUser.selectedCourse?.NEET;
+
+      // // Handle string
+      // if (typeof stdData === "string") {
+      //   setStandard(stdData);
+      //   localStorage.setItem("currentClass", stdData);
+      // }
+      // // Handle array
+      // else if (Array.isArray(stdData)) {
+      //   if (stdData.length === 1) {
+      //     setStandard(stdData[0]);
+      //     localStorage.setItem("currentClass", stdData[0]);
+      //   } else {
+      //     setStandard(stdData);
+      //     const savedClass = localStorage.getItem("currentClassJee");
+      //     if (savedClass) setSelectedClass(savedClass);
+      //   }
+      // }
+
+      // ✅ Fix for standard fetching
+      let stdData = storedUser.standards;
+
+      // If standards is empty, try to extract from coursetype or courseName
+      if ((!stdData || stdData.length === 0) && storedUser.coursetype) {
+        if (storedUser.coursetype.includes("11")) stdData = ["11th"];
+        else if (storedUser.coursetype.includes("12")) stdData = ["12th"];
+      }
 
       // Handle string
       if (typeof stdData === "string") {
@@ -43,10 +69,14 @@ const Subjects = () => {
           localStorage.setItem("currentClass", stdData[0]);
         } else {
           setStandard(stdData);
-          const savedClass = localStorage.getItem("currentClassJee");
+          const savedClass = localStorage.getItem("currentClass");
           if (savedClass) setSelectedClass(savedClass);
         }
       }
+      console.log("🧠 Detected Standards:", stdData);
+      console.log("📚 Final Standard State:", standard);
+
+
       const formatDate = (dateStr) => {
         const date = new Date(dateStr);
         return date.toLocaleDateString("en-GB", {
