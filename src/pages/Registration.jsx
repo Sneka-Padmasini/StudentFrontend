@@ -200,6 +200,7 @@ const RegistrationFlow = () => {
         // const response = await fetch('https://padmasini-prod-api.padmasini.com/register/newUser', {
         const response = await fetch(`${API_BASE_URL}/register/newUser`, { // ✅ updated
           method: 'POST',
+          credentials: "include",
           body: formData, // Do not set Content-Type; browser sets it with boundary
         });
 

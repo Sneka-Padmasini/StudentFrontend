@@ -16,10 +16,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (localStorage.getItem('currentUser')) {
-      console.log('user already logged in no need for sign page');
-      navigate('/home');
-    }
+    // Removed auto redirect to home
     window.scrollTo(0, 0);
   }, []);
 
@@ -34,8 +31,8 @@ const LoginPage = () => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          userName: email,    // input from form
-          password: password  // input from form
+          userName: email, // input from form
+          password: password // input from form
         })
       });
 
@@ -47,22 +44,32 @@ const LoginPage = () => {
         return;
       }
 
-      // // store current user in localStorage
+      // Normalize standards from selectedCourse object and selectedStandard array
+      // let standards = [];
+
+      // if (data.selectedCourse && typeof data.selectedCourse === "object") {
+      //   Object.values(data.selectedCourse).forEach(arr => {
+      //     if (Array.isArray(arr)) standards.push(...arr);
+      //   });
+      // }
+
+      // if (Array.isArray(data.selectedStandard)) {
+      //   standards.push(...data.selectedStandard);
+      // }
+
+      // standards = [...new Set(standards)]; // remove duplicates
+
       // const currentUser = {
-      //   userName: data.userName,
+      //   userName: data.userName || `${data.firstname} ${data.lastname}`,
       //   email: data.email,
-      //   phoneNumber: data.phoneNumber,
-      //   role: data.role,
-      //   coursetype: data.coursetype || "",
+      //   phoneNumber: data.mobile || data.phoneNumber,
+      //   role: data.role || "student",
+      //   coursetype: data.coursetype || data.courseName || "",
       //   courseName: data.courseName || "",
       //   subjects: data.subjects || [],
-      //   standards: data.standards || []
+      //   standards: standards.length ? standards : []
       // };
 
-      // localStorage.setItem("currentUser", JSON.stringify(currentUser));
-
-      // // update app state if using context or redux
-      // login(currentUser);
       // Normalize standards from selectedCourse object and selectedStandard array
       let standards = [];
 
@@ -78,6 +85,18 @@ const LoginPage = () => {
 
       standards = [...new Set(standards)]; // remove duplicates
 
+      // const currentUser = {
+      //   userName: data.userName || `${data.firstname} ${data.lastname}`,
+      //   email: data.email,
+      //   phoneNumber: data.mobile || data.phoneNumber,
+      //   role: data.role || "student",
+      //   coursetype: data.coursetype || data.courseName || "",
+      //   courseName: data.courseName || "",
+      //   subjects: data.subjects || [],
+      //   selectedCourse: data.selectedCourse || {},  // ✅ keep the object for frontend usage
+      //   standards: standards.length ? standards : []  // ✅ flattened array for UI
+      // };
+
       const currentUser = {
         userName: data.userName || `${data.firstname} ${data.lastname}`,
         email: data.email,
@@ -86,12 +105,13 @@ const LoginPage = () => {
         coursetype: data.coursetype || data.courseName || "",
         courseName: data.courseName || "",
         subjects: data.subjects || [],
-        standards: standards.length ? standards : []
+        selectedCourse: data.selectedCourse || {},
+        standards: data.standards || []
       };
+
 
       localStorage.setItem("currentUser", JSON.stringify(currentUser));
       login(currentUser);
-
 
       // navigate to dashboard/home page
       navigate("/NEET");
@@ -102,61 +122,6 @@ const LoginPage = () => {
     }
   };
 
-
-
-  // const handleLogin = (e) => {
-  //   e.preventDefault();
-
-  //   fetch("https://studentpadmasini.onrender.com/login", {
-  // fetch(`${API_BASE_URL}/login`, {
-  //     method: "POST",
-  //     credentials: "include",
-  //     headers: {
-  //       "Content-Type": "application/json"
-  //     },
-  //     body: JSON.stringify({
-  //       userName: email,
-  //       password: password
-  //     })
-  //   })
-  //   .then(async resp => {
-  //     const data = await resp.json();
-
-  //     if (data.message === 'Invalid credentials') {
-  //       alert("No user or password matched");
-  //       throw new Error(data.message || "Login failed");
-  //     }
-
-  //    if (data.message === 'Login successful') {
-  //   localStorage.setItem('currentUser', JSON.stringify(data.user));
-  //   login(data.user);
-
-  //   const rawCourse = data.user.course || "";
-  //   const userCourse = rawCourse.toUpperCase().trim();
-
-  //   console.log("👉 User course from server:", userCourse);
-
-  //   if (userCourse.includes('JEE')) {
-  //     navigate('/JEE');
-  //   } else if (userCourse.includes('NEET')) {
-  //     navigate('/NEET');
-  //   } else {
-  //     alert("Your enrolled course is not supported. Please contact admin.");
-  //     navigate('/home');
-  //   }
-
-  //   console.log("✅ Logged in:", data);
-  // }
-
-
-  //     if (!resp.ok) throw new Error(data.message || "Login failed");
-  //   })
-  //   .catch(err => {
-  //     console.log(err);
-  //     return;
-  //   });
-  // };
-
   const handleForgotPassword = async () => {
     if (!email) {
       alert("Please enter your email first");
@@ -164,9 +129,7 @@ const LoginPage = () => {
     }
 
     try {
-      // const resp = await fetch("http://localhost:3000/forgot-password", {
-      // const resp = await fetch("https://studentpadmasini.onrender.com/forgot-password", {
-      const resp = await fetch(`${API_BASE_URL}/forgot-password`, { // ✅ updated
+      const resp = await fetch(`${API_BASE_URL}/forgot-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -179,7 +142,6 @@ const LoginPage = () => {
       if (!resp.ok) throw new Error(data.message || "Something went wrong");
 
       alert(data.message); // backend will send success message
-      //navigate("/reset-password");
     } catch (err) {
       alert(err.message);
     }
@@ -189,7 +151,6 @@ const LoginPage = () => {
     <div className="login-container">
       {/* Outer Layout */}
       <div className="login">
-
         {/* Left side: illustration + text */}
         <div className="login-illustration">
           <img
@@ -200,6 +161,7 @@ const LoginPage = () => {
           <p>Log in to continue learning and exploring!</p>
         </div>
         <div className="divider"></div>
+
         {/* Right side: form */}
         <div className="login-form-section">
           <h2>Login</h2>
@@ -267,8 +229,6 @@ const LoginPage = () => {
       </a>
     </div>
   );
-
-
 };
 
 export default LoginPage;
