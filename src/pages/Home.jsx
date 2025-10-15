@@ -28,29 +28,53 @@ const Home = () => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [courseType, setCourseType] = useState(null);
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
   const { login, logout } = useUser()
   // Scroll to top on component load
+  // useEffect(() => {
+  //   //localStorage.clear();
+  //   //localStorage.removeItem("currentUser");
+  //   const storedUser = localStorage.getItem("currentUser");
+  //   if (storedUser) {
+  //     const parsedUser = JSON.parse(storedUser);
+  //     setCurrentUser(parsedUser);
+  //     if (parsedUser.selectedCourse) {
+  //       const courseKeys = Object.keys(parsedUser.selectedCourse);
+  //       setCourseType(courseKeys);
+  //       console.log("User courses:", courseKeys);
+  //     }
+  //     else {
+  //       logout();
+  //       setCurrentUser(null);
+  //     }
+  //   }
+  //   window.scrollTo(0, 0);
+  //   console.log(localStorage.getItem("currentUser"))
+
+  // }, []);
+
+
   useEffect(() => {
-    //localStorage.clear();
-    //localStorage.removeItem("currentUser");
     const storedUser = localStorage.getItem("currentUser");
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
-      setCurrentUser(parsedUser);
-      if (parsedUser.selectedCourse) {
-        const courseKeys = Object.keys(parsedUser.selectedCourse);
-        setCourseType(courseKeys);
-        console.log("User courses:", courseKeys);
-      }
-      else {
-        logout();
-        setCurrentUser(null);
-      }
-    }
-    window.scrollTo(0, 0);
-    console.log(localStorage.getItem("currentUser"))
 
+      setCurrentUser(parsedUser);
+
+      // Split courseName string into array
+      const coursesArray = parsedUser.courseName
+        ? parsedUser.courseName.split(",").map(c => c.trim())
+        : [];
+
+      setEnrolledCourses(coursesArray);
+
+      window.scrollTo(0, 0);
+      console.log("User courses after normalization:", coursesArray);
+    }
   }, []);
+
+
+
 
   useEffect(() => {
     // fetch('http://localhost:3000/checkSession',{
@@ -141,7 +165,7 @@ const Home = () => {
             <p className="sub-text">
               It is a powerful learning app designed to help aspiring students crack any competitive exam like NEET, JEE with ease. With expert-curated study materials, mock tests, and AI-driven personalized learning, we ensure you stay ahead in your preparation.
             </p>
-            {/* <button
+            <button
               className="course-button"
               onClick={() => {
                 const section = document.getElementById("course-section");
@@ -150,9 +174,6 @@ const Home = () => {
                 }
               }}
             >
-              Course
-            </button> */}
-            <button className="explore-btn">
               Learn More
             </button>
 
@@ -173,7 +194,7 @@ const Home = () => {
             &lt;
           </button>
 
-          <div className="tabs-container" id="tabScroll">
+          {/* <div className="tabs-container" id="tabScroll">
             {[
               {
                 courseType: "JEE",
@@ -219,7 +240,79 @@ const Home = () => {
             })}
 
 
+          </div> */}
+
+          <div className="tabs-container" id="tabScroll">
+            {[
+              {
+                courseType: "JEE",
+                title: "JEE Prep Material",
+                range: "JEE Exam",
+                tags: ["Reference", "Advanced", "Textbooks"],
+                img: booksImg
+              },
+              {
+                courseType: "NEET",
+                title: "NEET Ready Papers",
+                range: "NEET Exam",
+                tags: ["Mock Tests", "Practice", "Important"],
+                img: importantImg
+              }
+            ].map((card, index) => {
+              // Before login: show all courses
+              if (!currentUser) {
+                return (
+                  <div key={index} className="tab-card updated-card">
+                    <div className="card-header">
+                      <span className="class-range">{card.range}</span>
+                      <h3>{card.title}</h3>
+                    </div>
+                    <div className="tags">
+                      {card.tags.map((tag, i) => (
+                        <span key={i} className="tag">{tag}</span>
+                      ))}
+                    </div>
+                    <img className="card-image" src={card.img} alt={card.title} />
+                    <button
+                      className="explore-btn"
+                      onClick={() => navigate("/register")}
+                    >
+                      Learn More
+                    </button>
+                  </div>
+                );
+              }
+
+              // After login: show only enrolled courses
+              // const enrolledCourses = currentUser.selectedCourse ? Object.keys(currentUser.selectedCourse) : [];
+              if (!enrolledCourses.includes(card.courseType)) return null;
+
+              return (
+                <div key={index} className="tab-card updated-card">
+                  <div className="card-header">
+                    <span className="class-range">{card.range}</span>
+                    <h3>{card.title}</h3>
+                  </div>
+                  <div className="tags">
+                    {card.tags.map((tag, i) => (
+                      <span key={i} className="tag">{tag}</span>
+                    ))}
+                  </div>
+                  <img className="card-image" src={card.img} alt={card.title} />
+                  <button
+                    className="explore-btn"
+                    onClick={() => {
+                      if (card.courseType === "JEE") navigate("/JEE");
+                      else if (card.courseType === "NEET") navigate("/NEET");
+                    }}
+                  >
+                    Learn More
+                  </button>
+                </div>
+              );
+            })}
           </div>
+
 
           <button
             className="scroll-right"

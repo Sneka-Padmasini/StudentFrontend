@@ -224,7 +224,8 @@
 .Neet-container .explanation-container h5 {
   color: #1b721b;
   margin-bottom: 10px;
-  margin-top: 5px; /* adjust as needed */
+  margin-top: 5px;
+  /* adjust as needed */
   margin-bottom: 10px;
 }
 
@@ -236,14 +237,19 @@
 /*button*/
 /* Right-side buttons */
 .Neet-container .explanation-container button {
-  padding: 8px 16px;       /* slightly bigger padding for comfort */
+  padding: 8px 16px;
+  /* slightly bigger padding for comfort */
   font-size: 14px;
   line-height: 1.2;
   border-radius: 4px;
-  max-width: 200px;        /* limit horizontal size */
-  width: 100%;             /* allow shrinking in smaller containers */
-  display: block;           /* makes margin auto center work */
-  margin: 10px auto;       /* center the button horizontally */
+  max-width: 200px;
+  /* limit horizontal size */
+  width: 100%;
+  /* allow shrinking in smaller containers */
+  display: block;
+  /* makes margin auto center work */
+  margin: 10px auto;
+  /* center the button horizontally */
   cursor: pointer;
   border: 1px solid #28a745;
   background-color: #28a745;
@@ -266,6 +272,6 @@
 
 .Neet-container .no-explanation h2 {
   font-size: 20px;
-  color: #28a745;
+  color: #ebf1ed;
   margin-bottom: 8px;
 }

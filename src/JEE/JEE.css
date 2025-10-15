@@ -4,7 +4,7 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-background-color: #f4f4f4;
+  background-color: #f4f4f4;
 }
 
 /* Overall Page Layout */
@@ -12,7 +12,7 @@ background-color: #f4f4f4;
   display: flex;
   min-height: 100vh;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-margin-top: 60px;
+  margin-top: 60px;
 
 }
 
@@ -26,14 +26,24 @@ margin-top: 60px;
   margin-top: 25px;
   color: white;
   margin-left: -20px;
+  text-align: center;
 }
 
 .sidebar h2 {
   font-size: 1.8rem;
   margin-bottom: 1rem;
-  background-color: white;
   margin-top: 10px;
   color: #0bd112;
+  /* green heading text */
+  background: transparent !important;
+  /* force remove white box */
+  font-weight: 600;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  /* remove "button" spacing */
+  display: inline-block;
+  /* shrink to text width */
 }
 
 .badge {
@@ -48,7 +58,8 @@ margin-top: 60px;
 .certified {
   background-color: #08c534;
   color: #fff;
-  margin-right: 1rem; /* Add space to the right of the certified element */
+  margin-right: 1rem;
+  /* Add space to the right of the certified element */
 }
 
 .limited {
@@ -58,7 +69,8 @@ margin-top: 60px;
 
 
 .cohort-details {
-margin-top: 10px;}
+  margin-top: 10px;
+}
 
 .cohort-details h4 {
   margin-bottom: 0.5rem;
@@ -98,6 +110,7 @@ margin-top: 10px;}
   margin: 0.5rem 0;
   font-size: 1rem;
 }
+
 .progress-bar-container {
   position: relative;
   height: 20px;
@@ -108,6 +121,7 @@ margin-top: 10px;}
   margin-right: 20px;
 
 }
+
 .progress-bar {
   background: #a0f4a0;
   border-radius: 10px;
@@ -121,6 +135,7 @@ margin-top: 10px;}
   height: 100%;
   transition: width 0.4s ease;
 }
+
 .progress-percentage {
   position: absolute;
   width: 100%;
@@ -138,7 +153,7 @@ margin-top: 10px;}
 .certificate-box {
   margin-top: 0;
   margin-left: 1rem;
-  
+
 }
 
 .certificate-btn {
@@ -218,6 +233,7 @@ margin-top: 10px;}
 }
 
 .subject-card {
+  background-color: #003366;
   border-radius: 20px;
   padding: 0.8rem;
   text-align: center;
@@ -237,29 +253,37 @@ margin-top: 10px;}
 
 /* Subject-specific colors + hover shades */
 .subject-card-0 {
-  background-color: #f7e8c1; /* Physics */
+  background-color: #f7e8c1;
+  /* Physics */
 }
+
 .subject-card-0:hover {
   background-color: #fde6a7;
 }
 
 .subject-card-1 {
-  background-color: #dfc5d0; /* Chemistry */
+  background-color: #dfc5d0;
+  /* Chemistry */
 }
+
 .subject-card-1:hover {
   background-color: #d1bcc6;
 }
 
 .subject-card-2 {
-  background-color: #d7f1fb; /* Zoology */
+  background-color: #d7f1fb;
+  /* Zoology */
 }
+
 .subject-card-2:hover {
   background-color: #b2e5f9;
 }
 
 .subject-card-3 {
-  background-color: #ffd4dd; /* Botany */
+  background-color: #ffd4dd;
+  /* Botany */
 }
+
 .subject-card-3:hover {
   background-color: #f8baac;
 }
@@ -272,11 +296,11 @@ margin-top: 10px;}
   margin-bottom: 0.5rem;
 }
 
-.jee-subject-info {
+.neet-subject-info {
   margin-bottom: 1rem;
 }
 
-.jee-course-number {
+.course-number {
   color: #050505;
   font-size: 1.3rem;
   font-weight: bold;
@@ -317,18 +341,21 @@ margin-top: 10px;}
   background-color: #33ff58;
 }
 
+
 @media (max-width: 768px) {
+
   /* Overall Layout */
   .subjects-page {
     flex-direction: column;
-    margin-top: 90px; /* Adjust if you have a fixed navbar */
+    margin-top: 90px;
+    /* Adjust if you have a fixed navbar */
     padding: 1rem;
   }
 
   /* Sidebar */
   .sidebar {
     width: 100%;
-     margin-bottom: 2rem;
+    margin-bottom: 2rem;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     margin-top: -5px;
     margin-left: 0px;
@@ -351,50 +378,59 @@ margin-top: 10px;}
     margin-top: -5px;
     background-color: rgb(233, 251, 245);
   }
-  
+
   /* Progress Section */
   .progress-section {
     padding: 1rem;
   }
+
   .progress-bar-container {
-    width: 100%; /* Full width on small screens */
+    width: 100%;
+    /* Full width on small screens */
     margin-top: 30px;
     margin-left: 5px;
   }
 
-    .progress-header {
-      flex-direction: column; /* Stack header elements vertically on small screens */
-      align-items: flex-start;
-    }
-  
-    .progress-info {
-      padding-right: 0;
-      margin-bottom: 10px; /* Space between progress info and button */
-    }
-  
-    .certificate-box {
-      justify-content: center;
-      margin-top: 10px;
-    }
-  
-    .certificate-btn {
-      width: 100%; /* Make button take full width */
-      padding: 12px;
-      font-size: 18px; /* Increase font size for better readability */
-    }
-  
-    .progress-bar-container {
-      height: 18px; /* Slightly reduced height for smaller screens */
-    }
-  
-    .progress-bar {
-      border-radius: 8px; /* Smaller rounded corners */
-    }
-  
-    .subtext {
-      font-size: 12px; /* Reduce font size for better readability */
-    }
-  
+  .progress-header {
+    flex-direction: column;
+    /* Stack header elements vertically on small screens */
+    align-items: flex-start;
+  }
+
+  .progress-info {
+    padding-right: 0;
+    margin-bottom: 10px;
+    /* Space between progress info and button */
+  }
+
+  .certificate-box {
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .certificate-btn {
+    width: 100%;
+    /* Make button take full width */
+    padding: 12px;
+    font-size: 18px;
+    /* Increase font size for better readability */
+  }
+
+  .progress-bar-container {
+    height: 18px;
+    /* Slightly reduced height for smaller screens */
+  }
+
+  .progress-bar {
+    border-radius: 8px;
+    /* Smaller rounded corners */
+  }
+
+  .subtext {
+    font-size: 12px;
+    /* Reduce font size for better readability */
+  }
+
 
   /* Learning Path Timeline */
   .learning-path {
@@ -420,7 +456,7 @@ margin-top: 10px;}
   }
 
   /* Subject Card */
-  
+
   .subject-card {
     width: 100%;
     height: 100%;
@@ -432,6 +468,7 @@ margin-top: 10px;}
     width: 120px;
     height: 120px;
   }
+
   .subject-title {
     font-size: 1.2rem;
     margin-top: 0.1rem;
@@ -449,6 +486,7 @@ margin-top: 10px;}
     padding: 3px 6px;
   }
 }
+
 @media (max-width: 1100px) {
   .subjects-page {
     flex-direction: column;
@@ -511,6 +549,7 @@ margin-top: 10px;}
   .timeline-item {
     padding-left: 30px;
   }
+
   .subject-card {
     width: 100%;
     max-width: 300px;

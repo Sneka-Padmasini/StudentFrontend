@@ -22,66 +22,56 @@ const Jee = () => {
   const [endDate, setEndDate] = useState("");
   const [subjectCompletion, setSubjectCompletion] = useState(subjectList);
   const learningPathRef = useRef(null);
-  const { login } = useUser()
+  const { login } = useUser();
+
+  // ✅ Session check
   useEffect(() => {
-    // fetch('http://localhost:3000/checkSession',{
-    // fetch(`https://studentpadmasini.onrender.com/checkSession`, {
-    //  fetch(`https://padmasini-prod-api.padmasini.com/checkSession`, {
     fetch(`${API_BASE_URL}/checkSession`, {
       method: "GET",
-      credentials: 'include'
-    }).then(resp => resp.json())
-      .then(data => {
-        console.log(data)
+      credentials: "include",
+    })
+      .then((resp) => resp.json())
+      .then((data) => {
         if (data.loggedIn === true) {
-          login(data.user)
-          //localStorage.clear();
-          //console.log(localStorage.getItem('currentUser'))
-          localStorage.setItem('currentUser', JSON.stringify(data.user));
-          //  logout(localStorage.getItem('currentUser'))
-          console.log(localStorage.getItem('currentUser'))
-          //onsole.log(currentUser)
-        }
-        if (data.loggedIn === false) {
-          console.log('it came here before seeing user')
-          const existingUser = localStorage.getItem('currentUser')
+          login(data.user);
+          localStorage.setItem("currentUser", JSON.stringify(data.user));
+        } else if (data.loggedIn === false) {
+          const existingUser = localStorage.getItem("currentUser");
           if (existingUser) {
-            console.log('it came here and deleted the user')
-            // localStorage.removeItem("currentUser");
-            //localStorage.removeItem("jeeSubjectCompletion");
-            //localStorage.removeItem("currentClassJee");
-            localStorage.clear(); // Clear all local storage
-            logout();
-            setCoursesOpen(false);
-            setUserDropdownOpen(false);
+            localStorage.clear();
             navigate("/login");
           }
         }
-      }).catch(console.error)
+      })
+      .catch(console.error);
+  }, []);
 
-  }, [])
+  // ✅ Handle user standards (like NEET)
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("currentUser"));
     if (storedUser) {
-      let stdData = storedUser.selectedCourse?.JEE;
+      let stdData = storedUser.standards;
 
+      // If no standards, try fallback from coursetype
+      if ((!stdData || stdData.length === 0) && storedUser.coursetype) {
+        if (storedUser.coursetype.includes("11")) stdData = ["11th"];
+        else if (storedUser.coursetype.includes("12")) stdData = ["12th"];
+      }
+
+      // Handle single vs multiple classes
       if (typeof stdData === "string") {
         setStandard(stdData);
         localStorage.setItem("currentClassJee", stdData);
       } else if (Array.isArray(stdData)) {
         if (stdData.length === 1) {
-          setStandard(stdData[0]); // Single element
+          setStandard(stdData[0]);
           localStorage.setItem("currentClassJee", stdData[0]);
         } else {
-          setStandard(stdData); // Multiple options → dropdown
+          setStandard(stdData);
           const savedClass = localStorage.getItem("currentClassJee");
           if (savedClass) setSelectedClass(savedClass);
         }
       }
-      // if (storedUser.standard === "both") {
-      //   const savedClass = localStorage.getItem("currentClassJee") || "";
-      //   setSelectedClass(savedClass);
-      // }
 
       const formatDate = (dateStr) => {
         const date = new Date(dateStr);
@@ -95,7 +85,7 @@ const Jee = () => {
       if (storedUser.startDate) setStartDate(formatDate(storedUser.startDate));
       if (storedUser.endDate) setEndDate(formatDate(storedUser.endDate));
     }
-    //console.log(storedUser.selectedStandard)
+
     const savedCompletion = JSON.parse(localStorage.getItem("jeeSubjectCompletion"));
     if (savedCompletion) {
       setSubjectCompletion(savedCompletion);
@@ -105,7 +95,6 @@ const Jee = () => {
   const handleClassChange = (e) => {
     const selected = e.target.value;
     setSelectedClass(selected);
-    console.log(standard)
     localStorage.setItem("currentClassJee", selected);
   };
 
@@ -116,7 +105,7 @@ const Jee = () => {
   };
 
   const calculateProgress = () => {
-    const completedSubjects = subjectCompletion.filter((subject) => subject.certified).length;
+    const completedSubjects = subjectCompletion.filter((s) => s.certified).length;
     return (completedSubjects / subjectCompletion.length) * 100;
   };
 
@@ -151,8 +140,8 @@ const Jee = () => {
             {Array.isArray(standard) ? (
               <select value={selectedClass} onChange={handleClassChange}>
                 <option value="">Select Class</option>
-                {standard.map((std, index) => (
-                  <option key={index} value={std}>
+                {standard.map((std, idx) => (
+                  <option key={idx} value={std}>
                     {std === "11th" ? "Class 11" : std === "12th" ? "Class 12" : std}
                   </option>
                 ))}
@@ -169,15 +158,18 @@ const Jee = () => {
           </p>
         )}
 
-
         <span className="badge certified">Certified</span>
         <span className="badge limited">Limited Access Only</span>
 
         {startDate && endDate && (
           <div className="cohort-details">
             <h4>Your Batch</h4>
-            <p><strong>Start Date:</strong> {startDate}</p>
-            <p><strong>End Date:</strong> {endDate}</p>
+            <p>
+              <strong>Start Date:</strong> {startDate}
+            </p>
+            <p>
+              <strong>End Date:</strong> {endDate}
+            </p>
           </div>
         )}
       </aside>
@@ -187,7 +179,10 @@ const Jee = () => {
           <h3>My Completion Progress</h3>
           <div className="progress-header">
             <div className="progress-info">
-              <p>{subjectCompletion.filter((s) => s.certified).length} of {subjectCompletion.length} subjects completed</p>
+              <p>
+                {subjectCompletion.filter((s) => s.certified).length} of{" "}
+                {subjectCompletion.length} subjects completed
+              </p>
 
               <div className="progress-bar-container">
                 <div
@@ -204,7 +199,9 @@ const Jee = () => {
                   title={`Completed: ${Math.round(progressPercentage)}%`}
                 >
                   <div className="progress-filled">
-                    <span className="progress-percentage">{Math.round(progressPercentage)}%</span>
+                    <span className="progress-percentage">
+                      {Math.round(progressPercentage)}%
+                    </span>
                   </div>
                 </div>
               </div>
@@ -218,10 +215,13 @@ const Jee = () => {
 
             <div className="certificate-box">
               <button
-                className={`certificate-btn ${progressPercentage === 100 ? "btn-completed" : "btn-continue"}`}
+                className={`certificate-btn ${progressPercentage === 100 ? "btn-completed" : "btn-continue"
+                  }`}
                 onClick={handleScrollToLearningPath}
               >
-                {progressPercentage === 100 ? "Download Certificate" : "Continue Learning"}
+                {progressPercentage === 100
+                  ? "Download Certificate"
+                  : "Continue Learning"}
               </button>
             </div>
           </div>
@@ -235,19 +235,24 @@ const Jee = () => {
                 <div className="timeline-dot"></div>
                 <div className="timeline-content">
                   <div className={`subject-card subject-card-${index}`}>
-                    <img src={subject.image} alt={subject.name} className="subject-thumbnail" />
+                    <img
+                      src={subject.image}
+                      alt={subject.name}
+                      className="subject-thumbnail"
+                    />
                     <div className="jee-subject-info">
                       <span className="course-number">Course {index + 1}</span>
                       <h4 className="subject-title">{subject.name}</h4>
-                      {subject.certified && <span className="certified-badge">Certified</span>}
+                      {subject.certified && (
+                        <span className="certified-badge">Certified</span>
+                      )}
                     </div>
                     <button
                       className="continue-btn"
                       onClick={() => {
                         if (!standard) {
-                          console.log("jiii")
-                          alert("please select a standard")
-                          return
+                          alert("Please select a standard");
+                          return;
                         }
                         if (Array.isArray(standard) && !selectedClass) {
                           alert("Please select a class before proceeding");
@@ -256,13 +261,12 @@ const Jee = () => {
                         navigate("/JeeLearn", {
                           state: {
                             subject: subject.name,
-                            selectedClass: Array.isArray(standard) ? selectedClass : standard,
+                            selectedClass: Array.isArray(standard)
+                              ? selectedClass
+                              : standard,
                           },
-                        })
-                      }
-
-
-                      }
+                        });
+                      }}
                       disabled={standard === "both" && !selectedClass}
                     >
                       {subject.certified ? "Review" : "Learn More"}

@@ -7,7 +7,6 @@ import JeeExplanation from "./JeeExplanation";
 import JeeQuiz from "./JeeQuiz";
 import { API_BASE_URL } from "../config";
 
-// Recursive component to render subtopics and their tests
 const SubtopicTree = ({
   subtopics,
   onClick,
@@ -24,8 +23,6 @@ const SubtopicTree = ({
     ) {
       setExpandedSub((prev) => (prev === idx ? null : idx));
     }
-
-    // Trigger parent click logic (for leaf subtopics)
     onClick(sub, parentIndex);
   };
 
@@ -48,12 +45,11 @@ const SubtopicTree = ({
             style={{ marginLeft: `${level * 20}px` }}
             onClick={() => handleSubClick(sub, idx)}
           >
-            📄 {sub.unitName}
+            ⮚ {sub.unitName}
           </div>
 
           {expandedSub === idx &&
-            sub.test &&
-            sub.test.length > 0 &&
+            sub.test?.length > 0 &&
             sub.test.map((test, tIdx) => (
               <div
                 key={tIdx}
@@ -111,64 +107,64 @@ const JeeLearn = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-
   useEffect(() => {
-    const courseName = "professional";
-    const subjectName = subject;
-    const stringStandard = localStorage.getItem("currentClassJee");
-    console.log(stringStandard)
-    const standard = stringStandard?.replace(/\D/g, "");
-    console.log(standard)
-    console.log(localStorage.getItem("currentClassJee"))
-    //localStorage.removeItem("currentClass")
     const getAllSubjectDetails = () => {
+      const subjectName = subject;
+      const stringStandard = localStorage.getItem("currentClassJee");
+      const standard = String(stringStandard?.replace(/\D/g, ""));
+
+      const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      let courseName = "professional";
+
+      if (currentUser?.coursetype) {
+        const type = currentUser.coursetype.toLowerCase();
+        if (type.includes("jee")) courseName = "professional";
+        else if (type.includes("neet")) courseName = "professional";
+        else if (type.includes("school")) courseName = "local";
+      }
+
+      console.log("📘 Fetching JEE details for:", {
+        courseName,
+        subjectName,
+        standard,
+      });
+
       fetch(
-        // `http://localhost:3000/getSubjectDetails?courseName=${courseName}&subjectName=${subjectName}&standard=${standard}`,
-        // `https://studentpadmasini.onrender.com/getSubjectDetails?courseName=${courseName}&subjectName=${subjectName}&standard=${standard}`,
-        //  `https://padmasini-prod-api.padmasini.com/getSubjectDetails?courseName=${courseName}&subjectName=${subjectName}&standard=${standard}`,
-        `${API_BASE_URL}/getSubjectDetails?courseName=${courseName}&subjectName=${subjectName}&standard=${standard}`,
-        
+        `${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/${standard}`,
         {
           method: "GET",
           credentials: "include",
         }
       )
-        .then((resp) => resp.json())
-        .then((data) => {
-          console.log("details of units: ", data);
-          setFetchedUnits(data);
+        .then(async (resp) => {
+          if (!resp.ok) {
+            const text = await resp.text();
+            console.error("❌ Server error:", text);
+            throw new Error(text);
+          }
+          return resp.json();
         })
-        .catch((err) => console.log("getting units error: ", err));
+        .then((data) => {
+          console.log(`✅ ${subjectName} data fetched:`, data);
+          setFetchedUnits(Array.isArray(data) ? data : []);
+        })
+        .catch((err) => {
+          console.error("❌ Error fetching JEE subject details:", err);
+          setFetchedUnits([]);
+        });
     };
 
     getAllSubjectDetails();
 
-    // Load saved progress from localStorage
     const savedProgress = JSON.parse(
       localStorage.getItem(`completedSubtopics_${userId}_jee`) || "{}"
     );
     setCompletedSubtopics(savedProgress);
-  }, []);
-  // useEffect(() => {
-  //   const updated = {};
-  //   const traverse = (subs, topicName) => {
-  //     for (const sub of subs) {
-  //       if (sub.units) traverse(sub.units, topicName);
-  //       const key = `jee-completed-${sub.unitName}`;
-  //       if (localStorage.getItem(key) === "true") {
-  //         if (!updated[topicName]) updated[topicName] = {};
-  //         updated[topicName][sub.unitName] = true;
-  //       }
-  //     }
-  //   };
-  //   topics.forEach((topic) => traverse(topic.units, topic.unitName));
-  //   setCompletedSubtopics(updated);
-  // }, [topics]);
+  }, [subject]);
 
   const collectAllSubtopics = (subs = []) =>
     subs.flatMap((s) => [s, ...(s.units ? collectAllSubtopics(s.units) : [])]);
 
-  // Calculate % completion for a topic
   const calculateProgress = (topic) => {
     if (!topic || !topic.units) return 0;
     const allSubs = collectAllSubtopics(topic.units);
@@ -254,50 +250,27 @@ const JeeLearn = () => {
   return (
     <div className="Jee-container">
       {isMobile && (
-        <button
-          className="toggle-btn"
-          onClick={() => setShowTopics(!showTopics)}
-        >
+        <button className="toggle-btn" onClick={() => setShowTopics(!showTopics)}>
           <FaBars />
           <h2>{subject} Topics</h2>
         </button>
       )}
+
       {showTopics && (
         <div className="topics-list">
           <ul>
             {fetchedUnits.map((topic, index) => (
               <li key={index}>
-                {/* <div
+                <div
                   className={`topic-title ${expandedTopic === index ? "active" : ""
                     } ${!isTopicUnlocked(index) ? "locked" : ""}`}
                   onClick={() => toggleTopic(index)}
                 >
-                  {topic.unitName}
-                  <div className="progress-bar-wrapper">
-                    <div className="progress-info">
-                      <span className="progress-inside">
-                        {calculateProgress(topic)}%
-                      </span>
-                      <span className="expand-icon">
-                        {expandedTopic === index ? "-" : "+"}
-                      </span>
-                    </div>
-                    <div className="progress-bar-bg">
-                      <div
-                        className="progress-bar-fill"
-                        style={{ width: `${calculateProgress(topic)}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div> */}
-                <div
-                  className={`topic-title ${expandedTopic === index ? "active" : ""} ${!isTopicUnlocked(index) ? "locked" : ""
-                    }`}
-                  onClick={() => toggleTopic(index)}
-                >
                   <div className="topic-header">
                     <span>{topic.unitName}</span>
-                    <span className="expand-icon">{expandedTopic === index ? "-" : "+"}</span>
+                    <span className="expand-icon">
+                      {expandedTopic === index ? "−" : "+"}
+                    </span>
                   </div>
 
                   <div className="progress-bar-wrapper">
@@ -313,8 +286,6 @@ const JeeLearn = () => {
                   </div>
                 </div>
 
-
-
                 {expandedTopic === index && topic.units && (
                   <SubtopicTree
                     subtopics={topic.units}
@@ -324,7 +295,6 @@ const JeeLearn = () => {
                   />
                 )}
 
-                {/* Topic-level tests */}
                 {expandedTopic === index && topic.test?.length > 0 && (
                   <ul className="subtopics-list">
                     {topic.test.map((test, tIdx) => {
@@ -360,39 +330,7 @@ const JeeLearn = () => {
           </div>
         </div>
       )}
-      {/* <div className="explanation-container">
-        {selectedSubtopic ? (
-          selectedSubtopic.unitName.includes("Assessment") ? (
-            <JeeQuiz
-              topicTitle={fetchedUnits[expandedTopic]?.unitName}
-              subtopicTitle={selectedSubtopic.unitName}
-              test={selectedSubtopic.test || []}
-              onBack={handleBackToTopics}
-              onMarkComplete={markSubtopicComplete}
-            />
-          ) : (
-            <JeeExplanation
-              topicTitle={fetchedUnits[expandedTopic]?.unitName}
-              subtopicTitle={selectedSubtopic.unitName}
-              subject={subject}
-              explanation={selectedSubtopic.explanation || ""}
-              audioFileId={selectedSubtopic.audioFileId || []}
-              onBack={handleBackToTopics}
-              onMarkComplete={markSubtopicComplete}
-            />
-          )
-        ) : (
-          <div className="no-explanation">
-            <h2>
-              Welcome to {subject} - Std {selectedStandard}
-            </h2>
-            <p>Select a topic and subtopic to begin your learning journey.</p>
-          </div>
-        )}
-      </div> */}
 
-
-      {/* to fetch ai video  */}
       <div className="explanation-container">
         {selectedSubtopic ? (
           selectedSubtopic.unitName.includes("Assessment") ? (
@@ -415,16 +353,24 @@ const JeeLearn = () => {
                 onMarkComplete={markSubtopicComplete}
               />
 
-              {/* Show AI Generated Video */}
-              {selectedSubtopic?.video_url && (
-                <div style={{ marginTop: "20px" }}>
-                  <h5>AI Generated Video</h5>
-                  <video width="100%" controls>
-                    <source src={selectedSubtopic.video_url} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                </div>
-              )}
+              {(selectedSubtopic?.videoUrl ||
+                selectedSubtopic?.video_url ||
+                selectedSubtopic?.aiVideoUrl) && (
+                  <div style={{ marginTop: "20px" }}>
+                    <h5>AI Generated Video</h5>
+                    <video width="100%" controls>
+                      <source
+                        src={
+                          selectedSubtopic?.videoUrl ||
+                          selectedSubtopic?.video_url ||
+                          selectedSubtopic?.aiVideoUrl
+                        }
+                        type="video/mp4"
+                      />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                )}
             </>
           )
         ) : (

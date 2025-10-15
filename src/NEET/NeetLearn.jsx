@@ -159,13 +159,22 @@ const NeetLearn = () => {
 
       console.log("📘 Fetching details for:", { courseName, subjectName, standard });
 
+      // fetch(
+      //   `${API_BASE_URL}/getSubjectDetails?courseName=${encodeURIComponent(courseName)}&subjectName=${encodeURIComponent(subjectName)}&standard=${standard}`,
+      //   {
+      //     method: "GET",
+      //     credentials: "include",
+      //   }
+      // )
+
       fetch(
-        `${API_BASE_URL}/getSubjectDetails?courseName=${encodeURIComponent(courseName)}&subjectName=${encodeURIComponent(subjectName)}&standard=${standard}`,
+        `${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/${standard}`,
         {
           method: "GET",
           credentials: "include",
         }
       )
+
         .then(async (resp) => {
           if (!resp.ok) {
             const text = await resp.text();

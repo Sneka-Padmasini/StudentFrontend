@@ -11,8 +11,8 @@
 
 /* Heading */
 .contact-container h2 {
-  background-color: #09601f;
-  color: white;
+  background-color: #faf0f0;
+  color: #09601f;
   font-size: 24px;
   padding: 10px 20px;
   border-radius: 8px;
@@ -23,12 +23,15 @@
 /* Form Box */
 .contact-form-box {
   width: 100%;
-  max-width: 600px; /* Increased width */
-  background: linear-gradient(to bottom, #d1fad7, #cbd7c3);flex: 1;
-  padding: 40px 40px; /* Increased padding */
+  max-width: 600px;
+  /* Increased width */
+  background: linear-gradient(to bottom, #d1fad7, #cbd7c3);
+  flex: 1;
+  padding: 40px 40px;
+  /* Increased padding */
   border-radius: 16px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-  margin: 20px auto; 
+  margin: 20px auto;
 }
 
 /* Form Layout */
@@ -41,18 +44,21 @@ form {
 /* Input Fields */
 form input,
 form textarea {
- width: 100%;
+  width: 100%;
   padding: 14px;
   margin: 10px 0;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 15px;
-  
+
 }
+
 form input:hover,
 form textarea:hover {
-  border-color: #00ff26; /* Change border color on hover */
+  border-color: #00ff26;
+  /* Change border color on hover */
 }
+
 /* Special class for Name input (optional but included since you had "form-name") */
 .form-name {
   font-weight: 500;
@@ -73,13 +79,15 @@ form textarea::placeholder {
 
 /* Submit Button */
 .form-requirements {
-  text-align: center; /* Optional: helps ensure centering in some layouts */
+  text-align: center;
+  /* Optional: helps ensure centering in some layouts */
 }
 
 .form-requirements button[type="submit"] {
   width: 100%;
   max-width: 280px;
-  margin: 0 auto; /* centers the button horizontally */
+  margin: 0 auto;
+  /* centers the button horizontally */
   padding: 12px;
   background-color: #28a745;
   color: #fff;
@@ -90,6 +98,7 @@ form textarea::placeholder {
   cursor: pointer;
   transition: background-color 0.3s;
 }
+
 .form-requirements button[type="submit"]:hover {
   background-color: #1c7e32;
 }
@@ -176,7 +185,8 @@ form textarea::placeholder {
 .whatsapp-chat-button:hover {
   background-color: #1ebe5d;
   transform: scale(1.05);
-  animation-play-state: paused; /* Pause bounce on hover */
+  animation-play-state: paused;
+  /* Pause bounce on hover */
 }
 
 /* WhatsApp icon size */
@@ -190,21 +200,28 @@ form textarea::placeholder {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
 }
+
 /* Bounce Animation */
 @keyframes bounce {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   30% {
     transform: translateY(-10px);
   }
+
   50% {
     transform: translateY(0px);
   }
+
   70% {
     transform: translateY(-5px);
   }
@@ -274,4 +291,3 @@ form textarea::placeholder {
     height: 20px;
   }
 }
-

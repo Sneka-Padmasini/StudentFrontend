@@ -1,5 +1,5 @@
 // Navbar.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   FaBars,
@@ -20,6 +20,7 @@ const Navbar = () => {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const { login, currentUser, logout } = useUser();
   const navigate = useNavigate();
+  const dropdownRef = useRef(null); // ✅ ref for dynamic positioning
 
   const handleLogout = () => {
     fetch(`${API_BASE_URL}/logout`, {
@@ -39,35 +40,6 @@ const Navbar = () => {
       .catch(console.log);
   };
 
-  // useEffect(() => {
-  //   fetch(`${API_BASE_URL}/checkSession`, {
-  //     method: "GET",
-  //     credentials: "include",
-  //   })
-  //     .then((resp) => resp.json())
-  //     .then((data) => {
-  //       if (data.status === "pass") {
-  //         // Normalize backend keys
-  //         const normalizedUser = {
-  //           ...data,
-  //           userName: data.userName || "",
-  //           phoneNumber: data.phoneNumber || "",
-  //           selectedCourse: data.selectedCourse || {},
-  //           standards: data.standards || [],
-  //           subjects: data.subjects || [],
-  //         };
-  //         login(normalizedUser);
-  //         localStorage.setItem("currentUser", JSON.stringify(normalizedUser));
-  //       } else {
-  //         localStorage.clear();
-  //         logout();
-  //         setCoursesOpen(false);
-  //         setUserDropdownOpen(false);
-  //         navigate("/login");
-  //       }
-  //     })
-  //     .catch(console.error);
-  // }, []);
   useEffect(() => {
     fetch(`${API_BASE_URL}/checkSession`, {
       method: "GET",
@@ -91,13 +63,10 @@ const Navbar = () => {
           logout();
           setCoursesOpen(false);
           setUserDropdownOpen(false);
-          // ❌ REMOVE this navigate("/login") here
-          // Instead, let ProtectedRoute handle redirection on protected pages
         }
       })
       .catch(console.error);
   }, []);
-
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -117,34 +86,37 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Dynamic dropdown adjustment to prevent clipping
+  useEffect(() => {
+    if (userDropdownOpen && dropdownRef.current) {
+      const dropdown = dropdownRef.current;
+      const rect = dropdown.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+
+      if (rect.right > viewportWidth) {
+        // Shift left so it stays inside viewport
+        const overflow = rect.right - viewportWidth + 10; // 10px buffer
+        dropdown.style.left = `auto`;
+        dropdown.style.right = `${overflow + 10}px`;
+      } else {
+        dropdown.style.left = "auto";
+        dropdown.style.right = "0px";
+      }
+    }
+  }, [userDropdownOpen]);
+
+
   // Extract courses and standards
   let selectedCourse = [];
   let selectedStandard = [];
 
-  // if (currentUser) {
-  //   // If backend sends selectedCourse object, use it
-  //   if (currentUser.selectedCourse && typeof currentUser.selectedCourse === "object") {
-  //     selectedCourse = Object.keys(currentUser.selectedCourse);
-  //     selectedStandard = [...new Set(Object.values(currentUser.selectedCourse).flat())];
-  //   } else {
-  //     // Fallback: derive from courseName / coursetype
-  //     if (currentUser.courseName) selectedCourse = [currentUser.courseName];
-  //     if (currentUser.coursetype) {
-  //       const match = currentUser.coursetype.match(/\(([^)]+)\)/);
-  //       if (match) selectedStandard = [match[1]];
-  //     }
-  //   }
-  // }
-
   if (currentUser) {
-    // ✅ Preferred: use backend data directly
     if (currentUser.coursetype) {
       selectedCourse = currentUser.coursetype.split(",").map(c => c.trim());
     } else if (currentUser.courseName) {
       selectedCourse = currentUser.courseName.split(",").map(c => c.trim());
     }
 
-    // ✅ Standards array (if available)
     if (Array.isArray(currentUser.standards)) {
       selectedStandard = currentUser.standards;
     } else if (typeof currentUser.standards === "string" && currentUser.standards.length > 0) {
@@ -164,137 +136,43 @@ const Navbar = () => {
         {menuOpen ? <FaTimes /> : <FaBars />}
       </div>
 
-      {/* <ul className={menuOpen ? "nav-links active" : "nav-links"}>
-        {currentUser && (
-          <li className="dropdown">
-            <div
-              className="dropdown-toggle"
-              onClick={() => {
-                setCoursesOpen((prev) => !prev);
-                setUserDropdownOpen(false);
-              }}
-            >
-              <span>Courses</span>
-              <span className="dropdown-icon">
-                {coursesOpen ? <FaChevronUp /> : <FaChevronDown />}
-              </span>
-            </div>
-            {coursesOpen && (
-              <ul className="dropdown-menu">
-                {selectedCourse.map((course) => (
-                  <li key={course}>
-                    <Link
-                      to={`/${course}`}
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setCoursesOpen(false);
-                      }}
-                    >
-                      {course}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        )}
-
-        <li className="dropdown">
-          {currentUser ? (
-            <>
-              <div
-                className="dropdown-toggle"
-                onClick={() => {
-                  setUserDropdownOpen((prev) => !prev);
-                  setCoursesOpen(false);
-                }}
-              >
-                <span>Hi, {currentUser.userName}</span>
-                <span className="dropdown-icon">
-                  {userDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
-                </span>
-              </div>
-
-              {userDropdownOpen && (
-                <ul className="dropdown-menu user-details-dropdown">
-                  <div className="user-details-header">
-                    <li>
-                      <img src={currentUser.photo} alt="user" className="user-photo" />
-                    </li>
-                    <li>
-                      <strong>Name:</strong> {currentUser.userName}
-                    </li>
-                    <li>
-                      <strong>Email:</strong> {currentUser.email}
-                    </li>
-                    <li>
-                      <strong>Mobile:</strong> {currentUser.phoneNumber}
-                    </li>
-                    <li>
-                      <strong>Courses:</strong> {selectedCourse.join(",")}
-                    </li>
-                    <li>
-                      <strong>Standards:</strong> {selectedStandard.join(",")}
-                    </li>
-                    <li>
-                      <button
-                        className="upgrade-btn"
-                        onClick={() => {
-                          setUserDropdownOpen(false);
-                          navigate("/register?step=2&upgrade=true");
-                        }}
-                      >
-                        🪙 Upgrade Plan
-                      </button>
-                    </li>
-                    <li>
-                      <button className="logout-btn" onClick={handleLogout}>
-                        <FaSignOutAlt style={{ marginRight: "8px" }} />
-                        Logout
-                      </button>
-                    </li>
-                  </div>
-                </ul>
-              )}
-            </>
-          ) : (
-            <Link to="/login" onClick={() => setMenuOpen(false)}>
-              Sign In
-            </Link>
-          )}
-        </li>
-      </ul> */}
       <ul className={menuOpen ? "nav-links active" : "nav-links"}>
-        {/* Static links */}
-        <li>
-          <Link to="/home" onClick={() => setMenuOpen(false)}>Home</Link>
-        </li>
-        <li>
-          <Link to="/about" onClick={() => setMenuOpen(false)}>About</Link>
-        </li>
-        {/* <li>
-          <Link to="/courses" onClick={() => setMenuOpen(false)}>Courses</Link>
-        </li> */}
+        <li><Link to="/home" onClick={() => setMenuOpen(false)}>Home</Link></li>
+        <li><Link to="/about" onClick={() => setMenuOpen(false)}>About</Link></li>
         <li>
           <Link
-            to="#course-section"
+            to="/home"
+            className="nav-link"
             onClick={(e) => {
               e.preventDefault();
-              const section = document.getElementById("course-section");
-              if (section) section.scrollIntoView({ behavior: "smooth" });
+              if (window.location.pathname !== "/home") {
+                navigate("/home");
+                setTimeout(() => {
+                  const section = document.getElementById("course-section");
+                  if (section) section.scrollIntoView({ behavior: "smooth" });
+                }, 100);
+              } else {
+                const section = document.getElementById("course-section");
+                if (section) section.scrollIntoView({ behavior: "smooth" });
+              }
               setMenuOpen(false);
             }}
           >
             Courses
           </Link>
         </li>
-
+        {/* <li><Link to="/contact" onClick={() => setMenuOpen(false)}>Contact</Link></li> */}
 
         <li>
-          <Link to="/contact" onClick={() => setMenuOpen(false)}>Contact</Link>
+          <Link
+            to="/contact-us"
+            onClick={() => setMenuOpen(false)}
+          >
+            Contact
+          </Link>
         </li>
 
-        {/* Existing Courses dropdown (if logged in) */}
+
         {currentUser && selectedCourse.length > 0 && (
           <li className="dropdown">
             <div
@@ -329,7 +207,6 @@ const Navbar = () => {
           </li>
         )}
 
-        {/* User dropdown / Sign In */}
         <li className="dropdown">
           {currentUser ? (
             <>
@@ -346,56 +223,67 @@ const Navbar = () => {
                 </span>
               </div>
 
+
               {userDropdownOpen && (
-                <ul className="dropdown-menu user-details-dropdown">
-                  <div className="user-details-header">
-                    <li>
-                      <img src={currentUser.photo} alt="user" className="user-photo" />
-                    </li>
-                    <li>
-                      <strong>Name:</strong> {currentUser.userName}
-                    </li>
-                    <li>
-                      <strong>Email:</strong> {currentUser.email}
-                    </li>
-                    <li>
-                      <strong>Mobile:</strong> {currentUser.phoneNumber}
-                    </li>
-                    <li>
-                      <strong>Courses:</strong> {selectedCourse.join(",")}
-                    </li>
-                    <li>
-                      <strong>Standards:</strong> {selectedStandard.join(",")}
-                    </li>
-                    <li>
-                      <button
-                        className="upgrade-btn"
-                        onClick={() => {
-                          setUserDropdownOpen(false);
-                          navigate("/register?step=2&upgrade=true");
-                        }}
-                      >
-                        🪙 Upgrade Plan
-                      </button>
-                    </li>
-                    <li>
-                      <button className="logout-btn" onClick={handleLogout}>
-                        <FaSignOutAlt style={{ marginRight: "8px" }} />
-                        Logout
-                      </button>
-                    </li>
-                  </div>
+                <ul
+                  ref={dropdownRef} // ✅ attach ref here
+                  className="dropdown-menu user-details-dropdown simple-dropdown"
+                >
+                  <li className="user-row">
+                    {/* <img src={currentUser.photo || ""} alt="user" className="user-photo-small" /> */}
+
+                    <img
+                      src={
+                        currentUser.photo && currentUser.photo.trim() !== ""
+                          ? currentUser.photo
+                          : currentUser.gender === "female"
+                            ? "https://cdn-icons-png.flaticon.com/512/921/921087.png" // 👩 female avatar
+                            : currentUser.gender === "male"
+                              ? "https://cdn-icons-png.flaticon.com/512/236/236832.png" // 👨 male avatar
+                              : "https://cdn-icons-png.flaticon.com/512/149/149071.png" // 🧑 neutral default
+                      }
+                      alt="user avatar"
+                      className="user-photo-small"
+                    />
+
+
+                    <div className="user-meta">
+                      <div className="detail-item"><strong>Name:</strong> {currentUser.userName || "-"}</div>
+                      <div className="detail-item"><strong>Email:</strong> {currentUser.email || "-"}</div>
+                    </div>
+                  </li>
+
+                  <li className="detail-item"><strong>Mobile:</strong> {currentUser.phoneNumber || "-"}</li>
+                  <li className="detail-item"><strong>Courses:</strong> {selectedCourse.length ? selectedCourse.join(", ") : "-"}</li>
+                  <li className="detail-item"><strong>Standards:</strong> {selectedStandard.length ? selectedStandard.join(", ") : "-"}</li>
+
+                  <li className="action-item">
+                    <button
+                      className="upgrade-btn small-btn"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        navigate("/register?step=2&upgrade=true");
+                      }}
+                    >
+                      🪙 Upgrade
+                    </button>
+                  </li>
+
+                  <li className="action-item">
+                    <button className="logout-btn small-btn" onClick={handleLogout}>
+                      <FaSignOutAlt style={{ marginRight: "8px" }} />
+                      Logout
+                    </button>
+                  </li>
                 </ul>
               )}
+
             </>
           ) : (
-            <Link to="/login" onClick={() => setMenuOpen(false)}>
-              Sign In
-            </Link>
+            <Link to="/login" onClick={() => setMenuOpen(false)}>Sign In</Link>
           )}
         </li>
       </ul>
-
     </nav>
   );
 };

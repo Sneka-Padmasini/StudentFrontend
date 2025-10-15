@@ -40,24 +40,25 @@ body {
   width: 100%;
   max-width: 1900px;
   height: auto;
-  min-height: 500px;       /* Reserve vertical space for loading */
+  min-height: 500px;
+  /* Reserve vertical space for loading */
   border-radius: 8px;
   margin-top: 160px;
   margin-bottom: 55px;
   opacity: 0;
   animation: zoomInImage 1.2s ease-in-out forwards;
-  background-color: #e0f0e5; /* Placeholder color while loading */
 }
 
 
 .head-content {
   display: flex;
-  flex-direction: column;  /* Reduced gap from 10px */
+  flex-direction: column;
+  /* Reduced gap from 10px */
 }
 
 .head-text {
   font-size: 45px;
- color: #014421; 
+  color: #014421;
   line-height: 1.6;
   font-weight: bolder;
   margin-top: 10px;
@@ -65,15 +66,18 @@ body {
 
 .sub-text {
   font-size: 20px;
-  color: #2e8b57; /* Light green */
+  color: #2e8b57;
+  /* Light green */
   line-height: 1.6;
   margin-top: 0%;
 }
+
 .course-button {
   width: 50%;
   align-self: center;
   padding: 12px 24px;
-background-color: #014421; /* Dark green */
+  background-color: #014421;
+  /* Dark green */
   color: white;
   border: none;
   border-radius: 8px;
@@ -82,12 +86,15 @@ background-color: #014421; /* Dark green */
   transition: background-color 0.3s ease;
   margin-top: 20px;
 }
+
 .course-button:hover {
-  background-color: #228B22; /* Hover light green*/
+  background-color: #228B22;
+  /* Hover light green*/
 }
 
 #course-section {
-  scroll-margin-top: 200px; /* to adjust for fixed header if any */
+  scroll-margin-top: 200px;
+  /* to adjust for fixed header if any */
 }
 
 /* ========== Study Materials Section ========== */
@@ -106,7 +113,7 @@ background-color: #014421; /* Dark green */
   font-size: 32px;
   font-weight: bold;
   margin-bottom: 1.5rem;
- color: #ffffff;
+  color: #ffffff;
   background-color: #00000000;
 }
 
@@ -116,12 +123,14 @@ background-color: #014421; /* Dark green */
   overflow-x: auto;
   padding-bottom: 1rem;
   display: flex;
-  justify-content: center; /* Center content horizontally */
+  justify-content: center;
+  /* Center content horizontally */
 }
 
 
 .tabs-container {
-  display: inline-flex; /* Change from flex to inline-flex */
+  display: inline-flex;
+  /* Change from flex to inline-flex */
   gap: 20px;
   scroll-behavior: smooth;
   padding: 1rem 0;
@@ -135,6 +144,7 @@ background-color: #014421; /* Dark green */
 .tabs-container::-webkit-scrollbar {
   display: none;
 }
+
 .tabs-container {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -184,7 +194,8 @@ background-color: #014421; /* Dark green */
 }
 
 .tag {
-background-color: #014421; /* Dark green */
+  background-color: #014421;
+  /* Dark green */
   color: #edf0f3;
   font-size: 12px;
   font-weight: bolder;
@@ -203,7 +214,8 @@ background-color: #014421; /* Dark green */
 
 /* Button */
 .explore-btn {
-  background-color: #04381d; /* Dark green */
+  background-color: #04381d;
+  /* Dark green */
   color: white;
   border: none;
   padding: 10px 16px;
@@ -214,14 +226,17 @@ background-color: #014421; /* Dark green */
 }
 
 .explore-btn:hover {
-  background-color: #228B22; /* Light green on hover */
+  background-color: #228B22;
+  /* Light green on hover */
 }
+
 .scroll-left,
 .scroll-right {
-  position: absolute; /* Required to overlay on tabs */
+  position: absolute;
+  /* Required to overlay on tabs */
   top: 50%;
   transform: translateY(-50%);
-background-color: #03a020; 
+  background-color: #03a020;
   border: none;
   color: white;
   font-size: 20px;
@@ -233,7 +248,7 @@ background-color: #03a020;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 /* Specific positions */
@@ -250,55 +265,67 @@ background-color: #03a020;
 .scroll-right:hover {
   background-color: #c0f7c8;
 }
+
 /* Different background colors */
 .tab-card:nth-child(1) {
-  background-color: #e3fcce; /* Red */
+  background-color: #e3fcce;
+  /* Red */
   transition: background-color 0.3s, transform 0.3s ease-in-out;
 }
 
 .tab-card:nth-child(1):hover {
-  background-color: #c1fca9; /* Darker Red */
-  transform: scale(1.05); /* Slightly enlarge on hover */
+  background-color: #c1fca9;
+  /* Darker Red */
+  transform: scale(1.05);
+  /* Slightly enlarge on hover */
 }
 
 .tab-card:nth-child(2) {
-  background-color: #c1f7f3; /* Teal */
+  background-color: #c1f7f3;
+  /* Teal */
   transition: background-color 0.3s, transform 0.3s ease-in-out;
 }
 
 .tab-card:nth-child(2):hover {
-  background-color: #b2f8fa; /* Darker Teal */
+  background-color: #b2f8fa;
+  /* Darker Teal */
   transform: scale(1.05);
 }
 
 .tab-card:nth-child(3) {
-  background-color: #fdf2c3; /* Yellow */
+  background-color: #fdf2c3;
+  /* Yellow */
   color: #333;
   transition: background-color 0.3s, transform 0.3s ease-in-out;
 }
 
 .tab-card:nth-child(3):hover {
-  background-color: #fce68d; /* Darker Yellow */
+  background-color: #fce68d;
+  /* Darker Yellow */
   transform: scale(1.05);
 }
 
 .tab-card:nth-child(4) {
-  background-color: #fdbee9; /* Blue */
+  background-color: #fdbee9;
+  /* Blue */
   transition: background-color 0.3s, transform 0.3s ease-in-out;
 }
 
 .tab-card:nth-child(4):hover {
-  background-color: #dc86b4; /* Darker Blue */
+  background-color: #dc86b4;
+  /* Darker Blue */
   transform: scale(1.05);
 }
 
 .tab-card:nth-child(5) {
-  background-color: #f7b896; /* Purple */
+  background-color: #f7b896;
+  /* Purple */
   transition: background-color 0.3s, transform 0.3s ease-in-out;
 }
 
 .tab-card:nth-child(5):hover {
-  background-color: #f8ac9e; /* Darker Purple */
+  background-color: #f8ac9e;
+  /* Darker Purple */
   transform: scale(1.05);
 }
 
@@ -307,21 +334,23 @@ background-color: #03a020;
 .why-choose-us {
   font-size: 32px;
   font-weight: bold;
-  margin-bottom: 40px; 
+  margin-bottom: 40px;
   text-align: center;
   padding: 50px 20px;
 }
 
-.why-choose-us .heading{
+.why-choose-us .heading {
   color: #084a02;
   background-color: #00000000;
 }
-.why{
+
+.why {
   font-size: 20Px;
   color: #000;
   font-style: italic;
   margin-bottom: 20px;
 }
+
 .circle-layout {
   position: relative;
   width: 600px;
@@ -344,7 +373,7 @@ background-color: #03a020;
   width: 180px;
   height: 180px;
   object-fit: contain;
-  
+
 }
 
 /* Shared styles for feature items */
@@ -359,10 +388,11 @@ background-color: #03a020;
   width: 100px;
   height: 100px;
   padding: 3px;
-  border-radius: 100%; /* same as 100% but more common */
+  border-radius: 100%;
+  /* same as 100% but more common */
   background-color: #ffffff;
   /* Enhanced styling for softness */
-  box-shadow: 
+  box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.1),
     inset 0 -2px 4px rgba(0, 0, 0, 0.05),
     inset 0 2px 4px rgba(255, 255, 255, 0.6);
@@ -425,9 +455,10 @@ background-color: #03a020;
 
 
 @media (max-width: 700px) {
-  .why-choose-us{
+  .why-choose-us {
     margin-bottom: -10%;
   }
+
   .circle-layout {
     display: flex;
     flex-direction: column;
@@ -439,7 +470,8 @@ background-color: #03a020;
   }
 
   .center-logo {
-    display: none; /* Hide central logo on mobile */
+    display: none;
+    /* Hide central logo on mobile */
   }
 
   .circle-feature {
@@ -456,8 +488,9 @@ background-color: #03a020;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     text-align: left;
     margin-bottom: 10px;
-  
+
   }
+
   .top,
   .top-right,
   .bottom-right,
@@ -467,6 +500,7 @@ background-color: #03a020;
     position: static;
     transform: none;
   }
+
   .circle-feature img {
     width: 70px;
     height: 70px;
@@ -497,6 +531,7 @@ background-color: #03a020;
     flex: 1;
   }
 }
+
 /* FAQ Section */
 .faq {
   padding: 20px;
@@ -527,7 +562,8 @@ background-color: #03a020;
   font-size: 18px;
   color: #ffffff;
   cursor: pointer;
-  list-style: none; /* removes default arrow */
+  list-style: none;
+  /* removes default arrow */
   position: relative;
   padding-left: 20px;
 }
@@ -539,6 +575,7 @@ background-color: #03a020;
   left: 0;
   transition: transform 0.3s ease;
 }
+
 details[open] summary::before {
   transform: rotate(90deg);
 }
@@ -589,7 +626,8 @@ details[open] p {
 .whatsapp-chat-button:hover {
   background-color: #1ebe5d;
   transform: scale(1.05);
-  animation-play-state: paused; /* Pause bounce on hover */
+  animation-play-state: paused;
+  /* Pause bounce on hover */
 }
 
 /* WhatsApp icon size */
@@ -600,15 +638,20 @@ details[open] p {
 
 /* Bounce animation keyframes */
 @keyframes bounce {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   30% {
     transform: translateY(-10px);
   }
+
   50% {
     transform: translateY(0px);
   }
+
   70% {
     transform: translateY(-5px);
   }
@@ -636,7 +679,8 @@ details[open] p {
 
 .ai-status-label:hover {
   background-color: #00b327;
-  animation-play-state: paused; /* Pause bounce on hover */
+  animation-play-state: paused;
+  /* Pause bounce on hover */
 
 }
 
@@ -671,11 +715,13 @@ details[open] p {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+
 /*red*/
 .chat-header {
   background-color: #8e0303;
@@ -695,14 +741,18 @@ details[open] p {
   background-color: transparent;
   color: white;
   border: none;
-  font-size: 16px; /* Reduced font size */
-  padding: 4px 8px; /* Reduced padding for a smaller button */
+  font-size: 16px;
+  /* Reduced font size */
+  padding: 4px 8px;
+  /* Reduced padding for a smaller button */
   cursor: pointer;
   font-weight: bold;
   transition: color 0.3s ease;
   border-radius: 50%;
-  width: 30px; /* Fixed width */
-  height: 30px; /* Fixed height to make it circular */
+  width: 30px;
+  /* Fixed width */
+  height: 30px;
+  /* Fixed height to make it circular */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -803,7 +853,8 @@ details[open] p {
     height: auto;
     margin-top: 65px;
     margin-bottom: 0px;
-    min-height: 250px; /* smaller reserved space on mobile */
+    min-height: 250px;
+    /* smaller reserved space on mobile */
   }
 
   .head-content {
@@ -812,7 +863,7 @@ details[open] p {
 
   .head-text {
     font-size: 24px;
-    
+
   }
 
   .sub-text {
@@ -824,15 +875,18 @@ details[open] p {
     padding: 6px 12px;
     margin-bottom: 20px;
   }
-  .fab{
+
+  .fab {
     margin-top: 15px;
 
   }
+
   .faq p {
     margin-left: 10px;
   }
 }
-  /* Responsive styles */
+
+/* Responsive styles */
 @media (max-width: 768px) {
   .tabs-container {
     display: flex;
@@ -868,7 +922,7 @@ details[open] p {
     padding: 0.6rem 1rem;
     font-size: 1rem;
   }
-  
+
   .study-materials h2 {
     text-align: center;
     font-size: 1.5rem;
@@ -877,6 +931,7 @@ details[open] p {
 
 /* Responsive for Tablets & Phones */
 @media (max-width: 768px) {
+
   .scroll-left,
   .scroll-right {
     width: 28px;
@@ -892,6 +947,7 @@ details[open] p {
 
 /* Still show arrows on mobile (<=480px) */
 @media (max-width: 480px) {
+
   .scroll-left,
   .scroll-right {
     width: 24px;
@@ -911,8 +967,15 @@ details[open] p {
 }
 
 @keyframes fadeInHeader {
-  from { opacity: 0; transform: translateY(-30px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Image Animation */
@@ -921,19 +984,34 @@ details[open] p {
 }
 
 @keyframes zoomInImage {
-  0%   { opacity: 0; transform: scale(0.8); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Heading Text Animation */
 .head-text {
   animation: slideInLeft 1s ease-in-out 0.3s forwards;
-  opacity: 0; /* Prevent flash before animation */
+  opacity: 0;
+  /* Prevent flash before animation */
 }
 
 @keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-50px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Sub Text Animation */
@@ -943,14 +1021,28 @@ details[open] p {
 }
 
 @keyframes slideInRight {
-  from { opacity: 0; transform: translateX(50px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Bounce animation for button */
 @keyframes bounceBtn {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-8px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 /* Make button text bounce */
@@ -963,6 +1055,7 @@ details[open] p {
 .course-button:hover {
   animation: bounceBtn 0.6s ease-in-out infinite;
 }
+
 /* === Animations === */
 
 /* Fade + slide-up when cards load */
@@ -971,6 +1064,7 @@ details[open] p {
     opacity: 0;
     transform: translateY(30px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -979,15 +1073,30 @@ details[open] p {
 
 /* Pulse effect for button */
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Bounce effect for arrows */
 @keyframes bounce {
-  0%, 100% { transform: translateY(-50%) scale(1); }
-  50% { transform: translateY(-55%) scale(1.1); }
+
+  0%,
+  100% {
+    transform: translateY(-50%) scale(1);
+  }
+
+  50% {
+    transform: translateY(-55%) scale(1.1);
+  }
 }
 
 /* === Apply animations === */
@@ -995,13 +1104,29 @@ details[open] p {
 /* Cards */
 .tab-card {
   animation: cardEntry 0.6s ease forwards;
-  opacity: 0; /* Start hidden */
+  opacity: 0;
+  /* Start hidden */
 }
-.tab-card:nth-child(1) { animation-delay: 0.1s; }
-.tab-card:nth-child(2) { animation-delay: 0.3s; }
-.tab-card:nth-child(3) { animation-delay: 0.5s; }
-.tab-card:nth-child(4) { animation-delay: 0.7s; }
-.tab-card:nth-child(5) { animation-delay: 0.9s; }
+
+.tab-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.tab-card:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+.tab-card:nth-child(3) {
+  animation-delay: 0.5s;
+}
+
+.tab-card:nth-child(4) {
+  animation-delay: 0.7s;
+}
+
+.tab-card:nth-child(5) {
+  animation-delay: 0.9s;
+}
 
 /* Buttons (Learn More) */
 .explore-btn:hover {
@@ -1013,4 +1138,18 @@ details[open] p {
 .scroll-left,
 .scroll-right {
   animation: bounce 2s infinite ease-in-out;
+}
+
+
+/* Fine-tuned placement for 'Personalised Learning' */
+.circle-feature.bottom-right {
+  bottom: 17%;
+  /* slightly higher than before (was 15%) */
+  right: -3%;
+  /* moves a bit more to the right */
+}
+
+.circle-feature.bottom-right img {
+  margin-top: 8px;
+  /* keeps space between text and image */
 }

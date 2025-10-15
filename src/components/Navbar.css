@@ -116,34 +116,96 @@ body {
   cursor: pointer;
 }
 
+
+/* Improved dropdown menu styling */
 .dropdown-menu {
   position: absolute;
   top: 100%;
-  right: 0;
-  background: linear-gradient(to bottom, #f0fdf0, #d1f7d1); /* lighter green gradient */
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 6px;            /* smaller padding */
+  right: auto;
+  left: 50%;
+  transform: translateX(-60%);
+  /* ✅ keeps dropdown fully visible */
+  background: linear-gradient(to bottom, #f5fff5, #d6f9d6);
+  border: 1px solid #b5e4b5;
+  border-radius: 10px;
+  padding: 16px 18px;
+  /* ✅ extra inner spacing */
   list-style: none;
-  min-width: 180px;         /* smaller width */
-  z-index: 1000;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08); /* softer shadow */
+  min-width: 240px;
+  max-width: 280px;
+  z-index: 2000;
+  box-shadow: 0 6px 15px rgba(0, 50, 0, 0.15);
   text-align: left;
+  animation: fadeDown 0.3s ease forwards;
+  overflow: visible;
+  /* ✅ ensures no scrollbars */
 }
+
+
+/* Dropdown list items */
+.dropdown-menu li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+/* Dropdown text styling */
+.user-details-dropdown li strong {
+  color: #084b08;
+  font-weight: 600;
+}
+
+.user-details-dropdown li {
+  color: #1a1a1a;
+  font-size: 15px;
+}
+
+/* Space around the header section */
+.user-details-header {
+  background: #f4fff4;
+  border-radius: 8px;
+  padding: 14px;
+  border: 1px solid #cfeacb;
+  box-shadow: inset 0 0 5px rgba(0, 100, 0, 0.05);
+}
+
+/* Prevent dropdown clipping under navbar or scrollbar */
+.navbar {
+  overflow: visible;
+}
+
+/* Responsive fix for small screens */
+@media (max-width: 768px) {
+  .dropdown-menu {
+    right: 0;
+    left: auto;
+    width: 100%;
+    max-width: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 12px;
+  }
+}
+
 
 .dropdown-menu li a {
   display: block;
-  padding: 8px 12px;   /* smaller padding */
-  font-size: 15px;      /* slightly smaller font */
-  color: #0a3d0a;       /* dark green text */
-  background-color: transparent; /* remove gray box */
-  margin-bottom: 3px;   /* smaller spacing */
+  padding: 8px 12px;
+  /* smaller padding */
+  font-size: 15px;
+  /* slightly smaller font */
+  color: #0a3d0a;
+  /* dark green text */
+  background-color: transparent;
+  /* remove gray box */
+  margin-bottom: 3px;
+  /* smaller spacing */
   text-decoration: none;
   transition: background-color 0.2s;
 }
 
 .dropdown-menu li a:hover {
-  background-color: #e6f8e6; /* subtle hover highlight */
+  background-color: #e6f8e6;
+  /* subtle hover highlight */
 }
 
 .user-details-dropdown li {
@@ -395,4 +457,110 @@ body {
 .upgrade-btn:hover,
 .logout-btn:hover {
   animation: scaleUp 0.2s ease forwards;
+}
+
+
+
+
+/* ---------------------- Clean Simple Dropdown (Final Polished) ---------------------- */
+/* Make sure the parent dropdown is relative */
+.nav-links li.dropdown {
+  position: relative;
+  /* anchor dropdown to parent toggle */
+}
+
+.simple-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 8px !important;
+  left: auto !important;
+  transform: none !important;
+  background: linear-gradient(to bottom, #f4fff4, #e4f9e4);
+  border: 1px solid #cde9cd;
+  border-radius: 10px;
+  padding: 20px 28px !important;
+  /* ✅ force inner space all around */
+  min-width: 270px;
+  max-width: 300px;
+  box-sizing: border-box;
+  max-height: 450px;
+  overflow-y: auto;
+  z-index: 2000;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  animation: dropdownFadeIn 0.25s ease forwards;
+}
+
+
+
+.simple-dropdown li {
+  padding: 6px 0;
+  /* even vertical rhythm */
+}
+
+.simple-dropdown li strong {
+  display: inline-block;
+  width: 70px;
+  /* align labels (Name, Email, Mobile) neatly */
+}
+
+
+.user-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* small spacing between Name and Email */
+}
+
+.simple-dropdown .detail-item,
+.simple-dropdown .action-item {
+  margin-top: 8px;
+  /* slightly bigger space between items */
+}
+
+
+/* Optional: hide scrollbar */
+.simple-dropdown::-webkit-scrollbar {
+  display: none;
+}
+
+.simple-dropdown {
+  scrollbar-width: none;
+}
+
+
+/* ---------------------- User Photo Styling ---------------------- */
+.user-photo-small {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 2px solid #0a5a0a;
+  object-fit: cover;
+  display: block;
+  margin-right: 10px;
+  background-color: #eaf9ea;
+  /* optional fallback color */
+  box-shadow: 0 0 6px rgba(0, 100, 0, 0.15);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+
+
+/* ✅ Optional hover polish */
+.user-photo-small:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(0, 120, 0, 0.25);
+}
+
+
+/* ✅ Entry animation */
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

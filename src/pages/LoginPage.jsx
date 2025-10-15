@@ -114,7 +114,7 @@ const LoginPage = () => {
       login(currentUser);
 
       // navigate to dashboard/home page
-      navigate("/NEET");
+      navigate("/home");
 
     } catch (err) {
       console.error("Login failed:", err);
