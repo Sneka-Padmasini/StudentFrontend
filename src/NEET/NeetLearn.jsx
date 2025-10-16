@@ -113,30 +113,6 @@ const NeetLearn = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // useEffect(() => {
-  //   const getAllSubjectDetails = () => {
-  //     const subjectName = subject; // Physics, Chemistry, etc.
-  //     const stringStandard = localStorage.getItem("currentClass");
-  //     const standard = stringStandard?.replace(/\D/g, "");
-
-  //     fetch(`${API_BASE_URL}/getSubjectDetails?subjectName=${subjectName}&standard=${standard}`, {
-  //       method: "GET",
-  //       credentials: "include",
-  //     })
-  //       .then((resp) => resp.json())
-  //       .then((data) => {
-  //         console.log(`✅ ${subjectName} data fetched:`, data);
-  //         setFetchedUnits(data); // set the data from MongoDB
-  //       })
-  //       .catch((err) => {
-  //         console.error("❌ Error fetching subject details:", err);
-  //         setFetchedUnits([]);
-  //       });
-  //   };
-
-  //   getAllSubjectDetails();
-  // }, [subject]);
-
 
   useEffect(() => {
     const getAllSubjectDetails = () => {
@@ -159,13 +135,6 @@ const NeetLearn = () => {
 
       console.log("📘 Fetching details for:", { courseName, subjectName, standard });
 
-      // fetch(
-      //   `${API_BASE_URL}/getSubjectDetails?courseName=${encodeURIComponent(courseName)}&subjectName=${encodeURIComponent(subjectName)}&standard=${standard}`,
-      //   {
-      //     method: "GET",
-      //     credentials: "include",
-      //   }
-      // )
 
       fetch(
         `${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/${standard}`,
@@ -395,15 +364,19 @@ const NeetLearn = () => {
             />
           ) : (
             <>
+
               <NeetExplanation
                 topicTitle={fetchedUnits[expandedTopic]?.unitName}
                 subtopicTitle={selectedSubtopic.unitName}
                 subject={subject}
                 explanation={selectedSubtopic.explanation || ""}
                 audioFileId={selectedSubtopic.audioFileId || []}
+                imageUrls={selectedSubtopic.imageUrls || []}
                 onBack={handleBackToTopics}
                 onMarkComplete={markSubtopicComplete}
               />
+
+
 
               {/* Show AI Generated Video (robust to different field names) */}
               {(selectedSubtopic?.videoUrl || selectedSubtopic?.video_url || selectedSubtopic?.aiVideoUrl) && (

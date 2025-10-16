@@ -3,13 +3,14 @@ import './JeeExplanation.css';
 import { FaPlay, FaPause, FaCheckCircle } from 'react-icons/fa';
 import katex from 'katex';
 import parse from 'html-react-parser';
-import 'katex/dist/katex.min.css';  // Required to style the output
+import 'katex/dist/katex.min.css';
 
 const JeeExplanation = ({
   explanation = '',
   subtopicTitle = '',
   subject = '',
   audioFileId = [],
+  imageUrls = [],
   onBack,
   onMarkComplete
 }) => {
@@ -23,10 +24,9 @@ const JeeExplanation = ({
   const utteranceRef = useRef(null);
   const voicesLoadedRef = useRef(false);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
+  // Load and set voice
   useEffect(() => {
     const loadVoices = () => {
       const voices = synth.getVoices();
@@ -65,31 +65,29 @@ const JeeExplanation = ({
     setHighlightedRange({ start: 0, end: 0 });
     utteranceRef.current = null;
   }, [subtopicTitle]);
-const parseTextWithFormulas = (texts) => {
-  if(!texts)return;
-  const text=texts.replace(/\\\\/g, "\\")
-  const TEMP_DOLLAR = '__DOLLAR__';
-  const safeText = text.replace(/\\\$/g, TEMP_DOLLAR);
 
-  const parts = safeText.split(/(\$[^$]+\$)/g);
+  const parseTextWithFormulas = (texts) => {
+    if (!texts) return;
+    const text = texts.replace(/\\\\/g, "\\");
+    const TEMP_DOLLAR = '__DOLLAR__';
+    const safeText = text.replace(/\\\$/g, TEMP_DOLLAR);
+    const parts = safeText.split(/(\$[^$]+\$)/g);
 
-  return parts.map((part, index) => {
-    if (part.startsWith('$') && part.endsWith('$')) {
-      const latex = part.slice(1, -1);
-      try {
-        const html = katex.renderToString(latex, {
-          throwOnError: false,
-          output: 'html',
-        });
-        return <span key={index}>{parse(html)}</span>;
-      } catch (err) {
-        return <span key={index} style={{ color: 'red' }}>{latex}</span>;
+    return parts.map((part, index) => {
+      if (part.startsWith('$') && part.endsWith('$')) {
+        const latex = part.slice(1, -1);
+        try {
+          const html = katex.renderToString(latex, { throwOnError: false, output: 'html' });
+          return <span key={index}>{parse(html)}</span>;
+        } catch (err) {
+          return <span key={index} style={{ color: 'red' }}>{latex}</span>;
+        }
+      } else {
+        return <span key={index}>{part.replaceAll(TEMP_DOLLAR, '$')}</span>;
       }
-    } else {
-      return <span key={index}>{part.replaceAll(TEMP_DOLLAR, '$')}</span>;
-    }
-  });
-};
+    });
+  };
+
   const handleTogglePlayPause = () => {
     const text = explanation || subtopicTitle;
     if (isSpeaking) {
@@ -112,9 +110,7 @@ const parseTextWithFormulas = (texts) => {
         if (event.name === 'word') {
           const start = event.charIndex;
           let end = start;
-          while (end < text.length && /\S/.test(text[end])) {
-            end++;
-          }
+          while (end < text.length && /\S/.test(text[end])) end++;
           setHighlightedRange({ start, end });
         }
       };
@@ -141,18 +137,16 @@ const parseTextWithFormulas = (texts) => {
     sessionStorage.setItem(`jee-completed-${subtopicTitle}`, "true");
     if (onMarkComplete) onMarkComplete("explanation");
   };
- 
-  //const textToDisplay = explanation || subtopicTitle;
-  const textToDisplay = explanation || subtopicTitle;
-  //const textToDisplay=parseTextWithFormulas(textToDisplayWithout)
-  const { start, end } = highlightedRange;
-  const before = textToDisplay.slice(0, start);
-  const highlight = textToDisplay.slice(start, end);
-  const after = textToDisplay.slice(end);
 
   const isIntroIframe =
     subject.toLowerCase() === "physics" &&
     subtopicTitle.trim().toLowerCase() === "1.1 introduction";
+
+  const textToDisplay = explanation || subtopicTitle;
+  const { start, end } = highlightedRange;
+  const before = textToDisplay.slice(0, start);
+  const highlight = textToDisplay.slice(start, end);
+  const after = textToDisplay.slice(end);
 
   return (
     <div className="explanation-container">
@@ -185,48 +179,70 @@ const parseTextWithFormulas = (texts) => {
               ></iframe>
             </div>
           ) : (
-            
-              <pre style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}>
-  {parseTextWithFormulas(before)}
-  <mark className="highlight">{parseTextWithFormulas(highlight)}</mark>
-  {parseTextWithFormulas(after)}
-</pre>
-            
+            <>
+              {/* Explanation Text */}
+              <pre className="explanation-text" style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}>
+                {parseTextWithFormulas(before)}
+                <mark className="highlight">{parseTextWithFormulas(highlight)}</mark>
+                {parseTextWithFormulas(after)}
+              </pre>
+
+              {/* Explanation Images */}
+              {imageUrls && imageUrls.length > 0 && (
+                <div className="explanation-images">
+                  {imageUrls.map((url, idx) => (
+                    <img
+                      key={idx}
+                      src={url}
+                      alt={`Unit Image ${idx + 1}`}
+                      style={{
+                        maxWidth: "100%",
+                        margin: "10px 0",
+                        borderRadius: "10px",
+                        display: "block",
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
-<div className="subject-info">
-        {!isIntroIframe && (
-          <div className="voice-controls-wrapper">
-            <button className="voice-play-button" onClick={handleTogglePlayPause}>
-              {isSpeaking ? <FaPause /> : <FaPlay />}
-            </button>
 
-            <div className="rate-control">
-              <label htmlFor="rate">Speech Speed: {rate.toFixed(2)}x</label>
-              <input
-                type="range"
-                id="rate"
-                min="0.25"
-                max="2"
-                step="0.05"
-                value={rate}
-                onChange={(e) => setRate(parseFloat(e.target.value))}
-              />
-            </div>
-          </div>
-        )}
+        <div className="subject-info">
+          {!isIntroIframe && (
+            <div className="voice-controls-wrapper">
+              <button className="voice-play-button" onClick={handleTogglePlayPause}>
+                {isSpeaking ? <FaPause /> : <FaPlay />}
+              </button>
 
-        {/* Audio File Playback */}
-        {audioFileId && audioFileId.length > 0 && (
-          <div className="audio-files">
-            {audioFileId.map((id, index) => (
-              <div key={index} style={{ marginBottom: "8px" }}>
-                <audio controls src={id}></audio>
+              <div className="rate-control">
+                <label htmlFor="rate">Speech Speed: {rate.toFixed(2)}x</label>
+                <input
+                  type="range"
+                  id="rate"
+                  min="0.25"
+                  max="2"
+                  step="0.05"
+                  value={rate}
+                  onChange={(e) => setRate(parseFloat(e.target.value))}
+                />
               </div>
-            ))}
-          </div>
-        )}
-</div>
+            </div>
+          )}
+
+          {/* Audio Playback */}
+          {audioFileId && audioFileId.length > 0 && (
+            <div className="audio-files">
+              {audioFileId.map((id, index) => (
+                <div key={index} style={{ marginBottom: "8px" }}>
+                  <audio controls src={id}></audio>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <button onClick={handleBack} className="back-btn">
           Back to Topics
         </button>

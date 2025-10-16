@@ -170,12 +170,16 @@
   color: #dc3545;
 }
 
-/* Navigation Buttons */
 .navigation-buttons {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 15px;
+  /* space between Previous, Next, and Submit buttons */
   margin-top: 20px;
+  flex-wrap: wrap;
+  /* keeps buttons aligned on smaller screens */
 }
+
 
 .nav-btn,
 .submit-btn {
@@ -315,6 +319,35 @@
   font-weight: bold;
   margin: 10px 0;
 }
+
+.option-content {
+  display: flex;
+  flex-direction: column;
+  /* stack text + image */
+  align-items: flex-start;
+  /* align left inside the label */
+  width: 100%;
+  /* ensures image stays inside option box */
+}
+
+.option-content img {
+  display: block;
+  max-width: 100%;
+  /* prevent overflow */
+  margin-top: 5px;
+  border-radius: 5px;
+  object-fit: contain;
+}
+
+.quiz-question table {
+  background-color: white;
+  /* white background for table */
+  border-collapse: collapse;
+  width: 100%;
+  margin: 15px 0;
+  border: 1px solid #ccc;
+}
+
 
 /* Responsive Design */
 @media (max-width: 768px) {

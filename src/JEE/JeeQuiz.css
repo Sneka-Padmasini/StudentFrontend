@@ -101,7 +101,7 @@
 
 .option-label {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   padding: 12px 20px;
   border-radius: 8px;
   background-color: #ecf1ed;
@@ -112,6 +112,7 @@
   border: 1px solid transparent;
   position: relative;
   user-select: none;
+  flex-wrap: wrap;
 }
 
 .option-label:hover {
@@ -131,6 +132,8 @@
   position: relative;
   flex-shrink: 0;
   background-color: white;
+  margin-top: 5px;
+  /* aligns with top of text if text wraps */
 }
 
 .option-label input[type="radio"]:checked::before {
@@ -155,6 +158,26 @@
   border: 1px solid #dc3545 !important;
 }
 
+/* Option content wrapper for text + image */
+.option-content {
+  display: flex;
+  flex-direction: column;
+  /* stack text and image */
+  align-items: flex-start;
+  /* left-align */
+  width: 100%;
+  /* ensures image stays inside option box */
+}
+
+.option-content img {
+  display: block;
+  max-width: 100%;
+  margin-top: 5px;
+  border-radius: 5px;
+  object-fit: contain;
+  /* prevent stretching */
+}
+
 /* Feedback */
 .feedback-msg {
   font-weight: bold;
@@ -172,8 +195,10 @@
 /* Navigation Buttons */
 .navigation-buttons {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 15px;
   margin-top: 20px;
+  flex-wrap: wrap;
 }
 
 .nav-btn,
@@ -315,6 +340,16 @@
   margin: 10px 0;
 }
 
+.quiz-question table {
+  background-color: white;
+  /* white background for table */
+  border-collapse: collapse;
+  width: 100%;
+  margin: 15px 0;
+  border: 1px solid #ccc;
+}
+
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .quiz-wrapper {
@@ -361,7 +396,7 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width:600px) {
   .timer {
     font-size: 18px;
     padding: 8px;

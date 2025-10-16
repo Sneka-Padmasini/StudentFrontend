@@ -7,6 +7,7 @@ import JeeExplanation from "./JeeExplanation";
 import JeeQuiz from "./JeeQuiz";
 import { API_BASE_URL } from "../config";
 
+// Recursive component to render subtopics and their tests
 const SubtopicTree = ({
   subtopics,
   onClick,
@@ -17,10 +18,7 @@ const SubtopicTree = ({
   const [expandedSub, setExpandedSub] = useState(null);
 
   const handleSubClick = (sub, idx) => {
-    if (
-      (sub.units && sub.units.length > 0) ||
-      (sub.test && sub.test.length > 0)
-    ) {
+    if ((sub.units && sub.units.length > 0) || (sub.test && sub.test.length > 0)) {
       setExpandedSub((prev) => (prev === idx ? null : idx));
     }
     onClick(sub, parentIndex);
@@ -40,14 +38,14 @@ const SubtopicTree = ({
       {subtopics.map((sub, idx) => (
         <li key={idx}>
           <div
-            className={`subtopic-title ${selectedTitle === sub.unitName ? "selected" : ""
-              }`}
+            className={`subtopic-title ${selectedTitle === sub.unitName ? "selected" : ""}`}
             style={{ marginLeft: `${level * 20}px` }}
             onClick={() => handleSubClick(sub, idx)}
           >
             ⮚ {sub.unitName}
           </div>
 
+          {/* Show tests when expanded */}
           {expandedSub === idx &&
             sub.test?.length > 0 &&
             sub.test.map((test, tIdx) => (
@@ -61,6 +59,7 @@ const SubtopicTree = ({
               </div>
             ))}
 
+          {/* Recursive children */}
           {expandedSub === idx && sub.units && (
             <SubtopicTree
               subtopics={sub.units}
@@ -88,6 +87,7 @@ const JeeLearn = () => {
         ? 12
         : null;
   const userId = currentUser?.id || "guest";
+
   const [fetchedUnits, setFetchedUnits] = useState([]);
   const [expandedTopic, setExpandedTopic] = useState(null);
   const [selectedSubtopic, setSelectedSubtopic] = useState(null);
@@ -97,6 +97,7 @@ const JeeLearn = () => {
 
   useEffect(() => window.scrollTo(0, 0), []);
 
+  // Responsive check
   useEffect(() => {
     const handleResize = () => {
       const isNowMobile = window.innerWidth <= 768;
@@ -107,13 +108,11 @@ const JeeLearn = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Fetch all units and restore progress
   useEffect(() => {
-    const getAllSubjectDetails = () => {
-      const subjectName = subject;
+    const getAllSubjectDetails = async () => {
       const stringStandard = localStorage.getItem("currentClassJee");
       const standard = String(stringStandard?.replace(/\D/g, ""));
-
-      const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
       let courseName = "professional";
 
       if (currentUser?.coursetype) {
@@ -123,45 +122,29 @@ const JeeLearn = () => {
         else if (type.includes("school")) courseName = "local";
       }
 
-      console.log("📘 Fetching JEE details for:", {
-        courseName,
-        subjectName,
-        standard,
-      });
+      try {
+        const resp = await fetch(
+          `${API_BASE_URL}/api/getAllUnits/${courseName}/${subject}/${standard}`,
+          { method: "GET", credentials: "include" }
+        );
+        if (!resp.ok) throw new Error(await resp.text());
+        const data = await resp.json();
+        setFetchedUnits(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("❌ Error fetching JEE units:", err);
+        setFetchedUnits([]);
+      }
 
-      fetch(
-        `${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/${standard}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      )
-        .then(async (resp) => {
-          if (!resp.ok) {
-            const text = await resp.text();
-            console.error("❌ Server error:", text);
-            throw new Error(text);
-          }
-          return resp.json();
-        })
-        .then((data) => {
-          console.log(`✅ ${subjectName} data fetched:`, data);
-          setFetchedUnits(Array.isArray(data) ? data : []);
-        })
-        .catch((err) => {
-          console.error("❌ Error fetching JEE subject details:", err);
-          setFetchedUnits([]);
-        });
+      const savedProgress = JSON.parse(
+        localStorage.getItem(`completedSubtopics_${userId}_jee`) || "{}"
+      );
+      setCompletedSubtopics(savedProgress);
     };
 
     getAllSubjectDetails();
-
-    const savedProgress = JSON.parse(
-      localStorage.getItem(`completedSubtopics_${userId}_jee`) || "{}"
-    );
-    setCompletedSubtopics(savedProgress);
   }, [subject]);
 
+  // Flatten subtopics recursively
   const collectAllSubtopics = (subs = []) =>
     subs.flatMap((s) => [s, ...(s.units ? collectAllSubtopics(s.units) : [])]);
 
@@ -172,17 +155,12 @@ const JeeLearn = () => {
       (sub) => completedSubtopics[topic.unitName]?.[sub.unitName]
     ).length;
     const totalCount = allSubs.length;
-    return totalCount === 0
-      ? 0
-      : Math.round((completedCount / totalCount) * 100);
+    return totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
   };
 
   const isTopicCompleted = (topic) => calculateProgress(topic) === 100;
 
-  const isTopicUnlocked = (index) => {
-    if (index === 0) return true;
-    return isTopicCompleted(fetchedUnits[index - 1]);
-  };
+  const isTopicUnlocked = (index) => (index === 0 ? true : isTopicCompleted(fetchedUnits[index - 1]));
 
   const toggleTopic = (index) => {
     if (!isTopicUnlocked(index)) return;
@@ -219,25 +197,18 @@ const JeeLearn = () => {
         [topicTitle]: { ...topicProgress, [subtopicTitle]: true },
       };
 
-      localStorage.setItem(
-        `completedSubtopics_${userId}_jee`,
-        JSON.stringify(updated)
-      );
+      localStorage.setItem(`completedSubtopics_${userId}_jee`, JSON.stringify(updated));
       return updated;
     });
   };
 
   const resetProgress = () => {
-    const confirmReset = window.confirm(
-      "Are you sure you want to reset all your JEE progress?"
-    );
+    const confirmReset = window.confirm("Are you sure you want to reset all your JEE progress?");
     if (!confirmReset) return;
 
     localStorage.removeItem(`completedSubtopics_${userId}_jee`);
     Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith("jee-completed-")) {
-        localStorage.removeItem(key);
-      }
+      if (key.startsWith("jee-completed-")) localStorage.removeItem(key);
     });
 
     setCompletedSubtopics({});
@@ -262,15 +233,12 @@ const JeeLearn = () => {
             {fetchedUnits.map((topic, index) => (
               <li key={index}>
                 <div
-                  className={`topic-title ${expandedTopic === index ? "active" : ""
-                    } ${!isTopicUnlocked(index) ? "locked" : ""}`}
+                  className={`topic-title ${expandedTopic === index ? "active" : ""} ${!isTopicUnlocked(index) ? "locked" : ""}`}
                   onClick={() => toggleTopic(index)}
                 >
                   <div className="topic-header">
                     <span>{topic.unitName}</span>
-                    <span className="expand-icon">
-                      {expandedTopic === index ? "−" : "+"}
-                    </span>
+                    <span className="expand-icon">{expandedTopic === index ? "−" : "+"}</span>
                   </div>
 
                   <div className="progress-bar-wrapper">
@@ -307,9 +275,7 @@ const JeeLearn = () => {
                         <li
                           key={tIdx}
                           className="subtopic-title test-title"
-                          onClick={() =>
-                            handleSubtopicClick(testSubtopic, index)
-                          }
+                          onClick={() => handleSubtopicClick(testSubtopic, index)}
                         >
                           📝 {test.testName} - Assessment
                         </li>
@@ -320,6 +286,7 @@ const JeeLearn = () => {
               </li>
             ))}
           </ul>
+
           <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
             <button className="back-subjects-btn" onClick={handleBackToSubjects}>
               Back to Subjects
@@ -331,6 +298,7 @@ const JeeLearn = () => {
         </div>
       )}
 
+      {/* Explanation / Quiz Section */}
       <div className="explanation-container">
         {selectedSubtopic ? (
           selectedSubtopic.unitName.includes("Assessment") ? (
@@ -349,6 +317,7 @@ const JeeLearn = () => {
                 subject={subject}
                 explanation={selectedSubtopic.explanation || ""}
                 audioFileId={selectedSubtopic.audioFileId || []}
+                imageUrls={selectedSubtopic.imageUrls || []}
                 onBack={handleBackToTopics}
                 onMarkComplete={markSubtopicComplete}
               />
@@ -375,13 +344,12 @@ const JeeLearn = () => {
           )
         ) : (
           <div className="no-explanation">
-            <h2>
-              Welcome to {subject} - Std {selectedStandard}
-            </h2>
+            <h2>Welcome to {subject} - Std {selectedStandard}</h2>
             <p>Select a topic and subtopic to begin your learning journey.</p>
           </div>
         )}
       </div>
+
       <PadmasiniChat subjectName={subject} />
     </div>
   );
