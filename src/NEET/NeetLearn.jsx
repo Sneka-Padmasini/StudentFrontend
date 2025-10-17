@@ -103,6 +103,14 @@ const NeetLearn = () => {
 
   useEffect(() => window.scrollTo(0, 0), []);
 
+  // ADD THIS useEffect to load completed subtopics
+  useEffect(() => {
+    const savedProgress = localStorage.getItem(`completedSubtopics_${userId}_neet`);
+    if (savedProgress) {
+      setCompletedSubtopics(JSON.parse(savedProgress));
+    }
+  }, [userId]);
+
   useEffect(() => {
     const handleResize = () => {
       const isNowMobile = window.innerWidth <= 768;
@@ -113,6 +121,17 @@ const NeetLearn = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    console.log("📈 Current completedSubtopics:", completedSubtopics);
+    console.log("📈 Current expandedTopic:", expandedTopic);
+    console.log("📈 Current selectedSubtopic:", selectedSubtopic);
+
+    if (expandedTopic !== null && fetchedUnits[expandedTopic]) {
+      const topic = fetchedUnits[expandedTopic];
+      const progress = calculateProgress(topic);
+      console.log(`📊 Progress for ${topic.unitName}: ${progress}%`);
+    }
+  }, [completedSubtopics, expandedTopic, selectedSubtopic]);
 
   useEffect(() => {
     const getAllSubjectDetails = () => {
@@ -172,24 +191,40 @@ const NeetLearn = () => {
   const collectAllSubtopics = (subs = []) =>
     subs.flatMap((s) => [s, ...(s.units ? collectAllSubtopics(s.units) : [])]);
 
-  // Calculate % completion for a topic
+
+  // Calculate % completion for a topic - FIXED VERSION
   const calculateProgress = (topic) => {
     if (!topic || !topic.units) return 0;
+
+    // Get all subtopics (lessons) recursively
     const allSubs = collectAllSubtopics(topic.units);
-    const completedCount = allSubs.filter(
-      (sub) => completedSubtopics[topic.unitName]?.[sub.unitName]
-    ).length;
+
+    // Count completed subtopics
+    const completedCount = allSubs.filter((sub) => {
+      const isCompleted = completedSubtopics[topic.unitName]?.[sub.unitName];
+      console.log(`📝 Checking ${sub.unitName}: ${isCompleted ? '✅' : '❌'}`);
+      return isCompleted;
+    }).length;
+
     const totalCount = allSubs.length;
-    return totalCount === 0
-      ? 0
-      : Math.round((completedCount / totalCount) * 100);
+    const progress = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+
+    console.log(`📊 Progress for ${topic.unitName}: ${completedCount}/${totalCount} = ${progress}%`);
+    return progress;
   };
 
-  const isTopicCompleted = (topic) => calculateProgress(topic) === 100;
+  const isTopicCompleted = (topic) => {
+    const progress = calculateProgress(topic);
+    const completed = progress === 100;
+    console.log(`🔓 Topic ${topic.unitName} completed: ${completed} (${progress}%)`);
+    return completed;
+  };
 
+  // ADD THIS MISSING FUNCTION
   const isTopicUnlocked = (index) => {
     if (index === 0) return true; // Always unlock first topic
-    return isTopicCompleted(fetchedUnits[index - 1]);
+    const prevTopic = fetchedUnits[index - 1];
+    return isTopicCompleted(prevTopic);
   };
 
   const toggleTopic = (index) => {
@@ -211,28 +246,75 @@ const NeetLearn = () => {
 
   const handleBackToSubjects = () => navigate("/Neet");
 
+
   const markSubtopicComplete = () => {
     if (!selectedSubtopic || expandedTopic === null) return;
+
     const topicTitle = fetchedUnits[expandedTopic].unitName;
     const subtopicTitle = selectedSubtopic.unitName;
 
-    localStorage.setItem(`neet-completed-${subtopicTitle}`, "true");
+    console.log("🔵 Marking complete:", { topicTitle, subtopicTitle });
 
-    setCompletedSubtopics((prev) => {
-      const topicProgress = prev[topicTitle] || {};
-      if (topicProgress[subtopicTitle]) return prev;
+    // For tests, we need to mark ALL subtopics in the topic as completed
+    if (subtopicTitle.includes("Assessment")) {
+      console.log("🎯 This is a test - marking ALL subtopics in topic as completed");
 
-      const updated = {
-        ...prev,
-        [topicTitle]: { ...topicProgress, [subtopicTitle]: true },
-      };
+      setCompletedSubtopics((prev) => {
+        const topicProgress = prev[topicTitle] || {};
 
-      localStorage.setItem(
-        `completedSubtopics_${userId}_neet`,
-        JSON.stringify(updated)
-      );
-      return updated;
-    });
+        // Get all subtopics in this topic
+        const allSubs = collectAllSubtopics(fetchedUnits[expandedTopic].units);
+
+        // Mark ALL subtopics as completed
+        const updatedProgress = { ...topicProgress };
+        allSubs.forEach(sub => {
+          updatedProgress[sub.unitName] = true;
+          localStorage.setItem(`neet-completed-${sub.unitName}`, "true");
+        });
+
+        // Also mark the test itself
+        updatedProgress[subtopicTitle] = true;
+        localStorage.setItem(`neet-completed-${subtopicTitle}`, "true");
+
+        const updated = {
+          ...prev,
+          [topicTitle]: updatedProgress
+        };
+
+        console.log("🟢 Marked ALL subtopics as completed:", Object.keys(updatedProgress));
+
+        // Save to localStorage
+        localStorage.setItem(`completedSubtopics_${userId}_neet`, JSON.stringify(updated));
+
+        return updated;
+      });
+    } else {
+      // For regular lessons (existing logic)
+      setCompletedSubtopics((prev) => {
+        const topicProgress = prev[topicTitle] || {};
+
+        if (topicProgress[subtopicTitle]) {
+          console.log("🟡 Already completed, skipping");
+          return prev;
+        }
+
+        const updated = {
+          ...prev,
+          [topicTitle]: {
+            ...topicProgress,
+            [subtopicTitle]: true
+          }
+        };
+
+        console.log("🟢 Updated progress:", updated);
+
+        // Save to localStorage
+        localStorage.setItem(`completedSubtopics_${userId}_neet`, JSON.stringify(updated));
+        localStorage.setItem(`neet-completed-${subtopicTitle}`, "true");
+
+        return updated;
+      });
+    }
   };
 
   const resetProgress = () => {

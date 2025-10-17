@@ -1,0 +1,381 @@
+.about-container {
+    min-height: 100vh;
+    scroll-behavior: smooth;
+    font-family: 'Calibri', sans-serif;
+}
+
+/* Navigation Dots */
+.section-nav {
+    position: fixed;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.nav-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: none;
+    background: #ccc;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-dot.active {
+    background: #0a5a0a;
+    transform: scale(1.2);
+}
+
+.nav-dot span {
+    position: absolute;
+    right: 20px;
+    background: #0a5a0a;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    white-space: nowrap;
+}
+
+.nav-dot:hover span {
+    opacity: 1;
+}
+
+/* Common Section Styles */
+.about-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    position: relative;
+}
+
+.section-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.section-content.reverse {
+    grid-template-columns: 1fr 1fr;
+    direction: rtl;
+}
+
+.section-content.reverse>* {
+    direction: ltr;
+}
+
+/* Remove background for headings */
+.text-content h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: #0a5a0a;
+    font-weight: 600;
+    border-bottom: 2px solid #0a5a0a;
+    display: inline-block;
+    padding-bottom: 5px;
+    background: none;
+}
+
+.text-content p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #4b5563;
+    margin-bottom: 15px;
+}
+
+/* Hero Section - Elegant background */
+.hero-section {
+    background: #f4f6f8;
+    /* subtle light background */
+    color: #0a5a0a;
+    /* dark green text */
+    text-align: center;
+    padding: 100px 20px;
+}
+
+.hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.company-name {
+    font-size: 3.5rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    animation: fadeInUp 1s ease;
+    color: #0a5a0a;
+}
+
+.company-tagline {
+    font-size: 1.5rem;
+    margin-bottom: 40px;
+    opacity: 0.9;
+    animation: fadeInUp 1s ease 0.2s both;
+    color: #1f2937;
+}
+
+.hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    margin-top: 40px;
+    animation: fadeInUp 1s ease 0.4s both;
+}
+
+.stat h3 {
+    font-size: 2.5rem;
+    margin-bottom: 5px;
+}
+
+.stat p {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+/* Vision Section - Stylish labels */
+.vision-section {
+    background: #f8fafc;
+}
+
+.vision-graphic {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.graphic-item {
+    padding: 15px 20px;
+    background: #e6f4ea;
+    /* soft green background */
+    border-left: 4px solid #0a5a0a;
+    border-radius: 8px;
+    text-align: left;
+    font-weight: 600;
+    color: #0a5a0a;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.graphic-item:hover {
+    background: #d1ead6;
+    transform: translateY(-2px);
+}
+
+/* Mission Section */
+.mission-section {
+    background: white;
+}
+
+.mission-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.mission-card {
+    padding: 25px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border-left: 4px solid #0a5a0a;
+}
+
+.mission-card h4 {
+    color: #1f2937;
+    margin-bottom: 10px;
+}
+
+.mission-card p {
+    color: #4b5563;
+    margin: 0;
+}
+
+.mission-list {
+    list-style: none;
+    padding: 0;
+}
+
+.mission-list li {
+    padding: 8px 0;
+    padding-left: 25px;
+    position: relative;
+}
+
+.mission-list li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #10b981;
+    font-weight: bold;
+}
+
+/* Values Section */
+.values-section {
+    background: #f8fafc;
+}
+
+.values-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.value-item {
+    text-align: center;
+    padding: 30px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+}
+
+.value-item:hover {
+    transform: translateY(-5px);
+}
+
+.value-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    color: #0a5a0a;
+}
+
+.value-item h4 {
+    color: #1f2937;
+    margin-bottom: 10px;
+}
+
+.value-item p {
+    color: #4b5563;
+    margin: 0;
+}
+
+/* Team Section */
+.team-section {
+    background: white;
+}
+
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.team-member {
+    text-align: center;
+    padding: 30px;
+    background: #f8fafc;
+    border-radius: 10px;
+    transition: transform 0.3s ease;
+}
+
+.team-member:hover {
+    transform: translateY(-5px);
+}
+
+.member-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #0a5a0a;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0 auto 20px;
+}
+
+.team-member h4 {
+    color: #1f2937;
+    margin-bottom: 5px;
+}
+
+.member-role {
+    color: #0a5a0a;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.team-member p {
+    color: #4b5563;
+    margin: 0;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .section-nav {
+        display: none;
+    }
+
+    .section-content {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        text-align: center;
+    }
+
+    .section-content.reverse {
+        direction: ltr;
+    }
+
+    .company-name {
+        font-size: 2.5rem;
+    }
+
+    .hero-stats {
+        gap: 30px;
+    }
+
+    .values-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .team-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .text-content h2 {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-stats {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .about-section {
+        padding: 60px 15px;
+    }
+}

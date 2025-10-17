@@ -114,10 +114,11 @@ const NeetExplanation = ({
     setIsComplete(stored === "true");
   }, [subtopicTitle]);
 
+
   const handleMarkComplete = () => {
     setIsComplete(true);
     sessionStorage.setItem(`neet-completed-${subtopicTitle}`, "true");
-    if (onMarkComplete) onMarkComplete("explanation");
+    if (onMarkComplete) onMarkComplete(); // Remove "explanation" parameter
   };
 
   const parseTextWithFormulas = (texts) => {

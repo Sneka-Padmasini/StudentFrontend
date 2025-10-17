@@ -76,6 +76,20 @@ const JeeQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =>
     setUserAnswers(updatedAnswers);
   };
 
+  // Manual mark as complete function
+  const handleMarkComplete = () => {
+    console.log("🔄 Manually marking test as complete");
+    sessionStorage.setItem(`jee-completed-${subtopicTitle}`, "true");
+    setIsComplete(true);
+
+    // IMPORTANT: Call onMarkComplete to update parent progress
+    if (onMarkComplete) {
+      onMarkComplete();
+    }
+
+    alert("Test marked as complete! Progress updated.");
+  };
+
   // Submit handler
   const handleSubmit = () => {
     setSubmitted(true);
@@ -90,10 +104,16 @@ const JeeQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =>
 
     const percentage = ((score / questions.length) * 100).toFixed(2);
 
+    // AUTOMATICALLY mark as complete if 100% score
     if (percentage === "100.00") {
+      console.log("🎯 Perfect score! Marking as complete...");
       sessionStorage.setItem(`jee-completed-${subtopicTitle}`, "true");
       setIsComplete(true);
-      if (onMarkComplete) onMarkComplete("quiz");
+
+      // IMPORTANT: Call onMarkComplete to update parent progress
+      if (onMarkComplete) {
+        onMarkComplete();
+      }
     }
 
     setShowResultPopup(true);
@@ -136,9 +156,9 @@ const JeeQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =>
         <h2>{subtopicTitle}</h2>
 
         <button
-          onClick={handleSubmit}
+          onClick={handleMarkComplete}
           className={`complete-btn ${isComplete ? "completed" : ""}`}
-          disabled={isComplete || !submitted}
+          disabled={isComplete}
         >
           {isComplete ? <>Completed <FaCheckCircle className="check-icon" /></> : "Mark as Complete"}
         </button>

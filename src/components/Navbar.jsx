@@ -139,7 +139,7 @@ const Navbar = () => {
       <ul className={menuOpen ? "nav-links active" : "nav-links"}>
         <li><Link to="/home" onClick={() => setMenuOpen(false)}>Home</Link></li>
         <li><Link to="/about" onClick={() => setMenuOpen(false)}>About</Link></li>
-        <li>
+        {/* <li>
           <Link
             to="/home"
             className="nav-link"
@@ -160,8 +160,17 @@ const Navbar = () => {
           >
             Courses
           </Link>
+        </li> */}
+
+        <li>
+          <Link
+            to="/courses"
+            onClick={() => setMenuOpen(false)}
+          >
+            Courses
+          </Link>
         </li>
-        {/* <li><Link to="/contact" onClick={() => setMenuOpen(false)}>Contact</Link></li> */}
+
 
         <li>
           <Link

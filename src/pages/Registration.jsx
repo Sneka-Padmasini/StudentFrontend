@@ -884,7 +884,7 @@ const RegistrationFlow = () => {
       </div>
 
       {/* WhatsApp Button */}
-      <a
+      {/* <a
         href="https://wa.me/8248791389"
         className="whatsapp-chat-button"
         target="_blank"
@@ -893,7 +893,7 @@ const RegistrationFlow = () => {
       >
         <img src={whatsappIcon} alt="WhatsApp" className="whatsapp-icon" />
         <span>Chat with us on whatsapp</span>
-      </a>
+      </a> */}
     </div>
   );
 

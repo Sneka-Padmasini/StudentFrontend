@@ -84,13 +84,34 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
 
     const percentage = ((score / questions.length) * 100).toFixed(2);
 
+
+    // AUTOMATICALLY mark as complete if 100% score
     if (percentage === "100.00") {
+      console.log("🎯 Perfect score! Marking as complete...");
       sessionStorage.setItem(`neet-completed-${subtopicTitle}`, "true");
       setIsComplete(true);
-      if (onMarkComplete) onMarkComplete("quiz");
+
+      // IMPORTANT: Call onMarkComplete to update parent progress
+      if (onMarkComplete) {
+        onMarkComplete();
+      }
     }
 
     setShowResultPopup(true);
+  };
+
+
+  const handleMarkComplete = () => {
+    console.log("🔄 Manually marking test as complete");
+    sessionStorage.setItem(`neet-completed-${subtopicTitle}`, "true");
+    setIsComplete(true);
+
+    // IMPORTANT: Call onMarkComplete to update parent progress
+    if (onMarkComplete) {
+      onMarkComplete();
+    }
+
+    alert("Test marked as complete! Progress updated.");
   };
 
   const handleAutoSubmit = () => {
@@ -131,10 +152,11 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
       <div className="quiz-container">
         <h2>{subtopicTitle}</h2>
 
+
         <button
-          onClick={handleSubmit}
+          onClick={handleMarkComplete}
           className={`complete-btn ${isComplete ? "completed" : ""}`}
-          disabled={isComplete || !submitted}
+          disabled={isComplete}
         >
           {isComplete ? <>Completed <FaCheckCircle className="check-icon" /></> : "Mark as Complete"}
         </button>
@@ -187,18 +209,6 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
                   const isIncorrect = submitted && isSelected && optText !== correctAnswer;
 
                   return (
-                    // <label key={num} className={`option-label ${isCorrect ? "correct" : ""} ${isIncorrect ? "incorrect" : ""}`}>
-                    //   <input
-                    //     type="radio"
-                    //     name={`question-${currentQIndex}`}
-                    //     value={optText}
-                    //     checked={isSelected}
-                    //     onChange={() => handleOptionChange(optText)}
-                    //     disabled={submitted}
-                    //   />
-                    //   {parseTextWithFormulas(optText)}
-                    //   {optImage && <img src={optImage} alt={`Option ${num} Image`} style={{ maxWidth: "100%", marginTop: "5px", borderRadius: "5px" }} />}
-                    // </label>
 
                     <label
                       key={num}

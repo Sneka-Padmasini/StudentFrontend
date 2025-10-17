@@ -393,7 +393,7 @@ const Home = () => {
       </div>
 
       {/* WhatsApp Button */}
-      <a
+      {/* <a
         href="https://wa.me/8248791389"
         className="whatsapp-chat-button"
         target="_blank"
@@ -406,7 +406,7 @@ const Home = () => {
           className="whatsapp-icon"
         />
         <span>Chat with us on whatsapp</span>
-      </a>
+      </a> */}
 
       {/* 24/7 AI Bot Label */}
       <div className="ai-status-label" onClick={toggleChat}>

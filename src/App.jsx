@@ -18,6 +18,8 @@ import JeeExplanation from './JEE/JeeExplanation';
 import JeeQuiz from './JEE/JeeQuiz';
 import PadmasiniChat from "./components/PadmasiniChat"; // Importing the chat
 import ProtectedRoute from "./components/ProtectedRoute"; // Import here
+import About from "./components/About"; // ✅ import About page
+import Courses from "./pages/Courses";
 import "./App.css";
 
 function App() {
@@ -33,6 +35,8 @@ function App() {
         <Route path="/contact-us" element={<ContactUs />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/home" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/courses" element={<Courses />} />
         <Route path="/neet" element={<NEET />} />
         <Route path="/NeetLearn" element={<ProtectedRoute allowedCourse="NEET" element={<NeetLearn />} />} />
         <Route path="/NeetExplanation" element={<ProtectedRoute allowedCourse="NEET" element={<NeetExplanation />} />} />

@@ -12,38 +12,38 @@ const ContactUs = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  
+
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setSubmitting(true); // Start loading
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true); // Start loading
 
-  try {
-    const response = await fetch("/send-email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    });
+    try {
+      const response = await fetch("/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
-    if (response.ok) {
-      setSubmitted(true);
-    } else {
-      alert("Failed to send email. Please try again.");
+      if (response.ok) {
+        setSubmitted(true);
+      } else {
+        alert("Failed to send email. Please try again.");
+      }
+    } catch (err) {
+      console.error("Request error:", err);
+      alert("Server not reachable.");
+    } finally {
+      setSubmitting(false); // Stop loading
     }
-  } catch (err) {
-    console.error("Request error:", err);
-    alert("Server not reachable.");
-  } finally {
-    setSubmitting(false); // Stop loading
-  }
-};
+  };
 
 
   const handleClose = () => {
@@ -113,8 +113,8 @@ const handleSubmit = async (e) => {
         </div>
       )}
 
-       {/* WhatsApp Button */}
-            <a
+      {/* WhatsApp Button */}
+      {/* <a
               href="https://wa.me/8248791389"
               className="whatsapp-chat-button"
               target="_blank"
@@ -127,7 +127,7 @@ const handleSubmit = async (e) => {
                 className="whatsapp-icon"
               />
               <span>Chat with us on whatsapp</span>
-            </a>
+            </a> */}
     </div>
   );
 };

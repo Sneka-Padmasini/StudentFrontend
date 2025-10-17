@@ -213,7 +213,7 @@ const LoginPage = () => {
       </div>
 
       {/* WhatsApp Floating Button */}
-      <a
+      {/* <a
         href="https://wa.me/8248791389"
         className="whatsapp-chat-button"
         target="_blank"
@@ -226,7 +226,7 @@ const LoginPage = () => {
           className="whatsapp-icon"
         />
         <span>Chat with us on WhatsApp</span>
-      </a>
+      </a> */}
     </div>
   );
 };

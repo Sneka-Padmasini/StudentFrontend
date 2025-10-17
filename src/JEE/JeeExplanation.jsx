@@ -135,7 +135,7 @@ const JeeExplanation = ({
   const handleMarkComplete = () => {
     setIsComplete(true);
     sessionStorage.setItem(`jee-completed-${subtopicTitle}`, "true");
-    if (onMarkComplete) onMarkComplete("explanation");
+    if (onMarkComplete) onMarkComplete(); // Remove "explanation" parameter
   };
 
   const isIntroIframe =
