@@ -20,11 +20,13 @@ import PadmasiniChat from "./components/PadmasiniChat"; // Importing the chat
 import ProtectedRoute from "./components/ProtectedRoute"; // Import here
 import About from "./components/About"; // ✅ import About page
 import Courses from "./pages/Courses";
+import ScrollToTop from "./components/ScrollToTop";
 import "./App.css";
 
 function App() {
   return (
     <div className="app-container">
+      <ScrollToTop />
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />

@@ -452,7 +452,7 @@ const NeetLearn = () => {
                 subtopicTitle={selectedSubtopic.unitName}
                 subject={subject}
                 explanation={selectedSubtopic.explanation || ""}
-                audioFileId={selectedSubtopic.audioFileId || []}
+                // audioFileId={selectedSubtopic.audioFileId || []}
                 imageUrls={selectedSubtopic.imageUrls || []}
                 onBack={handleBackToTopics}
                 onMarkComplete={markSubtopicComplete}
@@ -462,7 +462,7 @@ const NeetLearn = () => {
 
               {/* Show AI Generated Video (robust to different field names) */}
               {(selectedSubtopic?.videoUrl || selectedSubtopic?.video_url || selectedSubtopic?.aiVideoUrl) && (
-                <div style={{ marginTop: "20px" }}>
+                <div className="ai-video-container" style={{ marginTop: "20px" }}>
                   <h5>AI Generated Video</h5>
                   <video width="100%" controls>
                     <source

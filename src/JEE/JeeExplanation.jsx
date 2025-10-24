@@ -67,26 +67,38 @@ const JeeExplanation = ({
   }, [subtopicTitle]);
 
   const parseTextWithFormulas = (texts) => {
-    if (!texts) return;
-    const text = texts.replace(/\\\\/g, "\\");
-    const TEMP_DOLLAR = '__DOLLAR__';
+    if (!texts) return null;
+
+    // Keep proper newlines and lists formatting
+    let text = texts
+      .replace(/\\\\/g, "\\") // cleanup slashes
+      .replace(/\r?\n/g, "<br/>"); // handle newlines from admin textareas
+
+    // Handle $...$ LaTeX formulas
+    const TEMP_DOLLAR = "__DOLLAR__";
     const safeText = text.replace(/\\\$/g, TEMP_DOLLAR);
     const parts = safeText.split(/(\$[^$]+\$)/g);
 
-    return parts.map((part, index) => {
-      if (part.startsWith('$') && part.endsWith('$')) {
+    const renderedParts = parts.map((part, index) => {
+      if (part.startsWith("$") && part.endsWith("$")) {
         const latex = part.slice(1, -1);
         try {
-          const html = katex.renderToString(latex, { throwOnError: false, output: 'html' });
-          return <span key={index}>{parse(html)}</span>;
+          const html = katex.renderToString(latex, { throwOnError: false, output: "html" });
+          return `<span>${html}</span>`;
         } catch (err) {
-          return <span key={index} style={{ color: 'red' }}>{latex}</span>;
+          return `<span style="color:red">${latex}</span>`;
         }
       } else {
-        return <span key={index}>{part.replaceAll(TEMP_DOLLAR, '$')}</span>;
+        return part.replaceAll(TEMP_DOLLAR, "$");
       }
     });
+
+    // Join everything and parse as HTML (so <ul>, <li>, <b>, <br> all work)
+    const combinedHTML = renderedParts.join("");
+    return parse(combinedHTML);
   };
+
+
 
   const handleTogglePlayPause = () => {
     const text = explanation || subtopicTitle;
@@ -180,12 +192,12 @@ const JeeExplanation = ({
             </div>
           ) : (
             <>
-              {/* Explanation Text */}
-              <pre className="explanation-text" style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}>
-                {parseTextWithFormulas(before)}
-                <mark className="highlight">{parseTextWithFormulas(highlight)}</mark>
-                {parseTextWithFormulas(after)}
-              </pre>
+
+              {/* Explanation text supporting formulas + HTML */}
+              <div className="explanation-text">
+                {parseTextWithFormulas(explanation || "No explanation available")}
+              </div>
+
 
               {/* Explanation Images */}
               {imageUrls && imageUrls.length > 0 && (
@@ -232,7 +244,8 @@ const JeeExplanation = ({
           )}
 
           {/* Audio Playback */}
-          {audioFileId && audioFileId.length > 0 && (
+
+          {/* {audioFileId && audioFileId.length > 0 && (
             <div className="audio-files">
               {audioFileId.map((id, index) => (
                 <div key={index} style={{ marginBottom: "8px" }}>
@@ -240,7 +253,7 @@ const JeeExplanation = ({
                 </div>
               ))}
             </div>
-          )}
+          )} */}
         </div>
 
         <button onClick={handleBack} className="back-btn">

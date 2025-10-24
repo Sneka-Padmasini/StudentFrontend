@@ -275,3 +275,29 @@
   color: #ebf1ed;
   margin-bottom: 8px;
 }
+
+/* ========= IMAGES ONLY ========= */
+.Neet-container .explanation-container img {
+  max-width: 90%;
+  /* slightly smaller than full width */
+  height: auto;
+  display: block;
+  margin: 15px auto 20px auto;
+  /* under content, centered */
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  object-fit: contain;
+}
+
+/* ========= AI VIDEO ONLY ========= */
+.Neet-container .explanation-container .ai-video-container video {
+  max-width: 100%;
+  /* take full width of container */
+  height: auto;
+  display: block;
+  margin: 20px 0;
+  /* space above and below */
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  object-fit: contain;
+}

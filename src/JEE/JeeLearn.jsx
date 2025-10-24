@@ -405,7 +405,7 @@ const JeeLearn = () => {
                 subtopicTitle={selectedSubtopic.unitName}
                 subject={subject}
                 explanation={selectedSubtopic.explanation || ""}
-                audioFileId={selectedSubtopic.audioFileId || []}
+                // audioFileId={selectedSubtopic.audioFileId || []}
                 imageUrls={selectedSubtopic.imageUrls || []}
                 onBack={handleBackToTopics}
                 onMarkComplete={markSubtopicComplete}
@@ -414,7 +414,7 @@ const JeeLearn = () => {
               {(selectedSubtopic?.videoUrl ||
                 selectedSubtopic?.video_url ||
                 selectedSubtopic?.aiVideoUrl) && (
-                  <div style={{ marginTop: "20px" }}>
+                  <div className="ai-video-container" style={{ marginTop: "20px" }}>
                     <h5>AI Generated Video</h5>
                     <video width="100%" controls>
                       <source

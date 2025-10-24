@@ -155,6 +155,53 @@
   margin-bottom: 8px;
 }
 
+/* Right-side buttons (Mark as Complete, Back to Topics) */
+.Jee-container .explanation-container button {
+  padding: 8px 16px;
+  /* same as NEET */
+  font-size: 14px;
+  /* same as NEET */
+  line-height: 1.2;
+  border-radius: 4px;
+  max-width: 200px;
+  width: 100%;
+  display: block;
+  margin: 10px auto;
+  cursor: pointer;
+  border: 1px solid #28a745;
+  background-color: #28a745;
+  color: #fff;
+  transition: all 0.2s ease;
+}
+
+.Jee-container .explanation-container button:hover {
+  background-color: #1c7e32;
+  border-color: #1c7e32;
+}
+
+/* ========= IMAGES ONLY ========= */
+.Jee-container .explanation-container img {
+  max-width: 90%;
+  height: auto;
+  display: block;
+  margin: 15px auto 20px auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  object-fit: contain;
+}
+
+/* ========= AI VIDEO ONLY ========= */
+.Jee-container .explanation-container .ai-video-container video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 20px 0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  object-fit: contain;
+}
+
+
 @media (max-width: 768px) {
   .Jee-container {
     flex-direction: column;
