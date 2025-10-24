@@ -11,6 +11,7 @@ const NeetExplanation = ({
   subject = '',
   audioFileId = [],
   imageUrls = [],
+  videoUrl = '',
   onBack,
   onMarkComplete
 }) => {
@@ -255,7 +256,16 @@ const NeetExplanation = ({
 
         </div>
 
-
+        {/* ✅ AI Generated Video - placed between content and back button */}
+        {videoUrl && (
+          <div className="ai-video-container">
+            <h5>AI Generated Video</h5>
+            <video width="100%" controls>
+              <source src={videoUrl} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        )}
 
         <button onClick={handleBack} className="back-btn">
           Back to Topics

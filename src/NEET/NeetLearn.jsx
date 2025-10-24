@@ -454,6 +454,12 @@ const NeetLearn = () => {
                 explanation={selectedSubtopic.explanation || ""}
                 // audioFileId={selectedSubtopic.audioFileId || []}
                 imageUrls={selectedSubtopic.imageUrls || []}
+                videoUrl={
+                  selectedSubtopic?.videoUrl ||
+                  selectedSubtopic?.video_url ||
+                  selectedSubtopic?.aiVideoUrl ||
+                  ""
+                }
                 onBack={handleBackToTopics}
                 onMarkComplete={markSubtopicComplete}
               />
@@ -461,7 +467,7 @@ const NeetLearn = () => {
 
 
               {/* Show AI Generated Video (robust to different field names) */}
-              {(selectedSubtopic?.videoUrl || selectedSubtopic?.video_url || selectedSubtopic?.aiVideoUrl) && (
+              {/* {(selectedSubtopic?.videoUrl || selectedSubtopic?.video_url || selectedSubtopic?.aiVideoUrl) && (
                 <div className="ai-video-container" style={{ marginTop: "20px" }}>
                   <h5>AI Generated Video</h5>
                   <video width="100%" controls>
@@ -472,7 +478,9 @@ const NeetLearn = () => {
                     Your browser does not support the video tag.
                   </video>
                 </div>
-              )}
+              )} */}
+
+
             </>
           )
         ) : (

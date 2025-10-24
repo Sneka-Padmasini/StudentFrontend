@@ -407,11 +407,17 @@ const JeeLearn = () => {
                 explanation={selectedSubtopic.explanation || ""}
                 // audioFileId={selectedSubtopic.audioFileId || []}
                 imageUrls={selectedSubtopic.imageUrls || []}
+                videoUrl={
+                  selectedSubtopic?.videoUrl ||
+                  selectedSubtopic?.video_url ||
+                  selectedSubtopic?.aiVideoUrl ||
+                  ""
+                }
                 onBack={handleBackToTopics}
                 onMarkComplete={markSubtopicComplete}
               />
 
-              {(selectedSubtopic?.videoUrl ||
+              {/* {(selectedSubtopic?.videoUrl ||
                 selectedSubtopic?.video_url ||
                 selectedSubtopic?.aiVideoUrl) && (
                   <div className="ai-video-container" style={{ marginTop: "20px" }}>
@@ -428,7 +434,7 @@ const JeeLearn = () => {
                       Your browser does not support the video tag.
                     </video>
                   </div>
-                )}
+                )} */}
             </>
           )
         ) : (

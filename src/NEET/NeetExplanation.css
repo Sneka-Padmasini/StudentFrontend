@@ -383,3 +383,14 @@
   border: 1px solid #ccc;
   border-radius: 8px;
 }
+
+.ai-video-container {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.ai-video-container video {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
