@@ -86,11 +86,45 @@ const Jee = () => {
       if (storedUser.endDate) setEndDate(formatDate(storedUser.endDate));
     }
 
-    const savedCompletion = JSON.parse(localStorage.getItem("jeeSubjectCompletion"));
-    if (savedCompletion) {
-      setSubjectCompletion(savedCompletion);
+    // const savedCompletion = JSON.parse(localStorage.getItem("jeeSubjectCompletion"));
+    // if (savedCompletion) {
+    //   setSubjectCompletion(savedCompletion);
+    // }
+
+    const savedCompletion = JSON.parse(localStorage.getItem("jeeSubjectCompletion") || "[]");
+
+    if (savedCompletion.length > 0) {
+      // Merge with the default subject list to ensure all subjects appear
+      const mergedSubjects = subjectList.map(sub => {
+        const existing = savedCompletion.find(s => s.name === sub.name);
+        return existing ? { ...sub, ...existing } : sub;
+      });
+      setSubjectCompletion(mergedSubjects);
+    } else {
+      // If nothing saved yet, initialize and store default list
+      localStorage.setItem("jeeSubjectCompletion", JSON.stringify(subjectList));
+      setSubjectCompletion(subjectList);
     }
+
+
   }, []);
+
+  // Listen for updates to jeeSubjectCompletion (written by JeeLearn)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const updated = JSON.parse(localStorage.getItem("jeeSubjectCompletion") || "[]");
+      // Merge with default list so missing fields/images don't break UI
+      const merged = subjectList.map(sub => {
+        const existing = updated.find(s => s.name === sub.name);
+        return existing ? { ...sub, ...existing } : sub;
+      });
+      setSubjectCompletion(merged);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
 
   const handleClassChange = (e) => {
     const selected = e.target.value;
@@ -110,6 +144,7 @@ const Jee = () => {
   };
 
   const progressPercentage = calculateProgress();
+  const safeProgress = isNaN(progressPercentage) ? 0 : progressPercentage;
 
   const handleSubjectCompletion = (subjectName) => {
     const updatedSubjects = subjectCompletion.map((subject) =>
@@ -184,7 +219,7 @@ const Jee = () => {
                 {subjectCompletion.length} subjects completed
               </p>
 
-              <div className="progress-bar-container">
+              {/* <div className="progress-bar-container">
                 <div
                   className="progress-bar"
                   style={{
@@ -204,10 +239,32 @@ const Jee = () => {
                     </span>
                   </div>
                 </div>
+              </div> */}
+
+              <div className="progress-bar-container">
+                <div
+                  className="progress-bar"
+                  style={{
+                    width: `${safeProgress}%`,
+                    backgroundColor:
+                      safeProgress === 100
+                        ? "#4CAF50"
+                        : safeProgress > 50
+                          ? "#FFEB3B"
+                          : "#B0BEC5",
+                  }}
+                  title={`Completed: ${Math.round(safeProgress)}%`}
+                >
+                  <div className="progress-filled">
+                    <span className="progress-percentage">
+                      {Math.round(safeProgress)}%
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <p className="subtext">
-                {progressPercentage === 100
+                {safeProgress === 100
                   ? "You've completed all subjects!"
                   : "Complete all mandatory subjects to earn your certificate"}
               </p>
@@ -215,11 +272,11 @@ const Jee = () => {
 
             <div className="certificate-box">
               <button
-                className={`certificate-btn ${progressPercentage === 100 ? "btn-completed" : "btn-continue"
+                className={`certificate-btn ${safeProgress === 100 ? "btn-completed" : "btn-continue"
                   }`}
                 onClick={handleScrollToLearningPath}
               >
-                {progressPercentage === 100
+                {safeProgress === 100
                   ? "Download Certificate"
                   : "Continue Learning"}
               </button>

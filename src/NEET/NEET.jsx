@@ -90,11 +90,41 @@ const Subjects = () => {
       if (storedUser.endDate) setEndDate(formatDate(storedUser.endDate));
     }
 
-    const savedCompletion = JSON.parse(localStorage.getItem("subjectCompletion"));
-    if (savedCompletion) {
-      setSubjectCompletion(savedCompletion);
+    // const savedCompletion = JSON.parse(localStorage.getItem("subjectCompletion"));
+    // if (savedCompletion) {
+    //   setSubjectCompletion(savedCompletion);
+    // }
+
+    const savedCompletion = JSON.parse(localStorage.getItem("subjectCompletion") || "[]");
+
+    if (savedCompletion.length > 0) {
+      // Merge with the default subject list to ensure all subjects appear
+      const mergedSubjects = subjectList.map(sub => {
+        const existing = savedCompletion.find(s => s.name === sub.name);
+        return existing ? { ...sub, ...existing } : sub;
+      });
+      setSubjectCompletion(mergedSubjects);
+    } else {
+      // If nothing saved yet, initialize and store default list
+      localStorage.setItem("subjectCompletion", JSON.stringify(subjectList));
+      setSubjectCompletion(subjectList);
     }
+
+
   }, []);
+
+
+  // 🔁 Listen for updates to localStorage (when user finishes a subject in NeetLearn)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const updatedCompletion = JSON.parse(localStorage.getItem("subjectCompletion") || "[]");
+      setSubjectCompletion(updatedCompletion);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
 
   const handleScrollToLearningPath = () => {
     if (learningPathRef.current) {
@@ -140,10 +170,19 @@ const Subjects = () => {
   }, [])
   const calculateProgress = () => {
     const completedSubjects = subjectCompletion.filter((subject) => subject.certified).length;
-    return (completedSubjects / subjectCompletion.length) * 100;
+    // return (completedSubjects / subjectCompletion.length) * 100;
+
+    return subjectCompletion.length === 0
+      ? 0
+      : (completedSubjects / subjectCompletion.length) * 100;
+
+
   };
 
   const progressPercentage = calculateProgress();
+
+  const safeProgress = isNaN(progressPercentage) ? 0 : progressPercentage;
+
 
   const handleSubjectCompletion = (subjectName) => {
     const updatedSubjects = subjectCompletion.map((subject) =>
@@ -217,22 +256,23 @@ const Subjects = () => {
             <div className="progress-info">
               <p>{subjectCompletion.filter((s) => s.certified).length} of {subjectCompletion.length} subjects completed</p>
 
+
               <div className="progress-bar-container">
                 <div
                   className="progress-bar"
                   style={{
-                    width: `${progressPercentage}%`,
+                    width: `${safeProgress}%`,
                     backgroundColor:
-                      progressPercentage === 100
+                      safeProgress === 100
                         ? "#4CAF50"
-                        : progressPercentage > 50
+                        : safeProgress > 50
                           ? "#FFEB3B"
                           : "#B0BEC5",
                   }}
-                  title={`Completed: ${Math.round(progressPercentage)}%`}
+                  title={`Completed: ${Math.round(safeProgress)}%`}
                 >
                   <div className="progress-filled">
-                    <span className="progress-percentage">{Math.round(progressPercentage)}%</span>
+                    <span className="progress-percentage">{Math.round(safeProgress)}%</span>
                   </div>
                 </div>
               </div>

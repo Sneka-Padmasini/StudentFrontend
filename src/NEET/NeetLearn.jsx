@@ -286,6 +286,54 @@ const NeetLearn = () => {
         // Save to localStorage
         localStorage.setItem(`completedSubtopics_${userId}_neet`, JSON.stringify(updated));
 
+
+        // ✅ Check if all topics of the subject are completed
+        setTimeout(() => {
+          if (!fetchedUnits || fetchedUnits.length === 0) return;
+
+          const allCompleted = fetchedUnits.every(topic => {
+            const allSubs = collectAllSubtopics(topic.units);
+            const completedCount = allSubs.filter(sub => updated[topic.unitName]?.[sub.unitName]).length;
+            return completedCount === allSubs.length;
+          });
+
+          if (allCompleted) {
+            console.log(`🏁 All topics completed for ${subject}`);
+            // const subjectCompletion = JSON.parse(localStorage.getItem("subjectCompletion") || "[]");
+            // const updatedCompletion = subjectCompletion.map(sub =>
+            //   sub.name === subject ? { ...sub, certified: true } : sub
+            // );
+            // localStorage.setItem("subjectCompletion", JSON.stringify(updatedCompletion));
+            // window.dispatchEvent(new Event("storage")); // 🔁 trigger update in NEET.jsx
+
+            // ✅ Update full subject list and preserve others
+            const allSubjects = [
+              "Physics",
+              "Chemistry",
+              "Zoology",
+              "Botany",
+            ];
+
+            const existingCompletion = JSON.parse(localStorage.getItem("subjectCompletion") || "[]");
+
+            // Make sure all subjects exist and keep others unchanged
+            const mergedCompletion = allSubjects.map(subj => {
+              const old = existingCompletion.find(s => s.name === subj) || { name: subj, progress: 0, certified: false };
+              if (subj === subject) {
+                return { ...old, certified: true, progress: 100 };
+              }
+              return old;
+            });
+
+            // Save back to localStorage
+            localStorage.setItem("subjectCompletion", JSON.stringify(mergedCompletion));
+            window.dispatchEvent(new Event("storage")); // refresh NEET.jsx progress
+
+
+          }
+        }, 500);
+
+
         return updated;
       });
     } else {

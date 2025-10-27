@@ -256,6 +256,40 @@ const JeeLearn = () => {
         // Save to localStorage
         localStorage.setItem(`completedSubtopics_${userId}_jee`, JSON.stringify(updated));
 
+
+        // ✅ Check if all topics of the subject are completed (then mark subject certified)
+        setTimeout(() => {
+          if (!fetchedUnits || fetchedUnits.length === 0) return;
+
+          const allCompleted = fetchedUnits.every(topic => {
+            const allSubs = collectAllSubtopics(topic.units);
+            const completedCount = allSubs.filter(sub => updated[topic.unitName]?.[sub.unitName]).length;
+            return completedCount === allSubs.length;
+          });
+
+          if (allCompleted) {
+            console.log(`🏁 All topics completed for ${subject}`);
+
+            // ensure list reflects JEE subjects
+            const allSubjects = ["Physics", "Chemistry", "Maths"];
+
+            const existingCompletion = JSON.parse(localStorage.getItem("jeeSubjectCompletion") || "[]");
+
+            const mergedCompletion = allSubjects.map(subj => {
+              const old = existingCompletion.find(s => s.name === subj) || { name: subj, progress: 0, certified: false };
+              if (subj === subject) {
+                return { ...old, certified: true, progress: 100 };
+              }
+              return old;
+            });
+
+            localStorage.setItem("jeeSubjectCompletion", JSON.stringify(mergedCompletion));
+            // trigger storage event for other tabs/pages/components (JEE.jsx will listen)
+            window.dispatchEvent(new Event("storage"));
+          }
+        }, 500);
+
+
         return updated;
       });
     } else {
