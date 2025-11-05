@@ -14,6 +14,44 @@ const subjectList = [
   { name: "Maths", image: mathsImg, certified: false },
 ];
 
+// 🔹 API helpers for saving & loading subject progress
+const saveSubjectCompletionToServer = async (userId, subjectCompletion, course, standard) => {
+  try {
+    await fetch(`${API_BASE_URL}/api/progress/save`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        subjectCompletion,
+        course,
+        standard
+      }),
+    });
+  } catch (err) {
+    console.error("❌ Error saving subject progress:", err);
+  }
+};
+
+// const loadSubjectCompletionFromServer = async (userId, setSubjectCompletion) => {
+const loadSubjectCompletionFromServer = async (userId, setSubjectCompletion, course, standard) => {
+  const standardParam = Array.isArray(standard)
+    ? encodeURIComponent(standard.join(","))
+    : encodeURIComponent(standard);
+  try {
+    // const res = await fetch(`${API_BASE_URL}/api/progress/${userId}`);
+    const res = await fetch(`${API_BASE_URL}/api/progress/${userId}?course=${encodeURIComponent(course)}&standard=${standardParam}`);
+    const data = await res.json();
+    if (data?.subjectCompletion) {
+      setSubjectCompletion(data.subjectCompletion);
+      // localStorage.setItem("jeeSubjectCompletion", JSON.stringify(data.subjectCompletion));
+      localStorage.setItem(`subjectCompletion_${course}_${standardParam}`, JSON.stringify(data.subjectCompletion));
+
+    }
+  } catch (err) {
+    console.error("❌ Error loading subject progress:", err);
+  }
+};
+
 const Jee = () => {
   const navigate = useNavigate();
   const [standard, setStandard] = useState("");
@@ -22,115 +60,231 @@ const Jee = () => {
   const [endDate, setEndDate] = useState("");
   const [subjectCompletion, setSubjectCompletion] = useState(subjectList);
   const learningPathRef = useRef(null);
-  const { login } = useUser();
+  const { login, logout } = useUser();
 
-  // ✅ Session check
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/checkSession`, {
-      method: "GET",
-      credentials: "include",
-    })
-      .then((resp) => resp.json())
-      .then((data) => {
-        if (data.loggedIn === true) {
-          login(data.user);
-          localStorage.setItem("currentUser", JSON.stringify(data.user));
-        } else if (data.loggedIn === false) {
-          const existingUser = localStorage.getItem("currentUser");
-          if (existingUser) {
-            localStorage.clear();
-            navigate("/login");
-          }
-        }
-      })
-      .catch(console.error);
-  }, []);
+  // useEffect(() => {
+  //   const storedUser = JSON.parse(localStorage.getItem("currentUser"));
+  //   if (storedUser) {
+  //     let stdData = storedUser.standards;
 
-  // ✅ Handle user standards (like NEET)
+  //     // If standards is empty, try to extract from coursetype or courseName
+  //     if ((!stdData || stdData.length === 0) && storedUser.coursetype) {
+  //       if (storedUser.coursetype.includes("11")) stdData = ["11th"];
+  //       else if (storedUser.coursetype.includes("12")) stdData = ["12th"];
+  //     }
+
+  //     // Handle string
+  //     if (typeof stdData === "string") {
+  //       setStandard(stdData);
+  //       localStorage.setItem("currentClassJee", stdData);
+  //     }
+  //     // Handle array
+  //     else if (Array.isArray(stdData)) {
+  //       if (stdData.length === 1) {
+  //         setStandard(stdData[0]);
+  //         localStorage.setItem("currentClassJee", stdData[0]);
+  //       } else {
+  //         setStandard(stdData);
+  //         const savedClass = localStorage.getItem("currentClassJee");
+  //         if (savedClass) setSelectedClass(savedClass);
+  //       }
+  //     }
+
+  //     console.log("🧠 Detected Standards:", stdData);
+  //     console.log("📚 Final Standard State:", standard);
+
+  //     const formatDate = (dateStr) => {
+  //       const date = new Date(dateStr);
+  //       return date.toLocaleDateString("en-GB", {
+  //         day: "2-digit",
+  //         month: "short",
+  //         year: "numeric",
+  //       });
+  //     };
+
+  //     if (storedUser.startDate) setStartDate(formatDate(storedUser.startDate));
+  //     if (storedUser.endDate) setEndDate(formatDate(storedUser.endDate));
+  //   }
+
+  //   const userId = storedUser?.id || storedUser?._id;
+  //   if (userId) {
+  //     const course = "JEE";
+  //     const currentStandard = selectedClass || standard;
+  //     loadSubjectCompletionFromServer(userId, setSubjectCompletion, course, currentStandard);
+  //   } else {
+  //     // Fallback only if backend data not found
+  //     const savedLocal = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_${currentStandard}`) || "[]");
+  //     if (savedLocal.length > 0) {
+  //       setSubjectCompletion(savedLocal);
+  //     } else {
+  //       setSubjectCompletion(subjectList);
+  //       // localStorage.setItem("jeeSubjectCompletion", JSON.stringify(subjectList));
+  //       localStorage.setItem(`subjectCompletion_${course}_${currentStandard}`, JSON.stringify(subjectList));
+  //     }
+  //     window.dispatchEvent(new Event("storage")); // force progress refresh
+  //   }
+  // }, []);
+
+  // useEffect(() => {
+  //   const storedUser = JSON.parse(localStorage.getItem("currentUser"));
+  //   const course = "JEE"; // ✅ move these two to the top
+  //   const currentStandard = selectedClass || standard;
+
+  //   if (storedUser) {
+  //     let stdData = storedUser.standards;
+  //     if ((!stdData || stdData.length === 0) && storedUser.coursetype) {
+  //       if (storedUser.coursetype.includes("11")) stdData = ["11th"];
+  //       else if (storedUser.coursetype.includes("12")) stdData = ["12th"];
+  //     }
+
+  //     if (typeof stdData === "string") {
+  //       setStandard(stdData);
+  //       localStorage.setItem("currentClassJee", stdData);
+  //     } else if (Array.isArray(stdData)) {
+  //       if (stdData.length === 1) {
+  //         setStandard(stdData[0]);
+  //         localStorage.setItem("currentClassJee", stdData[0]);
+  //       } else {
+  //         setStandard(stdData);
+  //         const savedClass = localStorage.getItem("currentClassJee");
+  //         if (savedClass) setSelectedClass(savedClass);
+  //       }
+  //     }
+
+  //     console.log("🧠 Detected Standards:", stdData);
+  //     console.log("📚 Final Standard State:", standard);
+
+  //     const formatDate = (dateStr) => {
+  //       const date = new Date(dateStr);
+  //       return date.toLocaleDateString("en-GB", {
+  //         day: "2-digit",
+  //         month: "short",
+  //         year: "numeric",
+  //       });
+  //     };
+
+  //     if (storedUser.startDate) setStartDate(formatDate(storedUser.startDate));
+  //     if (storedUser.endDate) setEndDate(formatDate(storedUser.endDate));
+  //   }
+
+  //   // ✅ Safe to use here
+  //   const userId = storedUser?.id || storedUser?._id;
+  //   if (userId) {
+  //     // ✅ Use selectedClass if available, else fallback to single string standard
+  //     const activeStandard = Array.isArray(standard)
+  //       ? selectedClass || standard[0] // use one at a time, not full array
+  //       : standard;
+
+  //     loadSubjectCompletionFromServer(userId, setSubjectCompletion, course, activeStandard);
+  //   } else {
+  //     const activeStandard = Array.isArray(standard)
+  //       ? selectedClass || standard[0]
+  //       : standard;
+
+  //     const savedLocal = JSON.parse(
+  //       localStorage.getItem(`subjectCompletion_${course}_${activeStandard}`) || "[]"
+  //     );
+  //     if (savedLocal.length > 0) {
+  //       setSubjectCompletion(savedLocal);
+  //     } else {
+  //       setSubjectCompletion(subjectList);
+  //       localStorage.setItem(
+  //         `subjectCompletion_${course}_${activeStandard}`,
+  //         JSON.stringify(subjectList)
+  //       );
+  //     }
+  //     window.dispatchEvent(new Event("storage"));
+  //   }
+
+  // }, [selectedClass, standard]); // ✅ add dependencies
+
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("currentUser"));
-    if (storedUser) {
-      let stdData = storedUser.standards;
+    const course = "JEE";
 
-      // If no standards, try fallback from coursetype
-      if ((!stdData || stdData.length === 0) && storedUser.coursetype) {
-        if (storedUser.coursetype.includes("11")) stdData = ["11th"];
-        else if (storedUser.coursetype.includes("12")) stdData = ["12th"];
-      }
+    if (!storedUser) return;
 
-      // Handle single vs multiple classes
-      if (typeof stdData === "string") {
+    let stdData = storedUser.standards;
+    if ((!stdData || stdData.length === 0) && storedUser.coursetype) {
+      if (storedUser.coursetype.includes("11")) stdData = ["11th"];
+      else if (storedUser.coursetype.includes("12")) stdData = ["12th"];
+    }
+
+    // 🔹 Save detected standards
+    if (typeof stdData === "string") {
+      setStandard(stdData);
+      localStorage.setItem("currentClassJee", stdData);
+    } else if (Array.isArray(stdData)) {
+      if (stdData.length === 1) {
+        setStandard(stdData[0]);
+        localStorage.setItem("currentClassJee", stdData[0]);
+      } else {
         setStandard(stdData);
-        localStorage.setItem("currentClassJee", stdData);
-      } else if (Array.isArray(stdData)) {
-        if (stdData.length === 1) {
-          setStandard(stdData[0]);
-          localStorage.setItem("currentClassJee", stdData[0]);
-        } else {
-          setStandard(stdData);
-          const savedClass = localStorage.getItem("currentClassJee");
-          if (savedClass) setSelectedClass(savedClass);
-        }
+        const savedClass = localStorage.getItem("currentClassJee");
+        if (savedClass) setSelectedClass(savedClass);
       }
-
-      const formatDate = (dateStr) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        });
-      };
-
-      if (storedUser.startDate) setStartDate(formatDate(storedUser.startDate));
-      if (storedUser.endDate) setEndDate(formatDate(storedUser.endDate));
     }
 
-    // const savedCompletion = JSON.parse(localStorage.getItem("jeeSubjectCompletion"));
-    // if (savedCompletion) {
-    //   setSubjectCompletion(savedCompletion);
-    // }
+    console.log("🧠 Detected Standards:", stdData);
 
-    const savedCompletion = JSON.parse(localStorage.getItem("jeeSubjectCompletion") || "[]");
+    // ✅ Pick only ONE active standard (not the entire array)
+    const activeStandard = Array.isArray(stdData)
+      ? selectedClass || stdData[0]
+      : stdData;
 
-    if (savedCompletion.length > 0) {
-      // Merge with the default subject list to ensure all subjects appear
-      const mergedSubjects = subjectList.map(sub => {
-        const existing = savedCompletion.find(s => s.name === sub.name);
-        return existing ? { ...sub, ...existing } : sub;
+    console.log("📚 Final Active Standard:", activeStandard);
+
+    // ✅ Format batch dates safely
+    const formatDate = (dateStr) => {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
       });
-      setSubjectCompletion(mergedSubjects);
-    } else {
-      // If nothing saved yet, initialize and store default list
-      localStorage.setItem("jeeSubjectCompletion", JSON.stringify(subjectList));
-      setSubjectCompletion(subjectList);
+    };
+
+    if (storedUser.startDate) setStartDate(formatDate(storedUser.startDate));
+    if (storedUser.endDate) setEndDate(formatDate(storedUser.endDate));
+
+    // ✅ Load progress only once per valid standard
+    const userId = storedUser?.id || storedUser?._id;
+    if (userId && activeStandard) {
+      loadSubjectCompletionFromServer(userId, setSubjectCompletion, course, activeStandard);
+    } else if (activeStandard) {
+      const savedLocal = JSON.parse(
+        localStorage.getItem(`subjectCompletion_${course}_${activeStandard}`) || "[]"
+      );
+      if (savedLocal.length > 0) {
+        setSubjectCompletion(savedLocal);
+      } else {
+        setSubjectCompletion(subjectList);
+        localStorage.setItem(
+          `subjectCompletion_${course}_${activeStandard}`,
+          JSON.stringify(subjectList)
+        );
+      }
     }
 
+    // ✅ Refresh UI progress safely
+    window.dispatchEvent(new Event("storage"));
+  }, [selectedClass]); // 🔥 only depend on selectedClass (NOT standard)
 
-  }, []);
 
-  // Listen for updates to jeeSubjectCompletion (written by JeeLearn)
+  // 🔁 Listen for updates to localStorage (when user finishes a subject in JeeLearn)
   useEffect(() => {
     const handleStorageChange = () => {
-      const updated = JSON.parse(localStorage.getItem("jeeSubjectCompletion") || "[]");
-      // Merge with default list so missing fields/images don't break UI
-      const merged = subjectList.map(sub => {
-        const existing = updated.find(s => s.name === sub.name);
-        return existing ? { ...sub, ...existing } : sub;
-      });
-      setSubjectCompletion(merged);
+      // const updatedCompletion = JSON.parse(localStorage.getItem("jeeSubjectCompletion") || "[]");
+      const course = "JEE";
+      const currentStandard = selectedClass || standard;
+      const updatedCompletion = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_${currentStandard}`) || "[]");
+
+      setSubjectCompletion(updatedCompletion);
     };
 
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
-
-
-  const handleClassChange = (e) => {
-    const selected = e.target.value;
-    setSelectedClass(selected);
-    localStorage.setItem("currentClassJee", selected);
-  };
 
   const handleScrollToLearningPath = () => {
     if (learningPathRef.current) {
@@ -138,10 +292,69 @@ const Jee = () => {
     }
   };
 
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/checkSession`, {
+      method: "GET",
+      credentials: 'include'
+    }).then(resp => resp.json())
+      .then(data => {
+        console.log(data)
+        if (data.loggedIn === true) {
+          login(data.user)
+          localStorage.setItem('currentUser', JSON.stringify(data.user));
+          console.log(localStorage.getItem('currentUser'))
+        }
+        if (data.loggedIn === false) {
+          console.log('it came here before seeing user')
+          const existingUser = localStorage.getItem('currentUser')
+          if (existingUser) {
+            console.log('it came here and deleted the user')
+            localStorage.clear(); // Clear all local storage
+            logout();
+            navigate("/login");
+          }
+        }
+      }).catch(console.error)
+  }, [])
+
   const calculateProgress = () => {
-    const completedSubjects = subjectCompletion.filter((s) => s.certified).length;
-    return (completedSubjects / subjectCompletion.length) * 100;
+    // ✅ Convert object to array safely
+    let data = subjectCompletion;
+
+    if (!Array.isArray(data)) {
+      data = Object.keys(data || {}).map((key) => ({
+        name: key,
+        certified:
+          data[key] === 100 ||
+          data[key] === true ||
+          data[key] === "completed",
+      }));
+    }
+
+    const completed = data.filter((s) => s.certified).length;
+    return data.length === 0 ? 0 : (completed / data.length) * 100;
   };
+
+  // ✅ Improved normalization with fuzzy matching
+  const normalizedSubjects = subjectList.map((sub) => {
+    // try exact match
+    const exactValue = subjectCompletion?.[sub.name];
+    // try partial match (for keys like "Introduction to Physics...")
+    const partialKey = Object.keys(subjectCompletion || {}).find((key) =>
+      key.toLowerCase().includes(sub.name.toLowerCase())
+    );
+    const partialValue = partialKey ? subjectCompletion[partialKey] : null;
+
+    const progressValue = exactValue ?? partialValue;
+
+    return {
+      ...sub,
+      certified:
+        progressValue === 100 ||
+        progressValue === true ||
+        progressValue === "completed",
+    };
+  });
 
   const progressPercentage = calculateProgress();
   const safeProgress = isNaN(progressPercentage) ? 0 : progressPercentage;
@@ -151,18 +364,63 @@ const Jee = () => {
       subject.name === subjectName ? { ...subject, certified: true } : subject
     );
     setSubjectCompletion(updatedSubjects);
-    localStorage.setItem("jeeSubjectCompletion", JSON.stringify(updatedSubjects));
+    // localStorage.setItem("jeeSubjectCompletion", JSON.stringify(updatedSubjects));
+    const course = "JEE";
+    // const currentStandard = selectedClass || standard;
+    // localStorage.setItem(`subjectCompletion_${course}_${currentStandard}`, JSON.stringify(updatedSubjects));
+    // const storedUser = JSON.parse(localStorage.getItem("currentUser"));
+    // if (storedUser?.id || storedUser?._id) {
+    //   const userId = storedUser.id || storedUser._id;
+    //   // saveSubjectCompletionToServer(userId, updatedSubjects);
+    //   saveSubjectCompletionToServer(userId, updatedSubjects, course, currentStandard);
+    // }
+    const activeStandard = Array.isArray(standard)
+      ? selectedClass || standard[0]
+      : standard;
+
+    localStorage.setItem(`subjectCompletion_${course}_${activeStandard}`, JSON.stringify(updatedSubjects));
+    const storedUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (storedUser?.id || storedUser?._id) {
+      const userId = storedUser.id || storedUser._id;
+      saveSubjectCompletionToServer(userId, updatedSubjects, course, activeStandard);
+    }
+
   };
 
+  // useEffect(() => {
+  //   // const completedSubtopics = JSON.parse(localStorage.getItem("jeeCompletedSubtopics"));
+  //   const course = "JEE";
+  //   const currentStandard = selectedClass || standard;
+  //   const storedUser = JSON.parse(localStorage.getItem("currentUser"));
+  //   const userId = storedUser?.id || storedUser?._id;
+  //   const completedSubtopics = JSON.parse(localStorage.getItem(`completedSubtopics_${userId}_${course}_${currentStandard}`) || "{}");
+
+  //   if (
+  //     completedSubtopics &&
+  //     Object.keys(completedSubtopics["UNIT AND MEASURE"] || {}).length === 6
+  //   ) {
+  //     handleSubjectCompletion("Physics");
+  //   }
+  // }, []);
+
   useEffect(() => {
-    const completedSubtopics = JSON.parse(localStorage.getItem("jeeCompletedSubtopics"));
-    if (
-      completedSubtopics &&
-      Object.keys(completedSubtopics["UNIT AND MEASURE"] || {}).length === 6
-    ) {
+    const course = "JEE";
+    const currentStandard = selectedClass || standard;
+    const storedUser = JSON.parse(localStorage.getItem("currentUser"));
+    const userId = storedUser?.id || storedUser?._id;
+    const completedSubtopics = JSON.parse(localStorage.getItem(`completedSubtopics_${userId}_${course}_${currentStandard}`) || "{}");
+
+    if (completedSubtopics && Object.keys(completedSubtopics["UNIT AND MEASURE"] || {}).length === 6) {
       handleSubjectCompletion("Physics");
     }
-  }, []);
+  }, [selectedClass, standard]); // ✅ runs when class/standard changes
+
+
+  const handleClassChange = (e) => {
+    const selected = e.target.value;
+    setSelectedClass(selected);
+    localStorage.setItem("currentClassJee", selected);
+  };
 
   return (
     <div className="subjects-page">
@@ -199,12 +457,8 @@ const Jee = () => {
         {startDate && endDate && (
           <div className="cohort-details">
             <h4>Your Batch</h4>
-            <p>
-              <strong>Start Date:</strong> {startDate}
-            </p>
-            <p>
-              <strong>End Date:</strong> {endDate}
-            </p>
+            <p><strong>Start Date:</strong> {startDate}</p>
+            <p><strong>End Date:</strong> {endDate}</p>
           </div>
         )}
       </aside>
@@ -214,32 +468,7 @@ const Jee = () => {
           <h3>My Completion Progress</h3>
           <div className="progress-header">
             <div className="progress-info">
-              <p>
-                {subjectCompletion.filter((s) => s.certified).length} of{" "}
-                {subjectCompletion.length} subjects completed
-              </p>
-
-              {/* <div className="progress-bar-container">
-                <div
-                  className="progress-bar"
-                  style={{
-                    width: `${progressPercentage}%`,
-                    backgroundColor:
-                      progressPercentage === 100
-                        ? "#4CAF50"
-                        : progressPercentage > 50
-                          ? "#FFEB3B"
-                          : "#B0BEC5",
-                  }}
-                  title={`Completed: ${Math.round(progressPercentage)}%`}
-                >
-                  <div className="progress-filled">
-                    <span className="progress-percentage">
-                      {Math.round(progressPercentage)}%
-                    </span>
-                  </div>
-                </div>
-              </div> */}
+              <p>{normalizedSubjects.filter((s) => s.certified).length} of {normalizedSubjects.length} subjects completed</p>
 
               <div className="progress-bar-container">
                 <div
@@ -256,9 +485,7 @@ const Jee = () => {
                   title={`Completed: ${Math.round(safeProgress)}%`}
                 >
                   <div className="progress-filled">
-                    <span className="progress-percentage">
-                      {Math.round(safeProgress)}%
-                    </span>
+                    <span className="progress-percentage">{Math.round(safeProgress)}%</span>
                   </div>
                 </div>
               </div>
@@ -272,13 +499,10 @@ const Jee = () => {
 
             <div className="certificate-box">
               <button
-                className={`certificate-btn ${safeProgress === 100 ? "btn-completed" : "btn-continue"
-                  }`}
+                className={`certificate-btn ${safeProgress === 100 ? "btn-completed" : "btn-continue"}`}
                 onClick={handleScrollToLearningPath}
               >
-                {safeProgress === 100
-                  ? "Download Certificate"
-                  : "Continue Learning"}
+                {safeProgress === 100 ? "Download Certificate" : "Continue Learning"}
               </button>
             </div>
           </div>
@@ -287,7 +511,7 @@ const Jee = () => {
         <section className="learning-path" ref={learningPathRef}>
           <h3>Learning Path</h3>
           <div className="timeline">
-            {subjectCompletion.map((subject, index) => (
+            {normalizedSubjects.map((subject, index) => (
               <div key={subject.name} className="timeline-item">
                 <div className="timeline-dot"></div>
                 <div className="timeline-content">
@@ -307,6 +531,7 @@ const Jee = () => {
                     <button
                       className="continue-btn"
                       onClick={() => {
+                        console.log(localStorage.getItem("currentUser"))
                         if (!standard) {
                           alert("Please select a standard");
                           return;

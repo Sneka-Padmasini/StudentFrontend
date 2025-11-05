@@ -11,7 +11,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
   const [submitted, setSubmitted] = useState(false);
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(120);
+  const [timeRemaining, setTimeRemaining] = useState(1200);
   const [hasStarted, setHasStarted] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [showResultPopup, setShowResultPopup] = useState(false);
@@ -22,7 +22,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
     setUserAnswers(Array(questionList.length).fill(""));
     setSubmitted(false);
     setCurrentQIndex(0);
-    setTimeRemaining(120);
+    setTimeRemaining(1200);
     setHasStarted(false);
     setShowConfirmation(false);
     setIsComplete(false);
@@ -60,16 +60,60 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
     });
   };
 
+
+  // useEffect(() => {
+  //   const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
+  //   const isDone = localStorage.getItem(`neet-completed-${userId}-${subtopicTitle}`) === "true";
+  //   if (isDone) setIsComplete(true);
+  // }, [subtopicTitle]);
+
   useEffect(() => {
-    const isDone = sessionStorage.getItem(`neet-completed-${subtopicTitle}`) === "true";
+    const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
+    const course = "NEET";
+    const standard = localStorage.getItem("currentClass");
+    const isDone = localStorage.getItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`) === "true";
     if (isDone) setIsComplete(true);
   }, [subtopicTitle]);
+
 
   const handleOptionChange = (selected) => {
     const updatedAnswers = [...userAnswers];
     updatedAnswers[currentQIndex] = selected;
     setUserAnswers(updatedAnswers);
   };
+
+  // const handleSubmit = () => {
+  //   setSubmitted(true);
+  //   setShowConfirmation(false);
+  //   sessionStorage.setItem(`answers-neet-${subtopicTitle}`, JSON.stringify(userAnswers));
+  //   sessionStorage.setItem(`quizData-neet-${subtopicTitle}`, JSON.stringify(questions));
+
+  //   const score = questions.reduce((acc, q, i) => {
+  //     const correctAnswer = q[`option${Number(q.correctIndex) + 1}`];
+  //     return userAnswers[i] === correctAnswer ? acc + 1 : acc;
+  //   }, 0);
+
+  //   const percentage = ((score / questions.length) * 100).toFixed(2);
+
+
+  //   // AUTOMATICALLY mark as complete if 100% score
+  //   if (percentage === "100.00") {
+  //     console.log("🎯 Perfect score! Marking as complete...");
+  //     // sessionStorage.setItem(`neet-completed-${subtopicTitle}`, "true");
+  //     const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
+  //     // localStorage.setItem(`neet-completed-${userId}-${subtopicTitle}`, "true");
+  //     localStorage.setItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`, "true");
+
+  //     setIsComplete(true);
+
+  //     // IMPORTANT: Call onMarkComplete to update parent progress
+  //     if (onMarkComplete) {
+  //       onMarkComplete();
+  //     }
+  //   }
+
+  //   setShowResultPopup(true);
+  // };
 
   const handleSubmit = () => {
     setSubmitted(true);
@@ -84,11 +128,14 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
 
     const percentage = ((score / questions.length) * 100).toFixed(2);
 
-
     // AUTOMATICALLY mark as complete if 100% score
     if (percentage === "100.00") {
       console.log("🎯 Perfect score! Marking as complete...");
-      sessionStorage.setItem(`neet-completed-${subtopicTitle}`, "true");
+      const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
+      const course = "NEET";
+      const standard = localStorage.getItem("currentClass");
+      localStorage.setItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`, "true");
+
       setIsComplete(true);
 
       // IMPORTANT: Call onMarkComplete to update parent progress
@@ -100,10 +147,13 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
     setShowResultPopup(true);
   };
 
-
   const handleMarkComplete = () => {
     console.log("🔄 Manually marking test as complete");
-    sessionStorage.setItem(`neet-completed-${subtopicTitle}`, "true");
+    const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
+    const course = "NEET";
+    const standard = localStorage.getItem("currentClass");
+    localStorage.setItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`, "true");
+
     setIsComplete(true);
 
     // IMPORTANT: Call onMarkComplete to update parent progress
@@ -113,6 +163,22 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
 
     alert("Test marked as complete! Progress updated.");
   };
+  // const handleMarkComplete = () => {
+  //   console.log("🔄 Manually marking test as complete");
+  //   // sessionStorage.setItem(`neet-completed-${subtopicTitle}`, "true");
+  //   const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
+  //   // localStorage.setItem(`neet-completed-${userId}-${subtopicTitle}`, "true");
+  //   localStorage.setItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`, "true");
+
+  //   setIsComplete(true);
+
+  //   // IMPORTANT: Call onMarkComplete to update parent progress
+  //   if (onMarkComplete) {
+  //     onMarkComplete();
+  //   }
+
+  //   alert("Test marked as complete! Progress updated.");
+  // };
 
   const handleAutoSubmit = () => {
     setSubmitted(true);
@@ -164,7 +230,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
         {!hasStarted ? (
           <div className="start-screen">
             <p><strong>Total Questions:</strong> {questions.length}</p>
-            <p><strong>Time Limit:</strong> 2 minutes</p>
+            <p><strong>Time Limit:</strong> 20 minutes</p>
             <p><strong>Minimum Marks to Pass:</strong> 100%</p>
             <button className="start-btn" onClick={() => setHasStarted(true)}>Start Assessment</button>
             <button className="back-btn" onClick={onBack}>Back to Topics</button>

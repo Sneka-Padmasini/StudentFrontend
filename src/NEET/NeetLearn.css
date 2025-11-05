@@ -301,3 +301,25 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   object-fit: contain;
 }
+
+@media (max-width: 768px) {
+
+  /* allow full scroll when dropdowns expand */
+  .Neet-container .topics-list {
+    max-height: none;
+    height: auto;
+    overflow-y: visible;
+  }
+
+  /* subtopics should remain visible and tappable */
+  .Neet-container .subtopics-list {
+    overflow: visible;
+    max-height: none;
+  }
+
+  /* make touch areas larger */
+  .Neet-container .subtopic-title {
+    padding: 10px;
+    font-size: 15px;
+  }
+}

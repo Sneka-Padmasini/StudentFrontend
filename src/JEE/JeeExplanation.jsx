@@ -25,6 +25,10 @@ const JeeExplanation = ({
   const utteranceRef = useRef(null);
   const voicesLoadedRef = useRef(false);
 
+  // 🧭 Define course & standard (for consistent key naming)
+  const course = "JEE";
+  const standard = localStorage.getItem("currentClassJee");
+
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   // Load and set voice
@@ -60,12 +64,28 @@ const JeeExplanation = ({
     };
   }, [synth]);
 
+  // Reset voice state when subtopic changes
   useEffect(() => {
     synth.cancel();
     setIsSpeaking(false);
     setHighlightedRange({ start: 0, end: 0 });
     utteranceRef.current = null;
   }, [subtopicTitle]);
+
+  // ✅ Load completion state for JEE (per course + standard)
+  useEffect(() => {
+    const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
+    const stored = localStorage.getItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`);
+    setIsComplete(stored === "true");
+  }, [subtopicTitle, course, standard]);
+
+  // ✅ Handle marking subtopic as complete (same structure as NEET)
+  const handleMarkComplete = () => {
+    setIsComplete(true);
+    const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
+    localStorage.setItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`, "true");
+    if (onMarkComplete) onMarkComplete();
+  };
 
   const parseTextWithFormulas = (texts) => {
     if (!texts) return null;
@@ -99,8 +119,6 @@ const JeeExplanation = ({
     return parse(combinedHTML);
   };
 
-
-
   const handleTogglePlayPause = () => {
     const text = explanation || subtopicTitle;
     if (isSpeaking) {
@@ -123,7 +141,9 @@ const JeeExplanation = ({
         if (event.name === 'word') {
           const start = event.charIndex;
           let end = start;
-          while (end < text.length && /\S/.test(text[end])) end++;
+          while (end < text.length && /\S/.test(text[end])) {
+            end++;
+          }
           setHighlightedRange({ start, end });
         }
       };
@@ -140,26 +160,9 @@ const JeeExplanation = ({
     if (onBack) onBack();
   };
 
-  useEffect(() => {
-    const stored = sessionStorage.getItem(`jee-completed-${subtopicTitle}`);
-    setIsComplete(stored === "true");
-  }, [subtopicTitle]);
-
-  const handleMarkComplete = () => {
-    setIsComplete(true);
-    sessionStorage.setItem(`jee-completed-${subtopicTitle}`, "true");
-    if (onMarkComplete) onMarkComplete(); // Remove "explanation" parameter
-  };
-
   const isIntroIframe =
     subject.toLowerCase() === "physics" &&
     subtopicTitle.trim().toLowerCase() === "1.1 introduction";
-
-  const textToDisplay = explanation || subtopicTitle;
-  const { start, end } = highlightedRange;
-  const before = textToDisplay.slice(0, start);
-  const highlight = textToDisplay.slice(start, end);
-  const after = textToDisplay.slice(end);
 
   return (
     <div className="explanation-container">
@@ -193,21 +196,19 @@ const JeeExplanation = ({
             </div>
           ) : (
             <>
-
               {/* Explanation text supporting formulas + HTML */}
               <div className="explanation-text">
                 {parseTextWithFormulas(explanation || "No explanation available")}
               </div>
 
-
-              {/* Explanation Images */}
+              {/* Display all images */}
               {imageUrls && imageUrls.length > 0 && (
                 <div className="explanation-images">
-                  {imageUrls.map((url, idx) => (
+                  {imageUrls.map((url, index) => (
                     <img
-                      key={idx}
+                      key={index}
                       src={url}
-                      alt={`Unit Image ${idx + 1}`}
+                      alt={`Unit Image ${index + 1}`}
                       style={{
                         maxWidth: "100%",
                         margin: "10px 0",
@@ -244,7 +245,7 @@ const JeeExplanation = ({
             </div>
           )}
 
-          {/* Audio Playback */}
+          {/* Audio File Playback (temporarily disabled) */}
 
           {/* {audioFileId && audioFileId.length > 0 && (
             <div className="audio-files">
@@ -257,7 +258,7 @@ const JeeExplanation = ({
           )} */}
         </div>
 
-        {/* ✅ AI Generated Video (between content and back button) */}
+        {/* ✅ AI Generated Video - placed between content and back button */}
         {videoUrl && (
           <div className="ai-video-container">
             <h5>AI Generated Video</h5>

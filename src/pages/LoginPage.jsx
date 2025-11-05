@@ -45,32 +45,6 @@ const LoginPage = () => {
       }
 
       // Normalize standards from selectedCourse object and selectedStandard array
-      // let standards = [];
-
-      // if (data.selectedCourse && typeof data.selectedCourse === "object") {
-      //   Object.values(data.selectedCourse).forEach(arr => {
-      //     if (Array.isArray(arr)) standards.push(...arr);
-      //   });
-      // }
-
-      // if (Array.isArray(data.selectedStandard)) {
-      //   standards.push(...data.selectedStandard);
-      // }
-
-      // standards = [...new Set(standards)]; // remove duplicates
-
-      // const currentUser = {
-      //   userName: data.userName || `${data.firstname} ${data.lastname}`,
-      //   email: data.email,
-      //   phoneNumber: data.mobile || data.phoneNumber,
-      //   role: data.role || "student",
-      //   coursetype: data.coursetype || data.courseName || "",
-      //   courseName: data.courseName || "",
-      //   subjects: data.subjects || [],
-      //   standards: standards.length ? standards : []
-      // };
-
-      // Normalize standards from selectedCourse object and selectedStandard array
       let standards = [];
 
       if (data.selectedCourse && typeof data.selectedCourse === "object") {
@@ -86,19 +60,23 @@ const LoginPage = () => {
       standards = [...new Set(standards)]; // remove duplicates
 
       // const currentUser = {
-      //   userName: data.userName || `${data.firstname} ${data.lastname}`,
+      //   userId: data.userId,
+      //   // userName: data.userName || `${data.firstname} ${data.lastname}`,
+      //   userName: data.userName || `${data.firstName || data.firstname || ""} ${data.lastName || data.lastname || ""}`.trim(),
       //   email: data.email,
       //   phoneNumber: data.mobile || data.phoneNumber,
       //   role: data.role || "student",
       //   coursetype: data.coursetype || data.courseName || "",
       //   courseName: data.courseName || "",
       //   subjects: data.subjects || [],
-      //   selectedCourse: data.selectedCourse || {},  // ✅ keep the object for frontend usage
-      //   standards: standards.length ? standards : []  // ✅ flattened array for UI
+      //   selectedCourse: data.selectedCourse || {},
+      //   standards: data.standards || []
       // };
 
       const currentUser = {
-        userName: data.userName || `${data.firstname} ${data.lastname}`,
+        _id: data.userId || data.id || "",   // ✅ store MongoDB id for NeetLearn
+        userId: data.userId || data.id || "", // keep both for safety
+        userName: data.userName || `${data.firstName || data.firstname || ""} ${data.lastName || data.lastname || ""}`.trim(),
         email: data.email,
         phoneNumber: data.mobile || data.phoneNumber,
         role: data.role || "student",
@@ -108,6 +86,7 @@ const LoginPage = () => {
         selectedCourse: data.selectedCourse || {},
         standards: data.standards || []
       };
+
 
 
       localStorage.setItem("currentUser", JSON.stringify(currentUser));

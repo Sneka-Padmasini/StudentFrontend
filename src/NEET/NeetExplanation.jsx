@@ -110,16 +110,38 @@ const NeetExplanation = ({
     if (onBack) onBack();
   };
 
+  // useEffect(() => {
+  //   const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
+  //   const stored = localStorage.getItem(`neet-completed-${userId}-${subtopicTitle}`);
+  //   setIsComplete(stored === "true");
+  // }, [subtopicTitle]);
+
+
+
+  // const handleMarkComplete = () => {
+  //   setIsComplete(true);
+  //   const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
+  //   localStorage.setItem(`neet-completed-${userId}-${subtopicTitle}`, "true");
+
+  //   // sessionStorage.setItem(`neet-completed-${subtopicTitle}`, "true");
+  //   if (onMarkComplete) onMarkComplete(); // Remove "explanation" parameter
+  // };
+
   useEffect(() => {
-    const stored = sessionStorage.getItem(`neet-completed-${subtopicTitle}`);
+    const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
+    const course = "NEET";
+    const standard = localStorage.getItem("currentClass");
+    const stored = localStorage.getItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`);
     setIsComplete(stored === "true");
   }, [subtopicTitle]);
 
-
   const handleMarkComplete = () => {
     setIsComplete(true);
-    sessionStorage.setItem(`neet-completed-${subtopicTitle}`, "true");
-    if (onMarkComplete) onMarkComplete(); // Remove "explanation" parameter
+    const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
+    const course = "NEET";
+    const standard = localStorage.getItem("currentClass");
+    localStorage.setItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`, "true");
+    if (onMarkComplete) onMarkComplete();
   };
 
   const parseTextWithFormulas = (texts) => {

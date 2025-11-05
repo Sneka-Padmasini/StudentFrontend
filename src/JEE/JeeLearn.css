@@ -217,3 +217,25 @@
     box-shadow: none;
   }
 }
+
+@media (max-width: 768px) {
+
+  /* Allow topics to grow and scroll naturally */
+  .Jee-container .topics-list {
+    max-height: none;
+    height: auto;
+    overflow-y: visible;
+  }
+
+  /* Ensure nested dropdowns remain visible */
+  .Jee-container .subtopics-list {
+    overflow: visible;
+    max-height: none;
+  }
+
+  /* Make tap area bigger for mobile */
+  .Jee-container .subtopic-title {
+    padding: 10px;
+    font-size: 15px;
+  }
+}
