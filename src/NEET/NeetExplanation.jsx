@@ -110,22 +110,6 @@ const NeetExplanation = ({
     if (onBack) onBack();
   };
 
-  // useEffect(() => {
-  //   const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
-  //   const stored = localStorage.getItem(`neet-completed-${userId}-${subtopicTitle}`);
-  //   setIsComplete(stored === "true");
-  // }, [subtopicTitle]);
-
-
-
-  // const handleMarkComplete = () => {
-  //   setIsComplete(true);
-  //   const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
-  //   localStorage.setItem(`neet-completed-${userId}-${subtopicTitle}`, "true");
-
-  //   // sessionStorage.setItem(`neet-completed-${subtopicTitle}`, "true");
-  //   if (onMarkComplete) onMarkComplete(); // Remove "explanation" parameter
-  // };
 
   useEffect(() => {
     const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
@@ -214,11 +198,46 @@ const NeetExplanation = ({
           ) : (
             <>
 
-              {/* Explanation text supporting formulas + HTML */}
-              <div className="explanation-text">
-                {parseTextWithFormulas(explanation || "No explanation available")}
+
+              {/* Explanation text with voice controls */}
+              <div className="explanation-text-with-controls">
+                <div className="explanation-text">
+                  {parseTextWithFormulas(explanation || "No explanation available")}
+                </div>
+                {!isIntroIframe && (
+                  <div className="voice-controls-container">
+                    <button className="voice-play-button" onClick={handleTogglePlayPause}>
+                      {isSpeaking ? <FaPause /> : <FaPlay />}
+                    </button>
+                    <div className="speed-control">
+                      <input
+                        type="range"
+                        id="rate"
+                        min="0.5"
+                        max="2"
+                        step="0.1"
+                        value={rate}
+                        onChange={(e) => setRate(parseFloat(e.target.value))}
+                      />
+                      <label htmlFor="rate" className="speed-label">{rate.toFixed(1)}x</label>
+                    </div>
+                  </div>
+                )}
               </div>
 
+              {/* Audio File Playback (temporarily disabled) */}
+              {/* <div className="subject-info">
+
+                {audioFileId && audioFileId.length > 0 && (
+                  <div className="audio-files">
+                    {audioFileId.map((id, index) => (
+                      <div key={index} style={{ marginBottom: "8px" }}>
+                        <audio controls src={id}></audio>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div> */}
 
               {/* Display all images */}
               {imageUrls && imageUrls.length > 0 && (
@@ -242,41 +261,7 @@ const NeetExplanation = ({
           )}
         </div>
 
-        <div className="subject-info">
-          {!isIntroIframe && (
-            <div className="voice-controls-wrapper">
-              <button className="voice-play-button" onClick={handleTogglePlayPause}>
-                {isSpeaking ? <FaPause /> : <FaPlay />}
-              </button>
 
-              <div className="rate-control">
-                <label htmlFor="rate">Speech Speed: {rate.toFixed(2)}x</label>
-                <input
-                  type="range"
-                  id="rate"
-                  min="0.25"
-                  max="2"
-                  step="0.05"
-                  value={rate}
-                  onChange={(e) => setRate(parseFloat(e.target.value))}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Audio File Playback (temporarily disabled) */}
-
-          {/* {audioFileId && audioFileId.length > 0 && (
-            <div className="audio-files">
-              {audioFileId.map((id, index) => (
-                <div key={index} style={{ marginBottom: "8px" }}>
-                  <audio controls src={id}></audio>
-                </div>
-              ))}
-            </div>
-          )} */}
-
-        </div>
 
         {/* ✅ AI Generated Video - placed between content and back button */}
         {videoUrl && (
