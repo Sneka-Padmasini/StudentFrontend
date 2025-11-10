@@ -243,139 +243,100 @@ const JeeLearn = () => {
   }, [userId, effectiveStandard]);
 
 
+  const collectAllLessons = (subs) => {
+    if (!Array.isArray(subs)) {
+      return [];
+    }
+    let leaves = [];
+    subs.forEach(sub => {
+      // If it has 'units', it's a folder, so we go deeper
+      if (sub.units && sub.units.length > 0) {
+        leaves = leaves.concat(collectAllLessons(sub.units));
+      }
+      // If it has NO 'units', it's a leaf lesson
+      else {
+        leaves.push(sub);
+      }
+    });
+    return leaves;
+  };
 
-  // const collectAllSubtopics = (subs = []) => subs.flatMap((s) => [s, ...(s.units ? collectAllSubtopics(s.units) : [])]);
-  const collectAllSubtopics = (subs = []) => {
-    if (!Array.isArray(subs)) return [];
-    return subs.flatMap((s) => [s, ...(Array.isArray(s.units) ? collectAllSubtopics(s.units) : [])]);
+
+  // HELPER 2: Finds ALL tests, no matter how deep
+  const collectAllTests = (topic) => {
+    let tests = [];
+
+    // 1. Find TOP-LEVEL test (matches the render logic near line 823)
+    if (topic.test && topic.test.length > 0) {
+      tests.push({ testName: `Assessment - ${topic.test[0].testName}` });
+    }
+
+    // 2. Create a recursive function to find NESTED tests
+    const findNestedTests = (subs) => {
+      if (!Array.isArray(subs)) return;
+
+      subs.forEach(sub => {
+        // If this sub-folder has a test, add it
+        // (matches the SubtopicTree's handleTestClick logic)
+        if (sub.test && sub.test.length > 0) {
+          tests.push({ testName: `Assessment - ${sub.unitName}` });
+        }
+        // Now, ONLY recurse into its children (sub.units)
+        // This prevents double-counting the 'sub' itself
+        findNestedTests(sub.units);
+      });
+    };
+
+    // 3. Start the recursive search for nested tests
+    findNestedTests(topic.units);
+
+    return tests;
   };
 
 
 
-  // const calculateProgress = (topic) => {
-  //   if (!topic?.units && !topic?.test) return 0;
-
-  //   const allSubs = collectAllSubtopics(topic.units || []);
-  //   const topicKey = `${course}_${effectiveStandard}_${subject}_${topic.unitName}`;
-
-  //   const topicProgress = completedSubtopics[topicKey] || {};
-
-  //   // 🧠 Count completed lessons + test if available
-  //   let completedCount = 0;
-
-  //   // Count normal subtopics
-  //   allSubs.forEach((sub) => {
-  //     if (topicProgress[sub.unitName]) completedCount++;
-  //   });
-
-  //   // Count test if it exists and marked complete
-  //   if (topic.test && topic.test.length > 0) {
-  //     const testName = topic.test[0].testName;
-  //     const assessmentKey = `Assessment - ${testName}`;
-  //     if (topicProgress[assessmentKey]) completedCount++;
-  //   }
-
-  //   const totalCount = allSubs.length + (topic.test?.length > 0 ? 1 : 0);
-  //   return totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-  // };
 
   const calculateProgress = (topic) => {
     if (!topic) return 0;
 
-    // 🧠 Collect all nested subtopics
-    const allSubs = collectAllSubtopics(topic.units || []);
-    const topicKey = `${course}_${effectiveStandard}_${subject}_${topic.unitName}`;
+    // Use the JEE course variables
+    const course = "JEE";
+    const standard = effectiveStandard;
+    const subjectName = subject;
+    const topicKey = `${course}_${standard}_${subjectName}_${topic.unitName}`;
     const topicProgress = completedSubtopics[topicKey] || {};
 
+    // 1. Get all leaf lessons and all tests
+    const allLessons = collectAllLessons(topic.units);
+    const allTests = collectAllTests(topic);
+
+    // 2. Calculate Total
+    const totalCount = allLessons.length + allTests.length;
+    if (totalCount === 0) return 0; // Nothing to complete
+
+    // 3. Calculate Completed
     let completedCount = 0;
-    let totalCount = 0;
 
-    // ✅ 1️⃣ Count all normal subtopics
-    // allSubs.forEach((sub) => {
-    //   totalCount++;
-    //   if (topicProgress[sub.unitName]) completedCount++;
-    // });
-    allSubs.forEach((sub) => {
-      totalCount++;
-
-      const cleanName = sub.unitName?.trim().toLowerCase();
-
-      // const found = Object.keys(topicProgress).some((key) => {
-      //   const normalizedKey = key.trim().toLowerCase();
-
-      //   // Flexible match: exact OR partial match
-      //   return (
-      //     normalizedKey === cleanName ||
-      //     normalizedKey.includes(cleanName) ||
-      //     cleanName.includes(normalizedKey)
-      //   );
-      // });
-      const found = Object.keys(topicProgress).some((key) => {
-        const normalizedKey = key.trim().toLowerCase();
-
-        // ✅ super-flexible match
-        return (
-          normalizedKey === cleanName ||
-          normalizedKey.includes(cleanName) ||
-          cleanName.includes(normalizedKey) ||
-          normalizedKey.replace(/\s+/g, "").includes(cleanName.replace(/\s+/g, "")) ||
-          cleanName.replace(/\s+/g, "").includes(normalizedKey.replace(/\s+/g, "")) ||
-          (normalizedKey.startsWith("child") && cleanName.startsWith("child")) ||
-          (normalizedKey.startsWith("sub") && cleanName.startsWith("sub"))
-        );
-      });
-
-
-      if (found) completedCount++;
+    // Count completed lessons
+    allLessons.forEach(lesson => {
+      // Use exact matching
+      if (topicProgress[lesson.unitName] === true) {
+        completedCount++;
+      }
     });
 
+    // Count completed tests
+    allTests.forEach(test => {
+      // Use exact matching
+      if (topicProgress[test.testName] === true) {
+        completedCount++;
+      }
+    });
 
-
-    // ✅ 2️⃣ Include test (special case for JEE)
-    if (topic.test && topic.test.length > 0) {
-      totalCount++; // count the test as one item
-
-      // Sometimes saved key is "Assessment - <testName>" or "Assessment - <topic.unitName>"
-      const testName = topic.test[0].testName || topic.unitName;
-      const possibleKeys = [
-        `Assessment - ${testName}`,
-        `Assessment - ${topic.unitName}`,
-        `Assessment - test`,
-      ];
-
-      // const isTestDone = possibleKeys.some((key) => topicProgress[key]);
-      const isTestDone = Object.keys(topicProgress).some((k) =>
-        possibleKeys.some(
-          (pk) =>
-            k.trim().toLowerCase() === pk.trim().toLowerCase() ||
-            k.trim().toLowerCase().includes(pk.trim().toLowerCase()) ||
-            pk.trim().toLowerCase().includes(k.trim().toLowerCase())
-        )
-      );
-
-
-      if (isTestDone) completedCount++;
-    }
-
-    // ✅ 3️⃣ Return the percentage
-    if (totalCount === 0) return 0;
+    // 4. Return the percentage
     const percent = Math.round((completedCount / totalCount) * 100);
-    // 🔍 🧠 Paste this block right BELOW the percent line
-    if (percent < 100) {
-      console.log(
-        `⚠️ Incomplete keys for ${topic.unitName}:`,
-        allSubs
-          .map((s) => s.unitName)
-          .filter((name) => !topicProgress[name]),
-        "and test key:",
-        Object.keys(topicProgress)
-      );
-    }
-
-    return percent;
+    return percent > 100 ? 100 : percent;
   };
-
-
 
 
   const isTopicCompleted = (topic) => calculateProgress(topic) === 100;
@@ -394,34 +355,142 @@ const JeeLearn = () => {
 
   const markSubtopicComplete = () => {
     if (!selectedSubtopic || expandedTopic === null) return;
+
+    let finalUserId = userId;
+    if (!finalUserId) {
+      const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      finalUserId = storedUser?._id || storedUser?.userId;
+      if (finalUserId) {
+        console.log("🔁 Using determined userId for save:", finalUserId);
+        setUserId(finalUserId);
+      } else {
+        console.warn("⚠️ Cannot save — userId missing completely");
+        return;
+      }
+    }
+
     const topicTitle = fetchedUnits[expandedTopic].unitName;
-    // const subtopicTitle = selectedSubtopic.unitName;
-    const subtopicTitle = selectedSubtopic.unitName.trim().toLowerCase();
+    const subtopicTitle = selectedSubtopic.unitName; // No .toLowerCase()
+    const course = "JEE"; // Use JEE variable
+    const standard = effectiveStandard; // Use JEE variable
+    const subjectName = subject;
+    const topicKey = `${course}_${standard}_${subjectName}_${topicTitle}`;
 
-    const topicKey = `${course}_${effectiveStandard}_${subject}_${topicTitle}`;
-    const localKey = `completedSubtopics_${userId}_${course}_${effectiveStandard}`;
+    console.log("🔵 Marking complete:", { topicKey, subtopicTitle, userId: finalUserId });
 
-    // const topicKey = `${course}_${standard}_${subject}_${topicTitle}`;
-    // const localKey = `completedSubtopics_${userId}_${course}_${standard}`;
+    // --- 1️⃣ Assessment Completion Logic ---
+    if (subtopicTitle.includes("Assessment")) {
+      console.log("🎯 This is a test - marking ONLY this test as completed");
 
-    setCompletedSubtopics((prev) => {
-      const updated = {
-        ...prev,
-        [topicKey]: { ...(prev[topicKey] || {}), [subtopicTitle]: true },
-      };
-      localStorage.setItem(localKey, JSON.stringify(updated));
+      setCompletedSubtopics((prev) => {
+        const topicProgress = prev[topicKey] || {};
+        const updatedProgress = { ...topicProgress };
 
-      if (saveProgressTimer) clearTimeout(saveProgressTimer);
-      saveProgressTimer = setTimeout(() => {
-        // saveProgressToServer(userId, updated, setCompletedSubtopics, course, standard);
-        saveProgressToServer(userId, updated, setCompletedSubtopics, course, effectiveStandard);
+        // Mark ONLY the test as completed
+        updatedProgress[subtopicTitle] = true;
 
-      }, 500);
+        const updated = { ...prev, [topicKey]: updatedProgress };
 
-      return updated;
-    });
+        localStorage.setItem(`completedSubtopics_${finalUserId}_${course}_${standard}`, JSON.stringify(updated));
+
+        if (saveProgressTimer) clearTimeout(saveProgressTimer);
+        saveProgressTimer = setTimeout(() => {
+          saveProgressToServer(finalUserId, updated, setCompletedSubtopics, course, standard);
+          saveProgressTimer = null;
+        }, 500);
+
+        // Check if subject is fully completed
+        setTimeout(() => {
+          if (!fetchedUnits?.length) return;
+
+          const allCompleted = fetchedUnits.every((topic) => {
+            const tKey = `${course}_${standard}_${subjectName}_${topic.unitName}`;
+            const topicProgress = updated[tKey] || {};
+            const allLessons = collectAllLessons(topic.units);
+            const allTests = collectAllTests(topic);
+            const totalCount = allLessons.length + allTests.length;
+            if (totalCount === 0) return true;
+
+            let completedCount = 0;
+            allLessons.forEach(lesson => {
+              if (topicProgress[lesson.unitName] === true) completedCount++;
+            });
+            allTests.forEach(test => {
+              if (topicProgress[test.testName] === true) completedCount++;
+            });
+            return completedCount === totalCount;
+          });
+
+          if (allCompleted) {
+            console.log(`🏁 All topics completed for ${subject}`);
+            const allSubjects = ["Physics", "Chemistry", "Mathematics"]; // Use JEE subjects
+            const existingCompletionData = JSON.parse(localStorage.getItem("subjectCompletion") || "[]");
+            const existingCompletion = Array.isArray(existingCompletionData) ? existingCompletionData : [];
+
+            const mergedCompletion = allSubjects.map((subj) => {
+              const old =
+                existingCompletion.find((s) => s.name === subj) || {
+                  name: subj,
+                  progress: 0,
+                  certified: false,
+                };
+              if (subj === subject) {
+                return { ...old, certified: true, progress: 100 };
+              }
+              return old;
+            });
+
+            const subjectCompletionMap = mergedCompletion.reduce((acc, subj) => {
+              const key = `${course}_${standard}_${subj.name}`;
+              acc[key] = subj.certified ? 100 : subj.progress || 0;
+              return acc;
+            }, {});
+
+            localStorage.setItem("subjectCompletion", JSON.stringify(mergedCompletion));
+            // Call JEE's saveSubjectCompletionToServer
+            saveSubjectCompletionToServer(finalUserId, subjectCompletionMap, updated, course, standard);
+            window.dispatchEvent(new Event("storage"));
+          }
+        }, 500);
+
+        return updated;
+      });
+    }
+
+    // --- 2️⃣ Normal Subtopic Logic ---
+    else {
+      setCompletedSubtopics((prev) => {
+        const topicProgress = prev[topicKey] || {};
+        if (topicProgress[subtopicTitle]) return prev;
+
+        const updated = {
+          ...prev,
+          [topicKey]: {
+            ...topicProgress,
+            [subtopicTitle]: true,
+          },
+        };
+
+        localStorage.setItem(
+          `completedSubtopics_${finalUserId}_${course}_${standard}`,
+          JSON.stringify(updated)
+        );
+
+        localStorage.setItem(
+          `${course}-completed-${finalUserId}-${standard}-${selectedSubtopic.unitName}`,
+          "true"
+        );
+
+        if (saveProgressTimer) clearTimeout(saveProgressTimer);
+        saveProgressTimer = setTimeout(() => {
+          saveProgressToServer(finalUserId, updated, setCompletedSubtopics, course, standard);
+          saveProgressTimer = null;
+        }, 500);
+
+        return updated;
+      });
+    }
   };
-
 
 
   const resetProgress = async (subjectName) => {
