@@ -201,7 +201,7 @@ const JeeExplanation = ({
                 <div className="explanation-text">
                   {parseTextWithFormulas(explanation || "No explanation available")}
                 </div>
-                {!isIntroIframe && (
+                {/* {!isIntroIframe && (
                   <div className="voice-controls-container">
                     <button className="voice-play-button" onClick={handleTogglePlayPause}>
                       {isSpeaking ? <FaPause /> : <FaPlay />}
@@ -219,7 +219,7 @@ const JeeExplanation = ({
                       <label htmlFor="rate" className="speed-label">{rate.toFixed(1)}x</label>
                     </div>
                   </div>
-                )}
+                )} */}
               </div>
 
               {/* Display all images */}

@@ -51,9 +51,10 @@ const PadmasiniChat = ({ subjectName = "" }) => {
 
   return (
     <>
-      <button className="chat-toggle" onClick={() => setChatOpen(true)}>
+      {/* temporary disabled ask padmasini button */}
+      {/* <button className="chat-toggle" onClick={() => setChatOpen(true)}>
         Ask Padmasini 💬
-      </button>
+      </button> */}
 
       {chatOpen && (
         <div className="chat-widget">
@@ -64,18 +65,18 @@ const PadmasiniChat = ({ subjectName = "" }) => {
           </div>
 
           <div className="chat-body">
-       <div className="chat-body-header">
-  <button
-    className="chat-clear"
-    onClick={() => {
-      if (window.confirm("Clear entire chat?")) {
-        setMessages([{ role: "assistant", content: "Hi! How can I help you today?" }]);
-      }
-    }}
-  >
-    🗑️
-  </button>
-</div>
+            <div className="chat-body-header">
+              <button
+                className="chat-clear"
+                onClick={() => {
+                  if (window.confirm("Clear entire chat?")) {
+                    setMessages([{ role: "assistant", content: "Hi! How can I help you today?" }]);
+                  }
+                }}
+              >
+                🗑️
+              </button>
+            </div>
 
 
 

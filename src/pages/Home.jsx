@@ -30,28 +30,7 @@ const Home = () => {
   const [courseType, setCourseType] = useState(null);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const { login, logout } = useUser()
-  // Scroll to top on component load
-  // useEffect(() => {
-  //   //localStorage.clear();
-  //   //localStorage.removeItem("currentUser");
-  //   const storedUser = localStorage.getItem("currentUser");
-  //   if (storedUser) {
-  //     const parsedUser = JSON.parse(storedUser);
-  //     setCurrentUser(parsedUser);
-  //     if (parsedUser.selectedCourse) {
-  //       const courseKeys = Object.keys(parsedUser.selectedCourse);
-  //       setCourseType(courseKeys);
-  //       console.log("User courses:", courseKeys);
-  //     }
-  //     else {
-  //       logout();
-  //       setCurrentUser(null);
-  //     }
-  //   }
-  //   window.scrollTo(0, 0);
-  //   console.log(localStorage.getItem("currentUser"))
 
-  // }, []);
 
 
   useEffect(() => {
@@ -77,9 +56,7 @@ const Home = () => {
 
 
   useEffect(() => {
-    // fetch('http://localhost:3000/checkSession',{
-    // fetch(`https://studentpadmasini.onrender.com/checkSession`, {
-    //  fetch(`https://padmasini-prod-api.padmasini.com/checkSession`, {
+
     fetch(`${API_BASE_URL}/checkSession`, {
       method: "GET",
       credentials: 'include'
@@ -194,53 +171,6 @@ const Home = () => {
             &lt;
           </button>
 
-          {/* <div className="tabs-container" id="tabScroll">
-            {[
-              {
-                courseType: "JEE",
-                title: "JEE Prep Material",
-                range: "JEE Exam",
-                tags: ["Reference", "Advanced", "Textbooks"],
-                img: booksImg
-              },
-              {
-                courseType: "NEET",
-                title: "NEET Ready Papers",
-                range: "NEET Exam",
-                tags: ["Mock Tests", "Practice", "Important"],
-                img: importantImg
-              }
-            ].map((card, index) => {
-              const canShow =
-                !currentUser || // show all if no user
-                (Array.isArray(courseType) && courseType.some(c => c === card.courseType));
-
-              if (!canShow) return null;
-
-              return (
-                <div key={index} className="tab-card updated-card">
-                  <div className="card-header">
-                    <span className="class-range">{card.range}</span>
-                    <h3>{card.title}</h3>
-                  </div>
-                  <div className="tags">
-                    {card.tags.map((tag, i) => (
-                      <span key={i} className="tag">{tag}</span>
-                    ))}
-                  </div>
-                  <img className="card-image" src={card.img} alt={card.title} />
-                  <button
-                    className="explore-btn"
-                    onClick={() => handleLearnMore(card.courseType)}
-                  >
-                    Learn More
-                  </button>
-                </div>
-              );
-            })}
-
-
-          </div> */}
 
           <div className="tabs-container" id="tabScroll">
             {[
@@ -409,12 +339,10 @@ const Home = () => {
       </a> */}
 
       {/* 24/7 AI Bot Label */}
-      <div className="ai-status-label" onClick={toggleChat}>
+      {/* <div className="ai-status-label" onClick={toggleChat}>
         <span className="ai-icon">🤖</span>
         <span className="ai-text">I'm online 24/7</span>
       </div>
-
-      {/* Chat Window */}
       {isChatOpen && (
         <div className="chat-window">
           <div className="chat-header">
@@ -425,7 +353,6 @@ const Home = () => {
             <div className="chat-intro">
               <p>Hi! I'm your AI assistant. How can I help you today?</p>
             </div>
-            {/* Chat Messages */}
             <div className="messages">
               {messages.map((message, index) => (
                 <div key={index} className={`message ${message.sender}`}>
@@ -444,7 +371,7 @@ const Home = () => {
             <button onClick={handleSendMessage}>Send</button>
           </div>
         </div>
-      )}
+      )} */}
 
     </div>
   );
