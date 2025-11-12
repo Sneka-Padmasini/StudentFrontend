@@ -5,7 +5,7 @@ import katex from "katex";
 import parse from "html-react-parser";
 import "katex/dist/katex.min.css";
 
-const JeeQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) => {
+const JeeQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isAlreadyComplete }) => {
   const [questions, setQuestions] = useState([]);
   const [userAnswers, setUserAnswers] = useState([]);
   const [submitted, setSubmitted] = useState(false);
@@ -13,7 +13,8 @@ const JeeQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =>
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(1200);
   const [hasStarted, setHasStarted] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
+  // const [isComplete, setIsComplete] = useState(false);
+  const [isComplete, setIsComplete] = useState(isAlreadyComplete);
   const [showResultPopup, setShowResultPopup] = useState(false);
 
   // Initialize constants for clarity
@@ -64,13 +65,10 @@ const JeeQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =>
     });
   };
 
-  // ✅ Check completion with new structured key
+
   useEffect(() => {
-    const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
-    const isDone =
-      localStorage.getItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`) === "true";
-    if (isDone) setIsComplete(true);
-  }, [subtopicTitle]);
+    setIsComplete(isAlreadyComplete);
+  }, [isAlreadyComplete, subtopicTitle]);
 
   const handleOptionChange = (selected) => {
     const updatedAnswers = [...userAnswers];
@@ -94,8 +92,6 @@ const JeeQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =>
     // ✅ Automatically mark as complete on 100%
     if (percentage === "100.00") {
       console.log("🎯 Perfect score! Marking as complete...");
-      const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
-      localStorage.setItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`, "true");
       setIsComplete(true);
 
       if (onMarkComplete) onMarkComplete();
@@ -106,9 +102,6 @@ const JeeQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =>
 
   const handleMarkComplete = () => {
     console.log("🔄 Manually marking JEE test as complete");
-    const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
-    localStorage.setItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`, "true");
-
     setIsComplete(true);
 
     if (onMarkComplete) onMarkComplete();

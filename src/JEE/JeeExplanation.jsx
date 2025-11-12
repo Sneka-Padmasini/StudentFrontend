@@ -13,14 +13,15 @@ const JeeExplanation = ({
   imageUrls = [],
   videoUrl = '',
   onBack,
-  onMarkComplete
+  onMarkComplete,
+  isAlreadyComplete
 }) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voice, setVoice] = useState(null);
   const [rate, setRate] = useState(1);
   const [highlightedRange, setHighlightedRange] = useState({ start: 0, end: 0 });
-  const [isComplete, setIsComplete] = useState(false);
-
+  // const [isComplete, setIsComplete] = useState(false);
+  const [isComplete, setIsComplete] = useState(isAlreadyComplete);
   const synth = window.speechSynthesis;
   const utteranceRef = useRef(null);
   const voicesLoadedRef = useRef(false);
@@ -72,18 +73,15 @@ const JeeExplanation = ({
     utteranceRef.current = null;
   }, [subtopicTitle]);
 
+
   // ✅ Load completion state for JEE (per course + standard)
   useEffect(() => {
-    const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
-    const stored = localStorage.getItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`);
-    setIsComplete(stored === "true");
-  }, [subtopicTitle, course, standard]);
+    setIsComplete(isAlreadyComplete);
+  }, [isAlreadyComplete, subtopicTitle]);
 
   // ✅ Handle marking subtopic as complete (same structure as NEET)
   const handleMarkComplete = () => {
     setIsComplete(true);
-    const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
-    localStorage.setItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`, "true");
     if (onMarkComplete) onMarkComplete();
   };
 

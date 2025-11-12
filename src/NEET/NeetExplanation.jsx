@@ -13,13 +13,15 @@ const NeetExplanation = ({
   imageUrls = [],
   videoUrl = '',
   onBack,
-  onMarkComplete
+  onMarkComplete,
+  isAlreadyComplete
 }) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voice, setVoice] = useState(null);
   const [rate, setRate] = useState(1);
   const [highlightedRange, setHighlightedRange] = useState({ start: 0, end: 0 });
-  const [isComplete, setIsComplete] = useState(false);
+  // const [isComplete, setIsComplete] = useState(false);
+  const [isComplete, setIsComplete] = useState(isAlreadyComplete);
 
   const synth = window.speechSynthesis;
   const utteranceRef = useRef(null);
@@ -112,19 +114,11 @@ const NeetExplanation = ({
 
 
   useEffect(() => {
-    const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
-    const course = "NEET";
-    const standard = localStorage.getItem("currentClass");
-    const stored = localStorage.getItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`);
-    setIsComplete(stored === "true");
-  }, [subtopicTitle]);
+    setIsComplete(isAlreadyComplete);
+  }, [isAlreadyComplete, subtopicTitle]); // Syncs when the prop or subtopic changes
 
   const handleMarkComplete = () => {
     setIsComplete(true);
-    const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
-    const course = "NEET";
-    const standard = localStorage.getItem("currentClass");
-    localStorage.setItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`, "true");
     if (onMarkComplete) onMarkComplete();
   };
 
@@ -223,6 +217,7 @@ const NeetExplanation = ({
                     </div>
                   </div>
                 )} */}
+
               </div>
 
               {/* Audio File Playback (temporarily disabled) */}

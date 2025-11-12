@@ -676,10 +676,10 @@ const NeetLearn = () => {
           JSON.stringify(updated)
         );
 
-        localStorage.setItem(
-          `${course}-completed-${finalUserId}-${standard}-${selectedSubtopic.unitName}`,
-          "true"
-        );
+        // localStorage.setItem(
+        //   `${course}-completed-${finalUserId}-${standard}-${selectedSubtopic.unitName}`,
+        //   "true"
+        // );
 
         if (saveProgressTimer) clearTimeout(saveProgressTimer);
         saveProgressTimer = setTimeout(() => {
@@ -856,34 +856,48 @@ const NeetLearn = () => {
       {/* Explanation / Quiz Section */}
       <div className="explanation-container">
         {selectedSubtopic ? (
-          selectedSubtopic.unitName.includes("Assessment") ? (
-            <NeetQuiz
-              topicTitle={fetchedUnits[expandedTopic]?.unitName}
-              subtopicTitle={selectedSubtopic.unitName}
-              test={selectedSubtopic.test || []}
-              onBack={handleBackToTopics}
-              onMarkComplete={markSubtopicComplete}
-            />
-          ) : (
-            <>
+          (() => { // Use IIFE (Immediately Invoked Function Expression) to calculate and return
+            const course = "NEET";
+            const standard = localStorage.getItem("currentClass") || "";
+            const topicTitle = fetchedUnits[expandedTopic]?.unitName;
+            const subtopicTitle = selectedSubtopic.unitName;
+            const topicKey = `${course}_${standard}_${subject}_${topicTitle}`;
 
-              <NeetExplanation
-                topicTitle={fetchedUnits[expandedTopic]?.unitName}
-                subtopicTitle={selectedSubtopic.unitName}
-                subject={subject}
-                explanation={selectedSubtopic.explanation || ""}
-                imageUrls={selectedSubtopic.imageUrls || []}
-                videoUrl={
-                  selectedSubtopic?.videoUrl ||
-                  selectedSubtopic?.video_url ||
-                  selectedSubtopic?.aiVideoUrl ||
-                  ""
-                }
-                onBack={handleBackToTopics}
-                onMarkComplete={markSubtopicComplete}
-              />
-            </>
-          )
+            // This is the SINGLE SOURCE OF TRUTH
+            const isAlreadyComplete = completedSubtopics[topicKey]?.[subtopicTitle] === true;
+
+            if (selectedSubtopic.unitName.includes("Assessment")) {
+              return (
+                <NeetQuiz
+                  topicTitle={fetchedUnits[expandedTopic]?.unitName}
+                  subtopicTitle={selectedSubtopic.unitName}
+                  test={selectedSubtopic.test || []}
+                  onBack={handleBackToTopics}
+                  onMarkComplete={markSubtopicComplete}
+                  isAlreadyComplete={isAlreadyComplete} // 👈 PASS PROP
+                />
+              );
+            } else {
+              return (
+                <NeetExplanation
+                  topicTitle={fetchedUnits[expandedTopic]?.unitName}
+                  subtopicTitle={selectedSubtopic.unitName}
+                  subject={subject}
+                  explanation={selectedSubtopic.explanation || ""}
+                  imageUrls={selectedSubtopic.imageUrls || []}
+                  videoUrl={
+                    selectedSubtopic?.videoUrl ||
+                    selectedSubtopic?.video_url ||
+                    selectedSubtopic?.aiVideoUrl ||
+                    ""
+                  }
+                  onBack={handleBackToTopics}
+                  onMarkComplete={markSubtopicComplete}
+                  isAlreadyComplete={isAlreadyComplete} // 👈 PASS PROP
+                />
+              );
+            }
+          })()
         ) : (
           <div className="no-explanation">
             <h2>
@@ -893,6 +907,7 @@ const NeetLearn = () => {
           </div>
         )}
       </div>
+
       <PadmasiniChat subjectName={subject} />
     </div>
   );

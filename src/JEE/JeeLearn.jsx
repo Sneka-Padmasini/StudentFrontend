@@ -323,8 +323,6 @@ const JeeLearn = () => {
   };
 
 
-
-
   const calculateProgress = (topic) => {
     if (!topic) return 0;
 
@@ -525,10 +523,6 @@ const JeeLearn = () => {
           JSON.stringify(updated)
         );
 
-        localStorage.setItem(
-          `${course}-completed-${finalUserId}-${standard}-${selectedSubtopic.unitName}`,
-          "true"
-        );
 
         if (saveProgressTimer) clearTimeout(saveProgressTimer);
         saveProgressTimer = setTimeout(() => {
@@ -677,9 +671,6 @@ const JeeLearn = () => {
             <button className="back-subjects-btn" onClick={handleBackToSubjects}>
               Back to Subjects
             </button>
-            {/* <button className="back-subjects-btn" onClick={resetProgress}>
-              Reset Progress
-            </button> */}
             <button
               className="back-subjects-btn"
               onClick={() => resetProgress(subject)}
@@ -691,42 +682,56 @@ const JeeLearn = () => {
         </div>
       )}
 
+      {/* Explanation / Quiz Section */}
       <div className="explanation-container">
         {selectedSubtopic ? (
-          selectedSubtopic.unitName.includes("Assessment") ? (
-            <JeeQuiz
-              topicTitle={fetchedUnits[expandedTopic]?.unitName}
-              subtopicTitle={selectedSubtopic.unitName}
-              test={selectedSubtopic.test || []}
-              onBack={() => setShowTopics(true)}
-              onMarkComplete={markSubtopicComplete}
-            />
-          ) : (
-            <JeeExplanation
-              topicTitle={fetchedUnits[expandedTopic]?.unitName}
-              subtopicTitle={selectedSubtopic.unitName}
-              subject={subject}
-              explanation={selectedSubtopic.explanation || ""}
-              imageUrls={selectedSubtopic.imageUrls || []}
-              videoUrl={
-                selectedSubtopic?.videoUrl ||
-                selectedSubtopic?.video_url ||
-                selectedSubtopic?.aiVideoUrl ||
-                ""
-              }
-              onBack={() => setShowTopics(true)}
-              onMarkComplete={markSubtopicComplete}
-            />
-          )
+          (() => { // Use IIFE to calculate completion status
+            const course = "JEE";
+            const standard = effectiveStandard;
+            const topicTitle = fetchedUnits[expandedTopic]?.unitName;
+            const subtopicTitle = selectedSubtopic.unitName;
+            const topicKey = `${course}_${standard}_${subject}_${topicTitle}`;
+
+            // This is the SINGLE SOURCE OF TRUTH
+            const isAlreadyComplete = completedSubtopics[topicKey]?.[subtopicTitle] === true;
+
+            if (selectedSubtopic.unitName.includes("Assessment")) {
+              return (
+                <JeeQuiz
+                  topicTitle={fetchedUnits[expandedTopic]?.unitName}
+                  subtopicTitle={selectedSubtopic.unitName}
+                  test={selectedSubtopic.test || []}
+                  onBack={() => setShowTopics(true)}
+                  onMarkComplete={markSubtopicComplete}
+                  isAlreadyComplete={isAlreadyComplete}
+                />
+              );
+            } else {
+              return (
+                <JeeExplanation
+                  topicTitle={fetchedUnits[expandedTopic]?.unitName}
+                  subtopicTitle={selectedSubtopic.unitName}
+                  subject={subject}
+                  explanation={selectedSubtopic.explanation || ""}
+                  imageUrls={selectedSubtopic.imageUrls || []}
+                  videoUrl={
+                    selectedSubtopic?.videoUrl ||
+                    selectedSubtopic?.video_url ||
+                    selectedSubtopic?.aiVideoUrl ||
+                    ""
+                  }
+                  onBack={() => setShowTopics(true)}
+                  onMarkComplete={markSubtopicComplete}
+                  isAlreadyComplete={isAlreadyComplete}
+                />
+              );
+            }
+          })()
         ) : (
           <div className="no-explanation">
-            {/* <h2>
-              Welcome to {subject} - {standard}
-            </h2> */}
             <h2>
               Welcome to {subject} - {effectiveStandard}
             </h2>
-
             <p>Select a topic and subtopic to begin your learning journey.</p>
           </div>
         )}

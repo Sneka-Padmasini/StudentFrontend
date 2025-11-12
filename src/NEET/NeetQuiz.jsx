@@ -5,7 +5,7 @@ import katex from "katex";
 import parse from "html-react-parser";
 import "katex/dist/katex.min.css";
 
-const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) => {
+const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isAlreadyComplete }) => {
   const [questions, setQuestions] = useState([]);
   const [userAnswers, setUserAnswers] = useState([]);
   const [submitted, setSubmitted] = useState(false);
@@ -13,7 +13,8 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(1200);
   const [hasStarted, setHasStarted] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
+  // const [isComplete, setIsComplete] = useState(false);
+  const [isComplete, setIsComplete] = useState(isAlreadyComplete);
   const [showResultPopup, setShowResultPopup] = useState(false);
 
   useEffect(() => {
@@ -61,20 +62,9 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
   };
 
 
-  // useEffect(() => {
-  //   const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
-  //   const isDone = localStorage.getItem(`neet-completed-${userId}-${subtopicTitle}`) === "true";
-  //   if (isDone) setIsComplete(true);
-  // }, [subtopicTitle]);
-
   useEffect(() => {
-    const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
-    const course = "NEET";
-    const standard = localStorage.getItem("currentClass");
-    const isDone = localStorage.getItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`) === "true";
-    if (isDone) setIsComplete(true);
-  }, [subtopicTitle]);
-
+    setIsComplete(isAlreadyComplete);
+  }, [isAlreadyComplete, subtopicTitle]); // Syncs when the prop or subtopic changes
 
   const handleOptionChange = (selected) => {
     const updatedAnswers = [...userAnswers];
@@ -82,38 +72,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
     setUserAnswers(updatedAnswers);
   };
 
-  // const handleSubmit = () => {
-  //   setSubmitted(true);
-  //   setShowConfirmation(false);
-  //   sessionStorage.setItem(`answers-neet-${subtopicTitle}`, JSON.stringify(userAnswers));
-  //   sessionStorage.setItem(`quizData-neet-${subtopicTitle}`, JSON.stringify(questions));
 
-  //   const score = questions.reduce((acc, q, i) => {
-  //     const correctAnswer = q[`option${Number(q.correctIndex) + 1}`];
-  //     return userAnswers[i] === correctAnswer ? acc + 1 : acc;
-  //   }, 0);
-
-  //   const percentage = ((score / questions.length) * 100).toFixed(2);
-
-
-  //   // AUTOMATICALLY mark as complete if 100% score
-  //   if (percentage === "100.00") {
-  //     console.log("🎯 Perfect score! Marking as complete...");
-  //     // sessionStorage.setItem(`neet-completed-${subtopicTitle}`, "true");
-  //     const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
-  //     // localStorage.setItem(`neet-completed-${userId}-${subtopicTitle}`, "true");
-  //     localStorage.setItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`, "true");
-
-  //     setIsComplete(true);
-
-  //     // IMPORTANT: Call onMarkComplete to update parent progress
-  //     if (onMarkComplete) {
-  //       onMarkComplete();
-  //     }
-  //   }
-
-  //   setShowResultPopup(true);
-  // };
 
   const handleSubmit = () => {
     setSubmitted(true);
@@ -131,10 +90,6 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
     // AUTOMATICALLY mark as complete if 100% score
     if (percentage === "100.00") {
       console.log("🎯 Perfect score! Marking as complete...");
-      const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
-      const course = "NEET";
-      const standard = localStorage.getItem("currentClass");
-      localStorage.setItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`, "true");
 
       setIsComplete(true);
 
@@ -149,10 +104,6 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
 
   const handleMarkComplete = () => {
     console.log("🔄 Manually marking test as complete");
-    const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
-    const course = "NEET";
-    const standard = localStorage.getItem("currentClass");
-    localStorage.setItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`, "true");
 
     setIsComplete(true);
 
@@ -163,22 +114,6 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete }) =
 
     alert("Test marked as complete! Progress updated.");
   };
-  // const handleMarkComplete = () => {
-  //   console.log("🔄 Manually marking test as complete");
-  //   // sessionStorage.setItem(`neet-completed-${subtopicTitle}`, "true");
-  //   const userId = JSON.parse(localStorage.getItem("currentUser") || "{}")?.userId || "guest";
-  //   // localStorage.setItem(`neet-completed-${userId}-${subtopicTitle}`, "true");
-  //   localStorage.setItem(`${course}-completed-${userId}-${standard}-${subtopicTitle}`, "true");
-
-  //   setIsComplete(true);
-
-  //   // IMPORTANT: Call onMarkComplete to update parent progress
-  //   if (onMarkComplete) {
-  //     onMarkComplete();
-  //   }
-
-  //   alert("Test marked as complete! Progress updated.");
-  // };
 
   const handleAutoSubmit = () => {
     setSubmitted(true);
