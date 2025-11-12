@@ -15,22 +15,22 @@ const subjectList = [
 ];
 
 // 🔹 API helpers for saving & loading subject progress
-const saveSubjectCompletionToServer = async (userId, subjectCompletion, course, standard) => {
-  try {
-    await fetch(`${API_BASE_URL}/api/progress/save`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        subjectCompletion,
-        course,
-        standard
-      }),
-    });
-  } catch (err) {
-    console.error("❌ Error saving subject progress:", err);
-  }
-};
+// const saveSubjectCompletionToServer = async (userId, subjectCompletion, course, standard) => {
+//   try {
+//     await fetch(`${API_BASE_URL}/api/progress/save`, {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({
+//         userId,
+//         subjectCompletion,
+//         course,
+//         standard
+//       }),
+//     });
+//   } catch (err) {
+//     console.error("❌ Error saving subject progress:", err);
+//   }
+// };
 
 // const loadSubjectCompletionFromServer = async (userId, setSubjectCompletion) => {
 const loadSubjectCompletionFromServer = async (userId, setSubjectCompletion, course, standard) => {
@@ -58,233 +58,105 @@ const Jee = () => {
   const [selectedClass, setSelectedClass] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [subjectCompletion, setSubjectCompletion] = useState(subjectList);
+  // const [subjectCompletion, setSubjectCompletion] = useState(subjectList);
+  const [subjectCompletion, setSubjectCompletion] = useState({});
   const learningPathRef = useRef(null);
   const { login, logout } = useUser();
 
-  // useEffect(() => {
-  //   const storedUser = JSON.parse(localStorage.getItem("currentUser"));
-  //   if (storedUser) {
-  //     let stdData = storedUser.standards;
+  // JEE.jsx (REPLACE OLD useEffect WITH THESE TWO)
 
-  //     // If standards is empty, try to extract from coursetype or courseName
-  //     if ((!stdData || stdData.length === 0) && storedUser.coursetype) {
-  //       if (storedUser.coursetype.includes("11")) stdData = ["11th"];
-  //       else if (storedUser.coursetype.includes("12")) stdData = ["12th"];
-  //     }
-
-  //     // Handle string
-  //     if (typeof stdData === "string") {
-  //       setStandard(stdData);
-  //       localStorage.setItem("currentClassJee", stdData);
-  //     }
-  //     // Handle array
-  //     else if (Array.isArray(stdData)) {
-  //       if (stdData.length === 1) {
-  //         setStandard(stdData[0]);
-  //         localStorage.setItem("currentClassJee", stdData[0]);
-  //       } else {
-  //         setStandard(stdData);
-  //         const savedClass = localStorage.getItem("currentClassJee");
-  //         if (savedClass) setSelectedClass(savedClass);
-  //       }
-  //     }
-
-  //     console.log("🧠 Detected Standards:", stdData);
-  //     console.log("📚 Final Standard State:", standard);
-
-  //     const formatDate = (dateStr) => {
-  //       const date = new Date(dateStr);
-  //       return date.toLocaleDateString("en-GB", {
-  //         day: "2-digit",
-  //         month: "short",
-  //         year: "numeric",
-  //       });
-  //     };
-
-  //     if (storedUser.startDate) setStartDate(formatDate(storedUser.startDate));
-  //     if (storedUser.endDate) setEndDate(formatDate(storedUser.endDate));
-  //   }
-
-  //   const userId = storedUser?.id || storedUser?._id;
-  //   if (userId) {
-  //     const course = "JEE";
-  //     const currentStandard = selectedClass || standard;
-  //     loadSubjectCompletionFromServer(userId, setSubjectCompletion, course, currentStandard);
-  //   } else {
-  //     // Fallback only if backend data not found
-  //     const savedLocal = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_${currentStandard}`) || "[]");
-  //     if (savedLocal.length > 0) {
-  //       setSubjectCompletion(savedLocal);
-  //     } else {
-  //       setSubjectCompletion(subjectList);
-  //       // localStorage.setItem("jeeSubjectCompletion", JSON.stringify(subjectList));
-  //       localStorage.setItem(`subjectCompletion_${course}_${currentStandard}`, JSON.stringify(subjectList));
-  //     }
-  //     window.dispatchEvent(new Event("storage")); // force progress refresh
-  //   }
-  // }, []);
-
-  // useEffect(() => {
-  //   const storedUser = JSON.parse(localStorage.getItem("currentUser"));
-  //   const course = "JEE"; // ✅ move these two to the top
-  //   const currentStandard = selectedClass || standard;
-
-  //   if (storedUser) {
-  //     let stdData = storedUser.standards;
-  //     if ((!stdData || stdData.length === 0) && storedUser.coursetype) {
-  //       if (storedUser.coursetype.includes("11")) stdData = ["11th"];
-  //       else if (storedUser.coursetype.includes("12")) stdData = ["12th"];
-  //     }
-
-  //     if (typeof stdData === "string") {
-  //       setStandard(stdData);
-  //       localStorage.setItem("currentClassJee", stdData);
-  //     } else if (Array.isArray(stdData)) {
-  //       if (stdData.length === 1) {
-  //         setStandard(stdData[0]);
-  //         localStorage.setItem("currentClassJee", stdData[0]);
-  //       } else {
-  //         setStandard(stdData);
-  //         const savedClass = localStorage.getItem("currentClassJee");
-  //         if (savedClass) setSelectedClass(savedClass);
-  //       }
-  //     }
-
-  //     console.log("🧠 Detected Standards:", stdData);
-  //     console.log("📚 Final Standard State:", standard);
-
-  //     const formatDate = (dateStr) => {
-  //       const date = new Date(dateStr);
-  //       return date.toLocaleDateString("en-GB", {
-  //         day: "2-digit",
-  //         month: "short",
-  //         year: "numeric",
-  //       });
-  //     };
-
-  //     if (storedUser.startDate) setStartDate(formatDate(storedUser.startDate));
-  //     if (storedUser.endDate) setEndDate(formatDate(storedUser.endDate));
-  //   }
-
-  //   // ✅ Safe to use here
-  //   const userId = storedUser?.id || storedUser?._id;
-  //   if (userId) {
-  //     // ✅ Use selectedClass if available, else fallback to single string standard
-  //     const activeStandard = Array.isArray(standard)
-  //       ? selectedClass || standard[0] // use one at a time, not full array
-  //       : standard;
-
-  //     loadSubjectCompletionFromServer(userId, setSubjectCompletion, course, activeStandard);
-  //   } else {
-  //     const activeStandard = Array.isArray(standard)
-  //       ? selectedClass || standard[0]
-  //       : standard;
-
-  //     const savedLocal = JSON.parse(
-  //       localStorage.getItem(`subjectCompletion_${course}_${activeStandard}`) || "[]"
-  //     );
-  //     if (savedLocal.length > 0) {
-  //       setSubjectCompletion(savedLocal);
-  //     } else {
-  //       setSubjectCompletion(subjectList);
-  //       localStorage.setItem(
-  //         `subjectCompletion_${course}_${activeStandard}`,
-  //         JSON.stringify(subjectList)
-  //       );
-  //     }
-  //     window.dispatchEvent(new Event("storage"));
-  //   }
-
-  // }, [selectedClass, standard]); // ✅ add dependencies
-
+  // ✅ FIX: This useEffect ONLY sets up the standard and dates
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("currentUser"));
-    const course = "JEE";
+    if (storedUser) {
+      let stdData = storedUser.standards;
 
-    if (!storedUser) return;
+      if ((!stdData || stdData.length === 0) && storedUser.coursetype) {
+        if (storedUser.coursetype.includes("11")) stdData = ["11th"];
+        else if (storedUser.coursetype.includes("12")) stdData = ["12th"];
+      }
 
-    let stdData = storedUser.standards;
-    if ((!stdData || stdData.length === 0) && storedUser.coursetype) {
-      if (storedUser.coursetype.includes("11")) stdData = ["11th"];
-      else if (storedUser.coursetype.includes("12")) stdData = ["12th"];
-    }
+      let currentClass = localStorage.getItem("currentClassJee"); // Use Jee key
 
-    // 🔹 Save detected standards
-    if (typeof stdData === "string") {
-      setStandard(stdData);
-      localStorage.setItem("currentClassJee", stdData);
-    } else if (Array.isArray(stdData)) {
-      if (stdData.length === 1) {
-        setStandard(stdData[0]);
-        localStorage.setItem("currentClassJee", stdData[0]);
-      } else {
+      if (typeof stdData === "string") {
         setStandard(stdData);
-        const savedClass = localStorage.getItem("currentClassJee");
-        if (savedClass) setSelectedClass(savedClass);
+        if (!currentClass) {
+          localStorage.setItem("currentClassJee", stdData); // Use Jee key
+          currentClass = stdData;
+        }
+      } else if (Array.isArray(stdData)) {
+        setStandard(stdData);
+        if (stdData.length === 1) {
+          if (!currentClass) {
+            localStorage.setItem("currentClassJee", stdData[0]); // Use Jee key
+            currentClass = stdData[0];
+          }
+        }
       }
+
+      if (currentClass) {
+        setSelectedClass(currentClass);
+      }
+
+      console.log("🧠 Detected Standards:", stdData);
+      console.log("📚 Initial Selected Class:", currentClass);
+
+      const formatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+      };
+
+      if (storedUser.startDate) setStartDate(formatDate(storedUser.startDate));
+      if (storedUser.endDate) setEndDate(formatDate(storedUser.endDate));
     }
+  }, []); // ✅ FIX: Run only ONCE on mount
 
-    console.log("🧠 Detected Standards:", stdData);
 
-    // ✅ Pick only ONE active standard (not the entire array)
-    const activeStandard = Array.isArray(stdData)
-      ? selectedClass || stdData[0]
-      : stdData;
-
-    console.log("📚 Final Active Standard:", activeStandard);
-
-    // ✅ Format batch dates safely
-    const formatDate = (dateStr) => {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
-    };
-
-    if (storedUser.startDate) setStartDate(formatDate(storedUser.startDate));
-    if (storedUser.endDate) setEndDate(formatDate(storedUser.endDate));
-
-    // ✅ Load progress only once per valid standard
+  // ✅ FIX: NEW useEffect to load progress when user/standard/class changes
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("currentUser"));
     const userId = storedUser?.id || storedUser?._id;
-    if (userId && activeStandard) {
-      loadSubjectCompletionFromServer(userId, setSubjectCompletion, course, activeStandard);
-    } else if (activeStandard) {
-      const savedLocal = JSON.parse(
-        localStorage.getItem(`subjectCompletion_${course}_${activeStandard}`) || "[]"
-      );
-      if (savedLocal.length > 0) {
-        setSubjectCompletion(savedLocal);
-      } else {
-        setSubjectCompletion(subjectList);
-        localStorage.setItem(
-          `subjectCompletion_${course}_${activeStandard}`,
-          JSON.stringify(subjectList)
-        );
-      }
+    const course = "JEE"; // Use JEE course
+
+    const currentStandard = selectedClass;
+
+    if (!currentStandard) {
+      console.log("📚 No class selected, clearing progress.");
+      setSubjectCompletion({});
+      return;
     }
 
-    // ✅ Refresh UI progress safely
-    window.dispatchEvent(new Event("storage"));
-  }, [selectedClass]); // 🔥 only depend on selectedClass (NOT standard)
+    console.log("📚 Loading progress for standard:", currentStandard);
+
+    if (userId) {
+      loadSubjectCompletionFromServer(userId, setSubjectCompletion, course, currentStandard);
+    } else {
+      const savedLocal = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_${currentStandard}`) || "{}"); // Default to {}
+      setSubjectCompletion(savedLocal);
+      window.dispatchEvent(new Event("storage"));
+    }
+
+  }, [selectedClass]); // Run when selectedClass changes
 
 
-  // 🔁 Listen for updates to localStorage (when user finishes a subject in JeeLearn)
   useEffect(() => {
     const handleStorageChange = () => {
-      // const updatedCompletion = JSON.parse(localStorage.getItem("jeeSubjectCompletion") || "[]");
       const course = "JEE";
       const currentStandard = selectedClass || standard;
-      const updatedCompletion = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_${currentStandard}`) || "[]");
 
+      const updatedCompletion = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_${currentStandard}`) || "{}"); // ✅ FIX: Default to {}
+
+      console.log("Storage change detected, updating subjectCompletion:", updatedCompletion);
       setSubjectCompletion(updatedCompletion);
     };
 
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
+  }, [selectedClass, standard]); // ✅ FIX: Add dependencies
 
   const handleScrollToLearningPath = () => {
     if (learningPathRef.current) {
@@ -317,38 +189,32 @@ const Jee = () => {
       }).catch(console.error)
   }, [])
 
+
   const calculateProgress = () => {
-    // ✅ Convert object to array safely
-    let data = subjectCompletion;
+    // ✅ FIX: This function now calculates progress based on the
+    // 'normalizedSubjects' array, which is the true source of what the user sees.
+    const totalSubjects = normalizedSubjects.length;
+    if (totalSubjects === 0) return 0;
 
-    if (!Array.isArray(data)) {
-      data = Object.keys(data || {}).map((key) => ({
-        name: key,
-        certified:
-          data[key] === 100 ||
-          data[key] === true ||
-          data[key] === "completed",
-      }));
-    }
+    const completedSubjects = normalizedSubjects.filter((s) => s.certified).length;
 
-    const completed = data.filter((s) => s.certified).length;
-    return data.length === 0 ? 0 : (completed / data.length) * 100;
+    return (completedSubjects / totalSubjects) * 100;
   };
 
-  // ✅ Improved normalization with fuzzy matching
+  // ✅ Improved normalization using exact keys
   const normalizedSubjects = subjectList.map((sub) => {
-    // try exact match
-    const exactValue = subjectCompletion?.[sub.name];
-    // try partial match (for keys like "Introduction to Physics...")
-    const partialKey = Object.keys(subjectCompletion || {}).find((key) =>
-      key.toLowerCase().includes(sub.name.toLowerCase())
-    );
-    const partialValue = partialKey ? subjectCompletion[partialKey] : null;
+    const course = "JEE";
+    // Get the standard that is *currently* selected
+    const currentStandard = selectedClass || (Array.isArray(standard) ? "" : standard);
 
-    const progressValue = exactValue ?? partialValue;
+    // Build the exact key to look for, e.g., "JEE_11th_Physics"
+    const subjectKey = `${course}_${currentStandard}_${sub.name}`;
+
+    // Get the value (0 or 100) from the state
+    const progressValue = subjectCompletion?.[subjectKey];
 
     return {
-      ...sub,
+      ...sub, // This keeps the name: "Physics", image: ...
       certified:
         progressValue === 100 ||
         progressValue === true ||
@@ -359,61 +225,6 @@ const Jee = () => {
   const progressPercentage = calculateProgress();
   const safeProgress = isNaN(progressPercentage) ? 0 : progressPercentage;
 
-  const handleSubjectCompletion = (subjectName) => {
-    const updatedSubjects = subjectCompletion.map((subject) =>
-      subject.name === subjectName ? { ...subject, certified: true } : subject
-    );
-    setSubjectCompletion(updatedSubjects);
-    // localStorage.setItem("jeeSubjectCompletion", JSON.stringify(updatedSubjects));
-    const course = "JEE";
-    // const currentStandard = selectedClass || standard;
-    // localStorage.setItem(`subjectCompletion_${course}_${currentStandard}`, JSON.stringify(updatedSubjects));
-    // const storedUser = JSON.parse(localStorage.getItem("currentUser"));
-    // if (storedUser?.id || storedUser?._id) {
-    //   const userId = storedUser.id || storedUser._id;
-    //   // saveSubjectCompletionToServer(userId, updatedSubjects);
-    //   saveSubjectCompletionToServer(userId, updatedSubjects, course, currentStandard);
-    // }
-    const activeStandard = Array.isArray(standard)
-      ? selectedClass || standard[0]
-      : standard;
-
-    localStorage.setItem(`subjectCompletion_${course}_${activeStandard}`, JSON.stringify(updatedSubjects));
-    const storedUser = JSON.parse(localStorage.getItem("currentUser"));
-    if (storedUser?.id || storedUser?._id) {
-      const userId = storedUser.id || storedUser._id;
-      saveSubjectCompletionToServer(userId, updatedSubjects, course, activeStandard);
-    }
-
-  };
-
-  // useEffect(() => {
-  //   // const completedSubtopics = JSON.parse(localStorage.getItem("jeeCompletedSubtopics"));
-  //   const course = "JEE";
-  //   const currentStandard = selectedClass || standard;
-  //   const storedUser = JSON.parse(localStorage.getItem("currentUser"));
-  //   const userId = storedUser?.id || storedUser?._id;
-  //   const completedSubtopics = JSON.parse(localStorage.getItem(`completedSubtopics_${userId}_${course}_${currentStandard}`) || "{}");
-
-  //   if (
-  //     completedSubtopics &&
-  //     Object.keys(completedSubtopics["UNIT AND MEASURE"] || {}).length === 6
-  //   ) {
-  //     handleSubjectCompletion("Physics");
-  //   }
-  // }, []);
-
-  useEffect(() => {
-    const course = "JEE";
-    const currentStandard = selectedClass || standard;
-    const storedUser = JSON.parse(localStorage.getItem("currentUser"));
-    const userId = storedUser?.id || storedUser?._id;
-    const completedSubtopics = JSON.parse(localStorage.getItem(`completedSubtopics_${userId}_${course}_${currentStandard}`) || "{}");
-
-    if (completedSubtopics && Object.keys(completedSubtopics["UNIT AND MEASURE"] || {}).length === 6) {
-      handleSubjectCompletion("Physics");
-    }
-  }, [selectedClass, standard]); // ✅ runs when class/standard changes
 
 
   const handleClassChange = (e) => {

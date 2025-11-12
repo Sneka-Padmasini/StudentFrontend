@@ -59,8 +59,34 @@ const saveProgressToServer = async (userId, completedSubtopics, setCompletedSubt
 };
 
 // ✅ Include course + standard
-const saveSubjectCompletionToServer = async (userId, subjectCompletionMap, completedSubtopics, course, standard) => {
-  if (!userId || userId === "guest") return;
+const saveSubjectCompletionToServer = async (userId, subjectCompletionMap, completedSubtopics) => {
+  if (!userId || userId === "guest") {
+    console.warn("⚠️ Skipping subject sync — userId not ready");
+    return;
+  }
+
+  // ✅ FIX: Get course and standard to send to the backend
+  const course = "JEE"; // Hardcoded for this file
+  const standard = localStorage.getItem("currentClassJee") || "";
+
+  if (!standard) {
+    console.error("❌ Cannot save subject completion, standard is missing from localStorage");
+    return;
+  }
+
+  // We need to sanitize subtopics before sending
+  const sanitizeKeys = (obj) => {
+    if (typeof obj !== "object" || obj === null) return obj;
+    const sanitized = {};
+    for (const [key, value] of Object.entries(obj)) {
+      const safeKey = key.replace(/\./g, "__dot__");
+      sanitized[safeKey] = sanitizeKeys(value);
+    }
+    return sanitized;
+  };
+
+  const safeSubtopics = sanitizeKeys(completedSubtopics);
+
   try {
     const response = await fetch(`${API_BASE_URL}/api/progress/save`, {
       method: "POST",
@@ -68,13 +94,17 @@ const saveSubjectCompletionToServer = async (userId, subjectCompletionMap, compl
       body: JSON.stringify({
         userId,
         subjectCompletion: subjectCompletionMap,
-        completedSubtopics: {},
-        course,
-        standard,
+        completedSubtopics: safeSubtopics, // ✅ FIX: Send the actual subtopics
+        course,                           // ✅ FIX: Send course
+        standard                          // ✅ FIX: Send standard
       }),
     });
-    if (!response.ok) console.error("❌ Subject completion sync failed:", await response.text());
-    else console.log(`✅ ${course} subject completion synced (${standard})`);
+
+    if (!response.ok) {
+      console.error("❌ Backend rejected subject completion sync:", await response.text());
+    } else {
+      console.log("✅ Subject completion synced successfully for", userId);
+    }
   } catch (err) {
     console.error("❌ Error syncing subject completion:", err);
   }
@@ -175,7 +205,6 @@ const JeeLearn = () => {
     }
   }, []);
 
-  // do changes here
 
   // 🧠 1️⃣ Fetch JEE subject units (like NEET)
   useEffect(() => {
@@ -353,6 +382,71 @@ const JeeLearn = () => {
     setExpandedTopic(index);
   };
 
+  // 🚀 NEW HELPER FUNCTION
+  const checkAndSaveSubjectCompletion = (userId, fetchedUnits, subject, course, standard, currentProgressData) => {
+    if (!fetchedUnits?.length || !userId) {
+      console.log("Skipping subject completion check (no units or user)");
+      return;
+    }
+
+    // Use a slight delay to ensure 'currentProgressData' (the new state) is processed
+    setTimeout(() => {
+      const allCompleted = fetchedUnits.every((topic) => {
+        const tKey = `${course}_${standard}_${subject}_${topic.unitName}`;
+
+        // Use the 'currentProgressData' map, which has the most current data
+        const topicProgress = currentProgressData[tKey] || {};
+
+        const allLessons = collectAllLessons(topic.units);
+        const allTests = collectAllTests(topic);
+
+        const totalCount = allLessons.length + allTests.length;
+        if (totalCount === 0) return true; // An empty topic is always "complete"
+
+        let completedCount = 0;
+        allLessons.forEach(lesson => {
+          if (topicProgress[lesson.unitName] === true) completedCount++;
+        });
+        allTests.forEach(test => {
+          if (topicProgress[test.testName] === true) completedCount++;
+        });
+
+        return completedCount === totalCount;
+      });
+
+      if (allCompleted) {
+        console.log(`🏁 All topics completed for ${subject} (${course} ${standard})`);
+
+        // ✅ FIX: Read/write from the CORRECT course-specific localStorage key
+        const localKey = `subjectCompletion_${course}_${standard}`;
+
+        // ✅ FIX: Default to an object {}, not an array
+        const existingCompletionData = JSON.parse(localStorage.getItem(localKey) || "{}");
+
+        const subjectKey = `${course}_${standard}_${subject}`;
+
+        const updatedCompletionMap = {
+          ...existingCompletionData,
+          [subjectKey]: 100 // Mark the current subject as 100
+        };
+
+        // ✅ FIX: Save to the CORRECT course-specific localStorage key
+        localStorage.setItem(localKey, JSON.stringify(updatedCompletionMap));
+
+        // Send to server
+        // We pass 'currentProgressData' as the subtopics to ensure backend has latest
+        saveSubjectCompletionToServer(userId, updatedCompletionMap, currentProgressData);
+
+        // Notify the JEE.jsx page
+        window.dispatchEvent(new Event("storage"));
+      } else {
+        console.log(`⏳ Subject ${subject} not yet complete.`);
+      }
+    }, 500); // 500ms delay
+  };
+
+  // JeeLearn.jsx (REPLACE THIS FUNCTION)
+
   const markSubtopicComplete = () => {
     if (!selectedSubtopic || expandedTopic === null) return;
 
@@ -370,13 +464,15 @@ const JeeLearn = () => {
     }
 
     const topicTitle = fetchedUnits[expandedTopic].unitName;
-    const subtopicTitle = selectedSubtopic.unitName; // No .toLowerCase()
+    const subtopicTitle = selectedSubtopic.unitName;
     const course = "JEE"; // Use JEE variable
     const standard = effectiveStandard; // Use JEE variable
     const subjectName = subject;
     const topicKey = `${course}_${standard}_${subjectName}_${topicTitle}`;
 
     console.log("🔵 Marking complete:", { topicKey, subtopicTitle, userId: finalUserId });
+
+    let updatedProgressData; // 👈 To capture the new state
 
     // --- 1️⃣ Assessment Completion Logic ---
     if (subtopicTitle.includes("Assessment")) {
@@ -385,9 +481,7 @@ const JeeLearn = () => {
       setCompletedSubtopics((prev) => {
         const topicProgress = prev[topicKey] || {};
         const updatedProgress = { ...topicProgress };
-
-        // Mark ONLY the test as completed
-        updatedProgress[subtopicTitle] = true;
+        updatedProgress[subtopicTitle] = true; // Mark ONLY the test
 
         const updated = { ...prev, [topicKey]: updatedProgress };
 
@@ -399,69 +493,24 @@ const JeeLearn = () => {
           saveProgressTimer = null;
         }, 500);
 
-        // Check if subject is fully completed
-        setTimeout(() => {
-          if (!fetchedUnits?.length) return;
-
-          const allCompleted = fetchedUnits.every((topic) => {
-            const tKey = `${course}_${standard}_${subjectName}_${topic.unitName}`;
-            const topicProgress = updated[tKey] || {};
-            const allLessons = collectAllLessons(topic.units);
-            const allTests = collectAllTests(topic);
-            const totalCount = allLessons.length + allTests.length;
-            if (totalCount === 0) return true;
-
-            let completedCount = 0;
-            allLessons.forEach(lesson => {
-              if (topicProgress[lesson.unitName] === true) completedCount++;
-            });
-            allTests.forEach(test => {
-              if (topicProgress[test.testName] === true) completedCount++;
-            });
-            return completedCount === totalCount;
-          });
-
-          if (allCompleted) {
-            console.log(`🏁 All topics completed for ${subject}`);
-            const allSubjects = ["Physics", "Chemistry", "Mathematics"]; // Use JEE subjects
-            const existingCompletionData = JSON.parse(localStorage.getItem("subjectCompletion") || "[]");
-            const existingCompletion = Array.isArray(existingCompletionData) ? existingCompletionData : [];
-
-            const mergedCompletion = allSubjects.map((subj) => {
-              const old =
-                existingCompletion.find((s) => s.name === subj) || {
-                  name: subj,
-                  progress: 0,
-                  certified: false,
-                };
-              if (subj === subject) {
-                return { ...old, certified: true, progress: 100 };
-              }
-              return old;
-            });
-
-            const subjectCompletionMap = mergedCompletion.reduce((acc, subj) => {
-              const key = `${course}_${standard}_${subj.name}`;
-              acc[key] = subj.certified ? 100 : subj.progress || 0;
-              return acc;
-            }, {});
-
-            localStorage.setItem("subjectCompletion", JSON.stringify(mergedCompletion));
-            // Call JEE's saveSubjectCompletionToServer
-            saveSubjectCompletionToServer(finalUserId, subjectCompletionMap, updated, course, standard);
-            window.dispatchEvent(new Event("storage"));
-          }
-        }, 500);
-
+        updatedProgressData = updated; // 👈 Capture the new state
         return updated;
       });
+
+      // ✅ CALL THE CHECKER FUNCTION
+      if (updatedProgressData) {
+        checkAndSaveSubjectCompletion(finalUserId, fetchedUnits, subject, course, standard, updatedProgressData);
+      }
     }
 
     // --- 2️⃣ Normal Subtopic Logic ---
     else {
       setCompletedSubtopics((prev) => {
         const topicProgress = prev[topicKey] || {};
-        if (topicProgress[subtopicTitle]) return prev;
+        if (topicProgress[subtopicTitle]) {
+          updatedProgressData = prev; // No change, but still need to check
+          return prev;
+        }
 
         const updated = {
           ...prev,
@@ -487,8 +536,14 @@ const JeeLearn = () => {
           saveProgressTimer = null;
         }, 500);
 
+        updatedProgressData = updated; // 👈 Capture the new state
         return updated;
       });
+
+      // ✅ CALL THE CHECKER FUNCTION
+      if (updatedProgressData) {
+        checkAndSaveSubjectCompletion(finalUserId, fetchedUnits, subject, course, standard, updatedProgressData);
+      }
     }
   };
 
@@ -500,64 +555,46 @@ const JeeLearn = () => {
 
       const finalUserId = storedUser._id;
       const course = "JEE";
-      const effectiveStandard =
-        localStorage.getItem("currentClassJee") ||
-        "11th"; // default fallback
+      const standard = effectiveStandard; // Use the correct standard
 
       // 1️⃣ Backend DELETE
       const response = await fetch(
-        `${API_BASE_URL}/api/progress/delete?userId=${finalUserId}&course=${course}&standard=${effectiveStandard}&subject=${encodeURIComponent(subjectName)}`,
+        `${API_BASE_URL}/api/progress/delete?userId=${finalUserId}&course=${course}&standard=${standard}&subject=${encodeURIComponent(subjectName)}`,
         { method: "DELETE" }
       );
 
       if (response.ok) {
-        console.log(`🗑️ Backend progress deleted for ${finalUserId} ${course}_${effectiveStandard}`);
+        console.log(`🗑️ Backend progress deleted for ${finalUserId} ${course}_${standard}`);
 
         // 2️⃣ Local cleanup
-        const localKey = `completedSubtopics_${finalUserId}_${course}_${effectiveStandard}`;
-        const completionKey = `subjectCompletion_${course}_${effectiveStandard}`;
+        localStorage.removeItem(`completedSubtopics_${finalUserId}_${course}_${standard}`);
 
-        localStorage.removeItem(localKey);
+        // Remove individual lesson flags
         Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith(`${course}-completed-${finalUserId}-${effectiveStandard}-`)) {
+          if (key.startsWith(`${course}-completed-${finalUserId}-${standard}-`)) {
             localStorage.removeItem(key);
           }
         });
 
-        // 🧹 Normalize subjectCompletion (object → array)
-        let savedCompletion = JSON.parse(localStorage.getItem(completionKey) || "[]");
+        // ✅ FIX: Update the Subject Completion OBJECT
+        const completionKey = `subjectCompletion_${course}_${standard}`;
+        const savedCompletion = JSON.parse(localStorage.getItem(completionKey) || "{}");
 
-        if (!Array.isArray(savedCompletion)) {
-          console.warn("⚠️ subjectCompletion was not an array, converting:", savedCompletion);
-          // Convert object form (like { JEE_11th_Physics: 100 }) into array form
-          savedCompletion = Object.keys(savedCompletion).map((key) => {
-            const parts = key.split("_");
-            const subj = parts[parts.length - 1]; // last part = subject
-            return { name: subj, progress: savedCompletion[key] || 0, certified: false };
-          });
-        }
+        const subjectKey = `${course}_${standard}_${subjectName}`;
 
-        // ✅ Update or add the reset subject entry
-        const updatedCompletion = savedCompletion.map((subj) =>
-          subj.name === subjectName ? { ...subj, progress: 0, certified: false } : subj
-        );
+        const updatedCompletionMap = {
+          ...savedCompletion,
+          [subjectKey]: 0 // Set this subject's progress to 0
+        };
 
-        if (!updatedCompletion.some((s) => s.name === subjectName)) {
-          updatedCompletion.push({ name: subjectName, progress: 0, certified: false });
-        }
-
-        localStorage.setItem(completionKey, JSON.stringify(updatedCompletion));
+        localStorage.setItem(completionKey, JSON.stringify(updatedCompletionMap));
 
         // 3️⃣ Update React state
         setCompletedSubtopics({});
-        // Optional: if you have a subjectCompletion state, reset it too safely
-        if (typeof setSubjectCompletion === "function") {
-          setSubjectCompletion(updatedCompletion);
-        }
 
         // 4️⃣ Dispatch global update
         window.dispatchEvent(new Event("storage"));
-        console.log(`🧹 Cleared ${subjectName} progress for ${course}_${effectiveStandard}`);
+        console.log(`🧹 Cleared ${subjectName} progress for ${course}_${standard}`);
       } else {
         console.error("❌ Failed to delete progress from backend:", await response.text());
       }
@@ -565,8 +602,6 @@ const JeeLearn = () => {
       console.error("⚠️ Reset progress error:", err);
     }
   };
-
-
 
   const handleBackToSubjects = () => navigate("/Jee");
 

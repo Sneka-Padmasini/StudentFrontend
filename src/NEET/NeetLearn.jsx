@@ -80,12 +80,39 @@ const saveSubjectCompletionToServer = async (userId, subjectCompletionMap, compl
     return;
   }
 
+  // ✅ FIX: Get course and standard to send to the backend
+  const course = "NEET";
+  const standard = localStorage.getItem("currentClass") || "";
+
+  if (!standard) {
+    console.error("❌ Cannot save subject completion, standard is missing from localStorage");
+    return;
+  }
+
+  // We need to sanitize subtopics before sending
+  const sanitizeKeys = (obj) => {
+    if (typeof obj !== "object" || obj === null) return obj;
+    const sanitized = {};
+    for (const [key, value] of Object.entries(obj)) {
+      const safeKey = key.replace(/\./g, "__dot__");
+      sanitized[safeKey] = sanitizeKeys(value);
+    }
+    return sanitized;
+  };
+
+  const safeSubtopics = sanitizeKeys(completedSubtopics);
+
   try {
     const response = await fetch(`${API_BASE_URL}/api/progress/save`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // Sending subjectCompletionMap (key-value object)
-      body: JSON.stringify({ userId, subjectCompletion: subjectCompletionMap, completedSubtopics: {} }),
+      body: JSON.stringify({
+        userId,
+        subjectCompletion: subjectCompletionMap,
+        completedSubtopics: safeSubtopics, // ✅ FIX: Send the actual subtopics
+        course,                           // ✅ FIX: Send course
+        standard                          // ✅ FIX: Send standard
+      }),
     });
 
     if (!response.ok) {
@@ -435,24 +462,6 @@ const NeetLearn = () => {
   };
 
 
-  // const calculateProgress = (topic) => {
-  //   if (!topic || !topic.units) return 0;
-
-  //   const allSubs = collectAllSubtopics(topic.units);
-  //   const course = "NEET";
-  //   const standard = localStorage.getItem("currentClass") || "";
-  //   const subjectName = subject; // "Physics", "Chemistry", etc.
-
-  //   // Unified key format used everywhere
-  //   const topicKey = `${course}_${standard}_${subjectName}_${topic.unitName}`;
-  //   const topicProgress = completedSubtopics[topicKey] || {};
-
-  //   const completedCount = allSubs.filter((sub) => topicProgress?.[sub.unitName] === true).length;
-  //   const totalCount = allSubs.length;
-  //   return totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
-  // };
-
-
   const calculateProgress = (topic) => {
     if (!topic) return 0;
 
@@ -525,6 +534,69 @@ const NeetLearn = () => {
 
   const handleBackToSubjects = () => navigate("/Neet");
 
+  // 🚀 NEW HELPER FUNCTION
+  const checkAndSaveSubjectCompletion = (userId, fetchedUnits, subject, course, standard, currentProgressData) => {
+    if (!fetchedUnits?.length || !userId) {
+      console.log("Skipping subject completion check (no units or user)");
+      return;
+    }
+
+    // Use a slight delay to ensure 'currentProgressData' (the new state) is processed
+    setTimeout(() => {
+      const allCompleted = fetchedUnits.every((topic) => {
+        const tKey = `${course}_${standard}_${subject}_${topic.unitName}`;
+
+        // Use the 'currentProgressData' map, which has the most current data
+        const topicProgress = currentProgressData[tKey] || {};
+
+        const allLessons = collectAllLessons(topic.units);
+        const allTests = collectAllTests(topic);
+
+        const totalCount = allLessons.length + allTests.length;
+        if (totalCount === 0) return true; // An empty topic is always "complete"
+
+        let completedCount = 0;
+        allLessons.forEach(lesson => {
+          if (topicProgress[lesson.unitName] === true) completedCount++;
+        });
+        allTests.forEach(test => {
+          if (topicProgress[test.testName] === true) completedCount++;
+        });
+
+        // console.log(`Checking topic ${topic.unitName}: ${completedCount}/${totalCount}`);
+        return completedCount === totalCount;
+      });
+
+      if (allCompleted) {
+        console.log(`🏁 All topics completed for ${subject} (${course} ${standard})`);
+
+        // ✅ FIX: Read/write from the CORRECT course-specific localStorage key
+        const localKey = `subjectCompletion_${course}_${standard}`;
+        // ✅ FIX: Default to an object {}, not an array []
+        const existingCompletionData = JSON.parse(localStorage.getItem(localKey) || "{}");
+
+        const subjectKey = `${course}_${standard}_${subject}`;
+
+        const updatedCompletionMap = {
+          ...existingCompletionData,
+          [subjectKey]: 100 // Mark the current subject as 100
+        };
+
+        // ✅ FIX: Save to the CORRECT course-specific localStorage key
+        localStorage.setItem(localKey, JSON.stringify(updatedCompletionMap));
+
+        // Send to server
+        // We pass 'currentProgressData' as the subtopics to ensure backend has latest
+        saveSubjectCompletionToServer(userId, updatedCompletionMap, currentProgressData);
+
+        // Notify the NEET.jsx page
+        window.dispatchEvent(new Event("storage"));
+      } else {
+        console.log(`⏳ Subject ${subject} not yet complete.`);
+      }
+    }, 500); // 500ms delay
+  };
+
 
   const markSubtopicComplete = () => {
     if (!selectedSubtopic || expandedTopic === null) return;
@@ -551,22 +623,17 @@ const NeetLearn = () => {
 
     console.log("🔵 Marking complete:", { topicKey, subtopicTitle, userId: finalUserId });
 
+    let updatedProgressData; // 👈 To capture the new state
+
     // --- 1️⃣ Assessment Completion Logic ---
     if (subtopicTitle.includes("Assessment")) {
-      console.log("🎯 This is a test - marking ONLY this test as completed"); // <-- Log is fixed
+      console.log("🎯 This is a test - marking ONLY this test as completed");
 
       setCompletedSubtopics((prev) => {
         const topicProgress = prev[topicKey] || {};
-        // const allSubs = ... // WE DELETED THIS
         const updatedProgress = { ...topicProgress };
+        updatedProgress[subtopicTitle] = true; // Mark ONLY the test
 
-        // "Mark all subtopics" loop... WE DELETED THIS
-        // allSubs.forEach((sub) => { ... });
-
-        // Mark ONLY the test as completed
-        updatedProgress[subtopicTitle] = true;
-
-        // ...the rest of the function stays the same...
         const updated = { ...prev, [topicKey]: updatedProgress };
 
         localStorage.setItem(`completedSubtopics_${finalUserId}_${course}_${standard}`, JSON.stringify(updated));
@@ -577,77 +644,24 @@ const NeetLearn = () => {
           saveProgressTimer = null;
         }, 500);
 
-
-
-        // Check if subject is fully completed
-        setTimeout(() => {
-          if (!fetchedUnits?.length) return;
-
-          const allCompleted = fetchedUnits.every((topic) => {
-            const tKey = `${course}_${standard}_${subjectName}_${topic.unitName}`;
-
-            // Use the 'updated' map, which has the most current data
-            const topicProgress = updated[tKey] || {};
-
-            // Re-use the same helper functions we use for calculateProgress
-            const allLessons = collectAllLessons(topic.units);
-            const allTests = collectAllTests(topic);
-
-            const totalCount = allLessons.length + allTests.length;
-            if (totalCount === 0) return true; // An empty topic is always "complete"
-
-            // Count completed items using the 'updated' map's data
-            let completedCount = 0;
-            allLessons.forEach(lesson => {
-              if (topicProgress[lesson.unitName] === true) completedCount++;
-            });
-            allTests.forEach(test => {
-              if (topicProgress[test.testName] === true) completedCount++;
-            });
-
-            // Return true only if all items are complete
-            return completedCount === totalCount;
-          });
-
-          if (allCompleted) {
-            console.log(`🏁 All topics completed for ${subject}`);
-            const allSubjects = ["Physics", "Chemistry", "Zoology", "Botany"];
-            const existingCompletionData = JSON.parse(localStorage.getItem("subjectCompletion") || "[]");
-            const existingCompletion = Array.isArray(existingCompletionData) ? existingCompletionData : [];
-
-            const mergedCompletion = allSubjects.map((subj) => {
-              const old =
-                existingCompletion.find((s) => s.name === subj) || {
-                  name: subj,
-                  progress: 0,
-                  certified: false,
-                };
-              if (subj === subject)
-                return { ...old, certified: true, progress: 100 };
-              return old;
-            });
-
-            const subjectCompletionMap = mergedCompletion.reduce((acc, subj) => {
-              const key = `${course}_${standard}_${subj.name}`;
-              acc[key] = subj.certified ? 100 : subj.progress || 0;
-              return acc;
-            }, {});
-
-            localStorage.setItem("subjectCompletion", JSON.stringify(mergedCompletion));
-            saveSubjectCompletionToServer(finalUserId, subjectCompletionMap, updated);
-            window.dispatchEvent(new Event("storage"));
-          }
-        }, 500);
-
+        updatedProgressData = updated; // 👈 Capture the new state
         return updated;
       });
+
+      // ✅ CALL THE CHECKER FUNCTION
+      if (updatedProgressData) {
+        checkAndSaveSubjectCompletion(finalUserId, fetchedUnits, subject, course, standard, updatedProgressData);
+      }
     }
 
     // --- 2️⃣ Normal Subtopic Logic ---
     else {
       setCompletedSubtopics((prev) => {
         const topicProgress = prev[topicKey] || {};
-        if (topicProgress[subtopicTitle]) return prev;
+        if (topicProgress[subtopicTitle]) {
+          updatedProgressData = prev; // No change, but still need to check
+          return prev;
+        }
 
         const updated = {
           ...prev,
@@ -673,12 +687,16 @@ const NeetLearn = () => {
           saveProgressTimer = null;
         }, 500);
 
+        updatedProgressData = updated; // 👈 Capture the new state
         return updated;
       });
+
+      // ✅ CALL THE CHECKER FUNCTION
+      if (updatedProgressData) {
+        checkAndSaveSubjectCompletion(finalUserId, fetchedUnits, subject, course, standard, updatedProgressData);
+      }
     }
   };
-
-
 
 
   const resetProgress = async (subjectName) => {

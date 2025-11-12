@@ -17,22 +17,22 @@ const subjectList = [
 ];
 
 // 🔹 API helpers for saving & loading subject progress - UPDATED with course and standard
-const saveSubjectCompletionToServer = async (userId, subjectCompletion, course, standard) => {
-  try {
-    await fetch(`${API_BASE_URL}/api/progress/save`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        subjectCompletion,
-        course, // Add course identifier
-        standard // Add standard identifier
-      }),
-    });
-  } catch (err) {
-    console.error("❌ Error saving subject progress:", err);
-  }
-};
+// const saveSubjectCompletionToServer = async (userId, subjectCompletion, course, standard) => {
+//   try {
+//     await fetch(`${API_BASE_URL}/api/progress/save`, {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({
+//         userId,
+//         subjectCompletion,
+//         course, // Add course identifier
+//         standard // Add standard identifier
+//       }),
+//     });
+//   } catch (err) {
+//     console.error("❌ Error saving subject progress:", err);
+//   }
+// };
 
 const loadSubjectCompletionFromServer = async (userId, setSubjectCompletion, course, standard) => {
   try {
@@ -60,42 +60,47 @@ const Subjects = () => {
   const [selectedClass, setSelectedClass] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [subjectCompletion, setSubjectCompletion] = useState(subjectList);
+  // const [subjectCompletion, setSubjectCompletion] = useState(subjectList);
+  const [subjectCompletion, setSubjectCompletion] = useState({});
   const learningPathRef = useRef(null);
   const { login, logout } = useUser(); // Make sure logout is included
 
+  // ✅ FIX: This useEffect ONLY sets up the standard and dates
   useEffect(() => {
-    console.log(JSON.parse(localStorage.getItem("currentUser")))
     const storedUser = JSON.parse(localStorage.getItem("currentUser"));
     if (storedUser) {
-      // ✅ Fix for standard fetching
       let stdData = storedUser.standards;
 
-      // If standards is empty, try to extract from coursetype or courseName
       if ((!stdData || stdData.length === 0) && storedUser.coursetype) {
         if (storedUser.coursetype.includes("11")) stdData = ["11th"];
         else if (storedUser.coursetype.includes("12")) stdData = ["12th"];
       }
 
-      // Handle string
+      let currentClass = localStorage.getItem("currentClass");
+
       if (typeof stdData === "string") {
         setStandard(stdData);
-        localStorage.setItem("currentClass", stdData);
-      }
-      // Handle array
-      else if (Array.isArray(stdData)) {
+        if (!currentClass) {
+          localStorage.setItem("currentClass", stdData);
+          currentClass = stdData; // Update for this render
+        }
+      } else if (Array.isArray(stdData)) {
+        setStandard(stdData);
         if (stdData.length === 1) {
-          setStandard(stdData[0]);
-          localStorage.setItem("currentClass", stdData[0]);
-        } else {
-          setStandard(stdData);
-          const savedClass = localStorage.getItem("currentClass");
-          if (savedClass) setSelectedClass(savedClass);
+          if (!currentClass) {
+            localStorage.setItem("currentClass", stdData[0]);
+            currentClass = stdData[0]; // Update for this render
+          }
         }
       }
 
+      // Set the selectedClass based on what's in localStorage
+      if (currentClass) {
+        setSelectedClass(currentClass);
+      }
+
       console.log("🧠 Detected Standards:", stdData);
-      console.log("📚 Final Standard State:", standard);
+      console.log("📚 Initial Selected Class:", currentClass);
 
       const formatDate = (dateStr) => {
         const date = new Date(dateStr);
@@ -109,39 +114,55 @@ const Subjects = () => {
       if (storedUser.startDate) setStartDate(formatDate(storedUser.startDate));
       if (storedUser.endDate) setEndDate(formatDate(storedUser.endDate));
     }
+  }, []); // ✅ FIX: Run only ONCE on mount
 
-    // Get current course and standard
-    const course = "NEET";
-    const currentStandard = selectedClass || standard;
 
+  // ✅ FIX: NEW useEffect to load progress when user/standard/class changes
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("currentUser"));
     const userId = storedUser?.id || storedUser?._id;
+    const course = "NEET";
+
+    // Determine the standard to load (use selectedClass as the source of truth)
+    const currentStandard = selectedClass;
+
+    if (!currentStandard) {
+      console.log("📚 No class selected, clearing progress.");
+      setSubjectCompletion({}); // Clear progress if no class is selected
+      return; // Don't load anything
+    }
+
+    console.log("📚 Loading progress for standard:", currentStandard);
+
     if (userId) {
       loadSubjectCompletionFromServer(userId, setSubjectCompletion, course, currentStandard);
     } else {
-      // Fallback only if backend data not found - use course-specific key
-      const savedLocal = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_${currentStandard}`) || "[]");
-      if (savedLocal.length > 0) {
-        setSubjectCompletion(savedLocal);
-      } else {
-        setSubjectCompletion(subjectList);
-        localStorage.setItem(`subjectCompletion_${course}_${currentStandard}`, JSON.stringify(subjectList));
-      }
+      // Fallback for guest or if user ID not ready
+      const savedLocal = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_${currentStandard}`) || "{}");
+      setSubjectCompletion(savedLocal);
       window.dispatchEvent(new Event("storage")); // force progress refresh
     }
+
+    // Run when selectedClass changes
   }, [selectedClass]);
+
 
   // 🔁 Listen for updates to localStorage (when user finishes a subject in NeetLearn)
   useEffect(() => {
     const handleStorageChange = () => {
       const course = "NEET";
       const currentStandard = selectedClass || standard;
-      const updatedCompletion = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_${currentStandard}`) || "[]");
+
+      // ✅ FIX: Default to an OBJECT {}, not an array []
+      const updatedCompletion = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_${currentStandard}`) || "{}");
+
+      console.log("Storage change detected, updating subjectCompletion:", updatedCompletion);
       setSubjectCompletion(updatedCompletion);
     };
 
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
-  }, [selectedClass]);
+  }, [selectedClass, standard]); // ✅ FIX: Add 'standard' to dependency array
 
   const handleScrollToLearningPath = () => {
     if (learningPathRef.current) {
@@ -174,38 +195,32 @@ const Subjects = () => {
       }).catch(console.error)
   }, [login, logout, navigate])
 
+
   const calculateProgress = () => {
-    // ✅ Convert object to array safely
-    let data = subjectCompletion;
 
-    if (!Array.isArray(data)) {
-      data = Object.keys(data || {}).map((key) => ({
-        name: key,
-        certified:
-          data[key] === 100 ||
-          data[key] === true ||
-          data[key] === "completed",
-      }));
-    }
+    const totalSubjects = normalizedSubjects.length;
+    if (totalSubjects === 0) return 0;
 
-    const completed = data.filter((s) => s.certified).length;
-    return data.length === 0 ? 0 : (completed / data.length) * 100;
+    const completedSubjects = normalizedSubjects.filter((s) => s.certified).length;
+
+    return (completedSubjects / totalSubjects) * 100;
   };
 
-  // ✅ Improved normalization with fuzzy matching
-  const normalizedSubjects = subjectList.map((sub) => {
-    // try exact match
-    const exactValue = subjectCompletion?.[sub.name];
-    // try partial match (for keys like "Introduction to Botany...")
-    const partialKey = Object.keys(subjectCompletion || {}).find((key) =>
-      key.toLowerCase().includes(sub.name.toLowerCase())
-    );
-    const partialValue = partialKey ? subjectCompletion[partialKey] : null;
 
-    const progressValue = exactValue ?? partialValue;
+  // ✅ Improved normalization using exact keys
+  const normalizedSubjects = subjectList.map((sub) => {
+    const course = "NEET";
+    // Get the standard that is *currently* selected
+    const currentStandard = selectedClass || (Array.isArray(standard) ? "" : standard);
+
+    // Build the exact key to look for, e.g., "NEET_11th_Physics"
+    const subjectKey = `${course}_${currentStandard}_${sub.name}`;
+
+    // Get the value (0 or 100) from the state
+    const progressValue = subjectCompletion?.[subjectKey];
 
     return {
-      ...sub,
+      ...sub, // This keeps the name: "Physics", image: ...
       certified:
         progressValue === 100 ||
         progressValue === true ||
@@ -216,40 +231,6 @@ const Subjects = () => {
   const progressPercentage = calculateProgress();
   const safeProgress = isNaN(progressPercentage) ? 0 : progressPercentage;
 
-  const handleSubjectCompletion = useCallback((subjectName) => {
-    const updatedSubjects = subjectCompletion.map((subject) =>
-      subject.name === subjectName ? { ...subject, certified: true } : subject
-    );
-    setSubjectCompletion(updatedSubjects);
-
-    // Use course-specific localStorage key
-    const course = "NEET";
-    const currentStandard = selectedClass || standard;
-    localStorage.setItem(`subjectCompletion_${course}_${currentStandard}`, JSON.stringify(updatedSubjects));
-
-    const storedUser = JSON.parse(localStorage.getItem("currentUser"));
-    if (storedUser?.id || storedUser?._id) {
-      const userId = storedUser.id || storedUser._id;
-      saveSubjectCompletionToServer(userId, updatedSubjects, course, currentStandard);
-    }
-  }, [subjectCompletion, selectedClass, standard]);
-
-  useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("currentUser"));
-    if (storedUser) {
-      const userId = storedUser?.id || storedUser?._id;
-      const course = "NEET";
-      const currentStandard = selectedClass || standard;
-      const completedSubtopics = JSON.parse(localStorage.getItem(`completedSubtopics_${userId}_${course}_${currentStandard}`) || "{}");
-
-      if (
-        completedSubtopics &&
-        Object.keys(completedSubtopics["UNIT AND MEASURE"] || {}).length === 6
-      ) {
-        handleSubjectCompletion("Physics");
-      }
-    }
-  }, [selectedClass, standard, handleSubjectCompletion]);
 
   const handleClassChange = (e) => {
     const selected = e.target.value;
