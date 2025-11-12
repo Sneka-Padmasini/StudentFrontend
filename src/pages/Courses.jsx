@@ -26,19 +26,19 @@ const Courses = () => {
             description: "Prepare effectively for NEET with guided study plans, practice papers, and interactive learning materials. Covers Physics, Chemistry, and Biology with detailed NCERT solutions, mock tests, and important questions to help you excel.",
             img: importantImg
         },
-        {
-            type: "JEE",
-            title: "JEE",
-            description: "Comprehensive learning for JEE aspirants with NCERT concepts, previous year questions, mock tests, and exam strategies. Covers Physics, Chemistry, and Mathematics with advanced practice and personalized guidance.",
-            img: booksImg
-        }
+        // {
+        //     type: "JEE",
+        //     title: "JEE",
+        //     description: "Comprehensive learning for JEE aspirants with NCERT concepts, previous year questions, mock tests, and exam strategies. Covers Physics, Chemistry, and Mathematics with advanced practice and personalized guidance.",
+        //     img: booksImg
+        // }
     ];
 
     const handleLearnMore = (courseType) => {
         if (!currentUser) {
             navigate("/register");
         } else {
-            if (courseType === "JEE") navigate("/JEE");
+            // if (courseType === "JEE") navigate("/JEE");
             if (courseType === "NEET") navigate("/NEET");
         }
     };

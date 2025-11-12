@@ -198,19 +198,21 @@ const Navbar = () => {
             </div>
             {coursesOpen && (
               <ul className="dropdown-menu">
-                {selectedCourse.map((course) => (
-                  <li key={course}>
-                    <Link
-                      to={`/${course}`}
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setCoursesOpen(false);
-                      }}
-                    >
-                      {course}
-                    </Link>
-                  </li>
-                ))}
+                {selectedCourse
+                  .filter(course => course.toLowerCase() !== 'jee') // Remove this line when JEE is needed
+                  .map((course) => (
+                    <li key={course}>
+                      <Link
+                        to={`/${course}`}
+                        onClick={() => {
+                          setMenuOpen(false);
+                          setCoursesOpen(false);
+                        }}
+                      >
+                        {course}
+                      </Link>
+                    </li>
+                  ))}
               </ul>
             )}
           </li>

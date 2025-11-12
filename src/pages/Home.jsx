@@ -94,9 +94,9 @@ const Home = () => {
     if (currentUser && localStorage.getItem("currentUser")) {
       console.log("Selected:", selectedCourseType);
 
-      if (selectedCourseType === "JEE") {
+      {/* if (selectedCourseType === "JEE") {
         navigate("/JEE");
-      } else if (selectedCourseType === "NEET") {
+      } else */} if (selectedCourseType === "NEET") {
         navigate("/NEET");
       } else {
         navigate("/register"); // fallback
@@ -174,13 +174,13 @@ const Home = () => {
 
           <div className="tabs-container" id="tabScroll">
             {[
-              {
-                courseType: "JEE",
-                title: "JEE Prep Material",
-                range: "JEE Exam",
-                tags: ["Reference", "Advanced", "Textbooks"],
-                img: booksImg
-              },
+              // {
+              //   courseType: "JEE",
+              //   title: "JEE Prep Material",
+              //   range: "JEE Exam",
+              //   tags: ["Reference", "Advanced", "Textbooks"],
+              //   img: booksImg
+              // },
               {
                 courseType: "NEET",
                 title: "NEET Ready Papers",
