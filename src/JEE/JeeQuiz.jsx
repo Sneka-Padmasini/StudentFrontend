@@ -254,8 +254,13 @@ const JeeQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isAl
                 })}
               </div>
 
+              {/* Feedback */}
               {submitted && userAnswers[currentQIndex] !== "" && (
-                <p className="answer-feedback">
+                <p className={
+                  `feedback-msg ${userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`]
+                    ? "correct"
+                    : "incorrect"}`
+                }>
                   {userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`]
                     ? "Correct!"
                     : `Incorrect. Correct answer: ${currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`]}`}

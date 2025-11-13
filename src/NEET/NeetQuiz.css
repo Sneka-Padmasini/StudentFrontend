@@ -155,29 +155,48 @@
   border: 1px solid #dc3545 !important;
 }
 
-
 /* Feedback */
 .feedback-msg {
   font-weight: bold;
-  margin-top: 10px;
+  margin-top: 15px;
+  padding: 10px 15px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 1.1rem;
 }
 
 .feedback-msg.correct {
-  color: #28a745;
+  color: #155724;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
 }
 
 .feedback-msg.incorrect {
-  color: #dc3545;
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+
+/* Solution Explanation Box */
+.solution-explanation {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 25px;
+}
+
+/* Style the "Explanation:" text to be bold */
+.solution-explanation p strong {
+  color: #062c08;
 }
 
 .navigation-buttons {
   display: flex;
   justify-content: center;
   gap: 15px;
-  /* space between Previous, Next, and Submit buttons */
   margin-top: 20px;
   flex-wrap: wrap;
-  /* keeps buttons aligned on smaller screens */
 }
 
 
