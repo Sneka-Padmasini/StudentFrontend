@@ -198,7 +198,7 @@ const RegistrationFlow = () => {
         // const response = await fetch('http://localhost:3000/register/newUser', {
         // const response = await fetch('https://studentpadmasini.onrender.com/register/newUser', {
         // const response = await fetch('https://padmasini-prod-api.padmasini.com/register/newUser', {
-        const response = await fetch(`${API_BASE_URL}/register/newUser`, { // ✅ updated
+        const response = await fetch(`${API_BASE_URL}/api/register/newUser`, { // ✅ updated
           method: 'POST',
           credentials: "include",
           body: formData, // Do not set Content-Type; browser sets it with boundary
@@ -281,7 +281,7 @@ const RegistrationFlow = () => {
     try {
       // const res = await fetch("http://localhost:3000/auth/send-otp", {
       // const res = await fetch("https://studentpadmasini.onrender.com/auth/send-otp", {
-      const res = await fetch(`${API_BASE_URL}/auth/send-otp`, { // ✅ updated
+      const res = await fetch(`${API_BASE_URL}/api/auth/send-otp`, { // ✅ updated
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -310,7 +310,7 @@ const RegistrationFlow = () => {
       // const res = await fetch("http://localhost:3000/auth/verify-otp", {
       // const res = await fetch("https://studentpadmasini.onrender.com/auth/verify-otp", {
       console.log("Verifying OTP", { email, otp });
-      const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, { // ✅ updated
+      const res = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, { // ✅ updated
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

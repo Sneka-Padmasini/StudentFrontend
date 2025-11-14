@@ -24,7 +24,7 @@ const LoginPage = () => {
     e.preventDefault();
 
     try {
-      const resp = await fetch(`${API_BASE_URL}/signIn`, {
+      const resp = await fetch(`${API_BASE_URL}/api/signIn`, {
         method: "POST",
         credentials: "include", // important for session cookies
         headers: {

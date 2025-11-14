@@ -23,7 +23,7 @@ const Navbar = () => {
   const dropdownRef = useRef(null); // ✅ ref for dynamic positioning
 
   const handleLogout = () => {
-    fetch(`${API_BASE_URL}/logout`, {
+    fetch(`${API_BASE_URL}/api/logout`, {
       method: "GET",
       credentials: "include",
     })
@@ -41,7 +41,7 @@ const Navbar = () => {
   };
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/checkSession`, {
+    fetch(`${API_BASE_URL}/api/checkSession`, {
       method: "GET",
       credentials: "include",
     })
