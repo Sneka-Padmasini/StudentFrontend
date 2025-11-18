@@ -18,7 +18,8 @@
   overflow-y: auto;
   height: calc(100vh - 60px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  margin-top: 20px;
+  /* margin-top: 20px; */
+  margin-top: 0;
 }
 
 .Jee-container .topics-list ul {
@@ -132,10 +133,26 @@
   background-color: #1c7e32;
 }
 
-.Jee-container .explanation-container {
+/* .Jee-container .explanation-container {
   flex: 1;
   padding: 20px;
   min-height: calc(100vh - 100px);
+  overflow-y: auto;
+  background: none;
+  color: #333;
+  font-size: 15px;
+  line-height: 1.6;
+} */
+.Jee-container .explanation-container {
+  flex: 1;
+
+  /* ✅ Match Left Side Height Exactly */
+  height: calc(100vh - 60px);
+  min-height: unset;
+
+  /* Remove top padding so it starts flush at the top */
+  padding: 0 20px;
+
   overflow-y: auto;
   background: none;
   color: #333;
@@ -201,6 +218,41 @@
   object-fit: contain;
 }
 
+/* Remove internal spacing from the Quiz Wrapper */
+.Jee-container .quiz-wrapper {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  min-height: auto !important;
+  height: 100%;
+  /* Ensure wrapper fills the space */
+}
+
+/* Fix the Green Card Margins & Height */
+.Jee-container .quiz-container {
+  /* ✅ Top/Bottom margins 0 to align perfectly with left box edges */
+  margin: 0 !important;
+
+  /* ✅ Force the card to stretch to the full height of the container */
+  min-height: 100% !important;
+
+  /* Ensure it doesn't overflow visually */
+  box-sizing: border-box;
+}
+
+/* For Chrome, Safari, and Opera */
+.Jee-container .topics-list::-webkit-scrollbar,
+.Jee-container .explanation-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* For Firefox, IE, and Edge */
+.Jee-container .topics-list,
+.Jee-container .explanation-container {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
 
 @media (max-width: 768px) {
   .Jee-container {

@@ -1,5 +1,5 @@
 /* Main Container */
-.explanation-container {
+/* .explanation-container {
   max-width: 900px;
   margin: 20px auto;
   padding: 20px;
@@ -8,6 +8,18 @@
   font-family: 'Arial', sans-serif;
   color: #333;
 
+} */
+.explanation-container {
+  max-width: 900px;
+
+  /* ✅ FIXED: Top margin 0, Bottom margin 20px */
+  margin: 0 auto 20px auto;
+
+  padding: 20px;
+  border-radius: 15px;
+  /* margin-top: -10px; <-- Removed this */
+  font-family: 'Arial', sans-serif;
+  color: #333;
 }
 
 /* Title Styling */
