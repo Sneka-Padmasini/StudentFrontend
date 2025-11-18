@@ -154,11 +154,6 @@ const NeetExplanation = ({
     return parse(combinedHTML);
   };
 
-
-  const isIntroIframe =
-    subject.toLowerCase() === "physics" &&
-    subtopicTitle.trim().toLowerCase() === "1.1 introduction";
-
   return (
     <div className="explanation-container">
       <div className="explanation-content">
@@ -179,26 +174,15 @@ const NeetExplanation = ({
             )}
           </button>
 
-          {isIntroIframe ? (
-            <div className="iframe-wrapper">
-              <iframe
-                src="https://scintillating-bienenstitch-4a86e8.netlify.app/"
-                title="NEET Physics Intro"
-                className="embedded-iframe"
-                frameBorder="0"
-                allowFullScreen
-              ></iframe>
-            </div>
-          ) : (
-            <>
+          <>
 
 
-              {/* Explanation text with voice controls */}
-              <div className="explanation-text-with-controls">
-                <div className="explanation-text">
-                  {parseTextWithFormulas(explanation || "No explanation available")}
-                </div>
-                {/* {!isIntroIframe && (
+            {/* Explanation text with voice controls */}
+            <div className="explanation-text-with-controls">
+              <div className="explanation-text">
+                {parseTextWithFormulas(explanation || "No explanation available")}
+              </div>
+              {/* {!isIntroIframe && (
                   <div className="voice-controls-container">
                     <button className="voice-play-button" onClick={handleTogglePlayPause}>
                       {isSpeaking ? <FaPause /> : <FaPlay />}
@@ -218,10 +202,10 @@ const NeetExplanation = ({
                   </div>
                 )} */}
 
-              </div>
+            </div>
 
-              {/* Audio File Playback (temporarily disabled) */}
-              {/* <div className="subject-info">
+            {/* Audio File Playback (temporarily disabled) */}
+            {/* <div className="subject-info">
 
                 {audioFileId && audioFileId.length > 0 && (
                   <div className="audio-files">
@@ -234,26 +218,26 @@ const NeetExplanation = ({
                 )}
               </div> */}
 
-              {/* Display all images */}
-              {imageUrls && imageUrls.length > 0 && (
-                <div className="explanation-images">
-                  {imageUrls.map((url, index) => (
-                    <img
-                      key={index}
-                      src={url}
-                      alt={`Unit Image ${index + 1}`}
-                      style={{
-                        maxWidth: "100%",
-                        margin: "10px 0",
-                        borderRadius: "10px",
-                        display: "block",
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-            </>
-          )}
+            {/* Display all images */}
+            {imageUrls && imageUrls.length > 0 && (
+              <div className="explanation-images">
+                {imageUrls.map((url, index) => (
+                  <img
+                    key={index}
+                    src={url}
+                    alt={`Unit Image ${index + 1}`}
+                    style={{
+                      maxWidth: "100%",
+                      margin: "10px 0",
+                      borderRadius: "10px",
+                      display: "block",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+
         </div>
 
 

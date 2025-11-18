@@ -158,10 +158,6 @@ const JeeExplanation = ({
     if (onBack) onBack();
   };
 
-  const isIntroIframe =
-    subject.toLowerCase() === "physics" &&
-    subtopicTitle.trim().toLowerCase() === "1.1 introduction";
-
   return (
     <div className="explanation-container">
       <div className="explanation-content">
@@ -182,24 +178,13 @@ const JeeExplanation = ({
             )}
           </button>
 
-          {isIntroIframe ? (
-            <div className="iframe-wrapper">
-              <iframe
-                src="https://scintillating-bienenstitch-4a86e8.netlify.app/"
-                title="JEE Physics Intro"
-                className="embedded-iframe"
-                frameBorder="0"
-                allowFullScreen
-              ></iframe>
-            </div>
-          ) : (
-            <>
-              {/* Explanation text with voice controls */}
-              <div className="explanation-text-with-controls">
-                <div className="explanation-text">
-                  {parseTextWithFormulas(explanation || "No explanation available")}
-                </div>
-                {/* {!isIntroIframe && (
+          <>
+            {/* Explanation text with voice controls */}
+            <div className="explanation-text-with-controls">
+              <div className="explanation-text">
+                {parseTextWithFormulas(explanation || "No explanation available")}
+              </div>
+              {/* {!isIntroIframe && (
                   <div className="voice-controls-container">
                     <button className="voice-play-button" onClick={handleTogglePlayPause}>
                       {isSpeaking ? <FaPause /> : <FaPlay />}
@@ -218,29 +203,29 @@ const JeeExplanation = ({
                     </div>
                   </div>
                 )} */}
+            </div>
+
+            {/* Display all images */}
+            {imageUrls && imageUrls.length > 0 && (
+              <div className="explanation-images">
+                {imageUrls.map((url, index) => (
+                  <img
+                    key={index}
+                    src={url}
+                    alt={`Unit Image ${index + 1}`}
+                    style={{
+                      maxWidth: "100%",
+                      margin: "10px 0",
+                      borderRadius: "10px",
+                      display: "block",
+                    }}
+                  />
+                ))}
               </div>
+            )}
 
-              {/* Display all images */}
-              {imageUrls && imageUrls.length > 0 && (
-                <div className="explanation-images">
-                  {imageUrls.map((url, index) => (
-                    <img
-                      key={index}
-                      src={url}
-                      alt={`Unit Image ${index + 1}`}
-                      style={{
-                        maxWidth: "100%",
-                        margin: "10px 0",
-                        borderRadius: "10px",
-                        display: "block",
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Audio File Playback (temporarily disabled) */}
-              {/* {audioFileId && audioFileId.length > 0 && (
+            {/* Audio File Playback (temporarily disabled) */}
+            {/* {audioFileId && audioFileId.length > 0 && (
                 <div className="audio-files">
                   {audioFileId.map((id, index) => (
                     <div key={index} style={{ marginBottom: "8px" }}>
@@ -249,8 +234,8 @@ const JeeExplanation = ({
                   ))}
                 </div>
               )} */}
-            </>
-          )}
+          </>
+
         </div>
 
         {/* ✅ AI Generated Video - placed between content and back button */}

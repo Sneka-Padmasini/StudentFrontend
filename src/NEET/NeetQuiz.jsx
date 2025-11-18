@@ -5,30 +5,67 @@ import katex from "katex";
 import parse from "html-react-parser";
 import "katex/dist/katex.min.css";
 
+const shuffleArray = (array) => {
+  let currentIndex = array.length,
+    randomIndex;
+  // While there remain elements to shuffle.
+  while (currentIndex !== 0) {
+    // Pick a remaining element.
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex],
+      array[currentIndex],
+    ];
+  }
+  return array;
+};
+
 const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isAlreadyComplete }) => {
   const [questions, setQuestions] = useState([]);
   const [userAnswers, setUserAnswers] = useState([]);
   const [submitted, setSubmitted] = useState(false);
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(1200);
+  const [timeRemaining, setTimeRemaining] = useState(2400);
   const [hasStarted, setHasStarted] = useState(false);
   // const [isComplete, setIsComplete] = useState(false);
   const [isComplete, setIsComplete] = useState(isAlreadyComplete);
   const [showResultPopup, setShowResultPopup] = useState(false);
 
   useEffect(() => {
-    const questionList = test?.[0]?.questionsList || [];
-    setQuestions(questionList);
-    setUserAnswers(Array(questionList.length).fill(""));
+    const allQuestions = test?.[0]?.questionsList || [];
+
+    // --- New Shuffle and Slice Logic ---
+    const shuffledQuestions = shuffleArray([...allQuestions]); // Shuffle a copy
+    const MAX_QUESTIONS = 40;
+    const finalQuestionList = shuffledQuestions.slice(0, MAX_QUESTIONS);
+    // --- End of New Logic ---
+
+    setQuestions(finalQuestionList); // Set the new 40-question list
+    setUserAnswers(Array(finalQuestionList.length).fill("")); // Base answers on new length
     setSubmitted(false);
     setCurrentQIndex(0);
-    setTimeRemaining(1200);
+    setTimeRemaining(2400); // Set time to 40 minutes (2400 seconds)
     setHasStarted(false);
     setShowConfirmation(false);
     setIsComplete(false);
     setShowResultPopup(false);
   }, [test, subtopicTitle]);
+
+  // useEffect(() => {
+  //   const questionList = test?.[0]?.questionsList || [];
+  //   setQuestions(questionList);
+  //   setUserAnswers(Array(questionList.length).fill(""));
+  //   setSubmitted(false);
+  //   setCurrentQIndex(0);
+  //   setTimeRemaining(1200);
+  //   setHasStarted(false);
+  //   setShowConfirmation(false);
+  //   setIsComplete(false);
+  //   setShowResultPopup(false);
+  // }, [test, subtopicTitle]);
 
   useEffect(() => {
     if (timeRemaining > 0 && !submitted && hasStarted) {
@@ -148,6 +185,8 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     );
   }
 
+
+
   return (
     <div className="quiz-wrapper">
       <div className="quiz-container">
@@ -165,7 +204,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
         {!hasStarted ? (
           <div className="start-screen">
             <p><strong>Total Questions:</strong> {questions.length}</p>
-            <p><strong>Time Limit:</strong> 20 minutes</p>
+            <p><strong>Time Limit:</strong> 40 minutes</p>
             <p><strong>Minimum Marks to Pass:</strong> 100%</p>
             <button className="start-btn" onClick={() => setHasStarted(true)}>Start Assessment</button>
             <button className="back-btn" onClick={onBack}>Back to Topics</button>
@@ -190,7 +229,8 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                       {currentQuestion.tableData.map((row, rIdx) => (
                         <tr key={rIdx}>
                           {row.map((cell, cIdx) => (
-                            <td key={cIdx} style={{ border: "1px solid #ccc", padding: "8px", textAlign: "center" }}>{cell}</td>
+                            // <td key={cIdx} style={{ border: "1px solid #ccc", padding: "8px", textAlign: "center" }}>{cell}</td>
+                            <td key={cIdx} style={{ border: "1px solid #ccc", padding: "8px", textAlign: "left" }}>{cell}</td>
                           ))}
                         </tr>
                       ))}
