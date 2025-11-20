@@ -163,6 +163,12 @@ const Navbar = () => {
         </li> */}
 
         <li>
+          <Link to="/pricing" onClick={() => setMenuOpen(false)}>
+            Pricing
+          </Link>
+        </li>
+
+        <li>
           <Link
             to="/courses"
             onClick={() => setMenuOpen(false)}

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import "./Registration.css";
 import registerIllustration from "../assets/registerIllustration.jpg";
-import whatsappIcon from "../assets/WhatsApp_icon.png";
 import { API_BASE_URL } from "../config";
-import { useRef } from "react";
+// IMPORTANT: RAZORPAY KEY ID must be defined using the VITE prefix in your .env file
+const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 const RegistrationFlow = () => {
   const [step, setStep] = useState(1);
@@ -28,45 +28,44 @@ const RegistrationFlow = () => {
   const [photo, setPhoto] = useState(null);
   const [dob, setDob] = useState("");
   const [gender, setGender] = useState("");
-  // const [selectedCourses, setSelectedCourses] = useState([]); // ["JEE","NEET"]
-  // const [selectedStandards, setSelectedStandards] = useState([]); // ["11th","12th"]
-  // const [selectedCourse, setSelectedCourse] = useState("");
-  // const [selectedStandard, setSelectedStandard] = useState("");
-  const [selectedCourses, setSelectedCourses] = useState([]); // ["JEE","NEET"]
-  const [selectedStandards, setSelectedStandards] = useState([]); // ["11th","12th"]
+  const [selectedCourses, setSelectedCourses] = useState([]);
+  const [selectedStandards, setSelectedStandards] = useState([]);
   const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
   const [standardDropdownOpen, setStandardDropdownOpen] = useState(false);
-
   const [photoPreview, setPhotoPreview] = useState(null);
-
   const courseDropdownRef = useRef(null);
   const standardDropdownRef = useRef(null);
 
   // Step 3 states
   const [selectedPlan, setSelectedPlan] = useState("");
   const [promoCode, setPromoCode] = useState("");
-  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
+  // Removed manual payment states like upiId, bank, cardNumber, etc.
   const [isPaying, setIsPaying] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("");
-  const [upiId, setUpiId] = useState("");
-  const [bank, setBank] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvv, setCvv] = useState("");
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const stepFromURL = parseInt(queryParams.get("step"));
   const isUpgrade = queryParams.get("upgrade") === "true";
+  const planFromURL = queryParams.get("plan");
   const [isVerified, setIsVerified] = useState(false);
+
+
+  // 1. Load Razorpay Script Dynamically
   useEffect(() => {
-    // const existingUser=localStorage.getItem('currentUser')
-    // if(existingUser){
-    //   console.log("user already logged in")
-    //   navigate('/home')
-    // }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  // Existing useEffects for user data and routing
+  useEffect(() => {
     const useMe1 = localStorage.getItem("registeredUser")
     if (useMe1) {
       console.log("useMe1")
@@ -107,26 +106,29 @@ const RegistrationFlow = () => {
   useEffect(() => {
     if (stepFromURL === 2) setStep(2);
     if (stepFromURL === 3) setStep(3);
+    // If a plan is passed via the URL, set it as the selected plan immediately.
+    if (planFromURL) setSelectedPlan(planFromURL);
     window.scrollTo(0, 0);
-  }, [stepFromURL]);
+  }, [stepFromURL, planFromURL]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [step]);
 
+
+  // Helper functions
   const validateEmail = (email) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(email);
   const validateMobile = (mobile) => /^[0-9]{10}$/.test(mobile);
+
   const storeLocal = () => {
     console.log("use me too")
     localStorage.setItem("registeredUser", JSON.stringify({ firstname, lastname, email, mobile, password, confirmPassword }));
   }
+
+  // Existing submit handlers (Step 1 and Step 2)
   const handleStepOneSubmit = (e) => {
     console.log(localStorage.getItem("registeredUser"))
     e.preventDefault();
-    //   if (!isEmailVerified()) {
-    //     console.log(localStorage.getItem('emailVerification'))
-    //   return; // stop here if email is not verified
-    // }
     if (!validateEmail(email)) return setEmailError("Please enter a valid email address.");
     else setEmailError("");
     if (!validateMobile(mobile)) return setMobileError("Please enter a valid 10-digit mobile number.");
@@ -144,19 +146,7 @@ const RegistrationFlow = () => {
       setPhotoPreview(localUrl); // preview photo on UI
     }
   };
-  // const toggleCourse = (course) => {
-  //   setSelectedCourses((prev) =>
-  //     prev.includes(course) ? prev.filter((c) => c !== course) : [...prev, course]
-  //   );
-  // };
 
-  // const toggleStandard = (std) => {
-  //   setSelectedStandards((prev) =>
-  //     prev.includes(std) ? prev.filter((s) => s !== std) : [...prev, std]
-  //   );
-  // };
-
-  // Toggle functions
   const toggleCourse = (course) => {
     setSelectedCourses((prev) =>
       prev.includes(course) ? prev.filter((c) => c !== course) : [...prev, course]
@@ -171,34 +161,57 @@ const RegistrationFlow = () => {
     setStandardDropdownOpen(false); // ✅ closes dropdown
   };
 
+  // Helper function to calculate plan end date
+  const calculateEndDate = (plan) => {
+    const startDate = new Date();
+    let days;
+    if (plan === "trial") {
+      days = 10;
+    } else if (plan === "monthly") {
+      days = 30;
+    } else if (plan === "yearly") {
+      days = 365;
+    } else {
+      return null;
+    }
+    const endDate = new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000);
+    return endDate.toISOString().split("T")[0];
+  }
+
+  const getPlanPrice = (plan) => {
+    if (plan === 'monthly') return 1000; // ₹1000
+    if (plan === 'yearly') return 10000; // ₹10000
+    return 0;
+  };
+
 
   const sendUserDetails = async () => {
     const formData = new FormData();
+    const user = JSON.parse(localStorage.getItem("registeredUser") || "{}");
 
-    formData.append('firstname', firstname);
-    formData.append('lastname', lastname);
-    formData.append('email', email);
-    formData.append('password', password);
-    formData.append('mobile', mobile);
-    formData.append('dob', dob);
-    formData.append('gender', gender);
-    formData.append('selectedCourses', JSON.stringify(selectedCourses));
-    formData.append('selectedStandard', JSON.stringify(selectedStandards)); // ✅ singular
-
-    // formData.append('selectedStandards', JSON.stringify(selectedStandards));
+    // Add user and plan details to formData
+    formData.append('firstname', user.firstname);
+    formData.append('lastname', user.lastname);
+    formData.append('email', user.email);
+    formData.append('password', user.password);
+    formData.append('mobile', user.mobile);
+    formData.append('dob', user.dob);
+    formData.append('gender', user.gender);
+    formData.append('selectedCourses', JSON.stringify(user.selectedCourses));
+    formData.append('selectedStandard', JSON.stringify(user.selectedStandard));
+    formData.append('plan', user.plan);
+    formData.append('startDate', user.startDate);
+    formData.append('endDate', user.endDate);
 
     // append photo only if selected
     if (photo) {
       console.log("photo is there")
       formData.append('photo', photo);
     }
-    console.log(selectedCourses, "  ", selectedStandards)
+
     if (!isUpgrade) {
       try {
-        // const response = await fetch('http://localhost:3000/register/newUser', {
-        // const response = await fetch('https://studentpadmasini.onrender.com/register/newUser', {
-        // const response = await fetch('https://padmasini-prod-api.padmasini.com/register/newUser', {
-        const response = await fetch(`${API_BASE_URL}/api/register/newUser`, { // ✅ updated
+        const response = await fetch(`${API_BASE_URL}/api/register/newUser`, {
           method: 'POST',
           credentials: "include",
           body: formData, // Do not set Content-Type; browser sets it with boundary
@@ -207,10 +220,9 @@ const RegistrationFlow = () => {
         const data = await response.json();
 
         if (response.ok) {
-          // localStorage.removeItem("registeredUser")
-          alert(data.message);
+          localStorage.removeItem("registeredUser");
+          alert(data.message || "Registration Successful!");
           navigate('/Login')
-          // optionally redirect or reset form here
         } else {
           alert(data.error || "Registration failed");
         }
@@ -242,32 +254,42 @@ const RegistrationFlow = () => {
 
     updatedUser.dob = dob;
     updatedUser.gender = gender;
-    updatedUser.selectedCourses = selectedCourses; // ✅ updated for arrays
-    updatedUser.selectedStandard = selectedStandards; // ✅ singular
-
-    // updatedUser.selectedStandards = selectedStandards; // ✅ updated for arrays
+    updatedUser.selectedCourses = selectedCourses;
+    updatedUser.selectedStandard = selectedStandards;
 
     if (!isUpgrade) {
       updatedUser.photo = photo;
     }
 
     localStorage.setItem("registeredUser", JSON.stringify(updatedUser));
-    setStep(3);
-  };
 
+    // Logic based on Free Trial vs Paid Plan
+    if (planFromURL === 'trial' && !isUpgrade) {
+      // FREE TRIAL FLOW: Finalize registration and grant 10-day trial immediately.
+      updatedUser.plan = "trial";
+      updatedUser.startDate = new Date().toISOString().split("T")[0];
+      updatedUser.endDate = calculateEndDate('trial'); // 10 days
+      localStorage.setItem("registeredUser", JSON.stringify(updatedUser));
 
+      alert(`Registration Completed! Starting your 10-day Free Trial!`);
+      sendUserDetails(); // Final registration call and navigates to /Login
 
-  const completePayment = (method) => {
-    setPaymentMethod(method);
-    if (["Google Pay", "PhonePe", "Paytm"].includes(method)) {
-      setIsPaying(true);
-      setTimeout(() => {
-        setIsPaying(false);
-        setPaymentSuccess(true);
-        alert(`${method} Payment Successful!`);
-      }, 2000);
+    } else if (planFromURL && planFromURL !== 'trial' || isUpgrade) {
+      // PAID PLAN FLOW or UPGRADE: Go to Step 3 (Payment)
+      setStep(3);
+    } else {
+      // Fallback/Standard registration (if no explicit plan selected upfront) -> Default to trial
+      updatedUser.plan = "trial";
+      updatedUser.startDate = new Date().toISOString().split("T")[0];
+      updatedUser.endDate = calculateEndDate('trial'); // 10 days
+      localStorage.setItem("registeredUser", JSON.stringify(updatedUser));
+
+      alert(`Registration Completed! Starting your 10-day Free Trial!`);
+      sendUserDetails(); // Final registration call and navigates to /Login
     }
   };
+
+  // OTP functions (unchanged)
   const sendOtp = async (e) => {
     e.preventDefault();
     if (!email) {
@@ -279,9 +301,7 @@ const RegistrationFlow = () => {
     setEmailError("");
     setLoading(true);
     try {
-      // const res = await fetch("http://localhost:3000/auth/send-otp", {
-      // const res = await fetch("https://studentpadmasini.onrender.com/auth/send-otp", {
-      const res = await fetch(`${API_BASE_URL}/api/auth/send-otp`, { // ✅ updated
+      const res = await fetch(`${API_BASE_URL}/api/auth/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -307,10 +327,8 @@ const RegistrationFlow = () => {
     e.preventDefault();
     if (!otp) return setOtpError("Please enter OTP");
     try {
-      // const res = await fetch("http://localhost:3000/auth/verify-otp", {
-      // const res = await fetch("https://studentpadmasini.onrender.com/auth/verify-otp", {
       console.log("Verifying OTP", { email, otp });
-      const res = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, { // ✅ updated
+      const res = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -332,21 +350,6 @@ const RegistrationFlow = () => {
     }
   }
 
-  const isEmailVerified = () => {
-    const emailVerification = localStorage.getItem("emailVerification")
-    const verifiedEmail = localStorage.getItem("verifiedEmail")
-    console.log(emailVerification)
-    if (!verifiedEmail || verifiedEmail !== email || emailVerification !== "success") {
-      alert("Please verify your email to proceed to the next step.");
-      return false;
-    }
-    return true
-  }
-  const handlePayNowClick = () => {
-    if (!selectedPlan) return alert("Please select a plan.");
-    setShowPaymentOptions(true);
-  };
-
   const currentUserCourses = () => {
     const currentUser = JSON.parse(localStorage.getItem("currentUser"))
     if (currentUser) {
@@ -367,45 +370,119 @@ const RegistrationFlow = () => {
         );
         return <div>Your current course: {courseList.join(" | ")}</div>;
       }
-
-
     }
   }
 
-  const handleFinalPayment = () => {
 
-    if (paymentMethod === "UPI" && !upiId) return alert("Enter UPI ID");
-    if (paymentMethod === "Net Banking" && !bank) return alert("Select a bank");
-    if (paymentMethod === "Credit/Debit Card" && (!cardNumber || !expiry || !cvv)) return alert("Fill all card details");
+  // ----------------------------------------------------
+  // Razorpay Integration Functions
+  // ----------------------------------------------------
 
+  const displayRazorpay = async () => {
+    if (isPaying) return;
     setIsPaying(true);
-    setTimeout(() => {
-      setIsPaying(false);
-      setPaymenySuccess(true)
-      alert(`Payment successful using ${paymentMethod}`);
-      const user = JSON.parse(localStorage.getItem("registeredUser") || "{}");
-      const startDate = new Date();
-      let endDate;
 
-      if (selectedPlan === "trial") {
-        endDate = new Date(startDate.getTime() + 15 * 24 * 60 * 60 * 1000);
-      } else if (selectedPlan === "monthly") {
-        endDate = new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
-      } else if (selectedPlan === "yearly") {
-        endDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+    const price = getPlanPrice(selectedPlan);
+    const user = JSON.parse(localStorage.getItem("registeredUser") || "{}");
+
+    // Step A: Call Spring Boot Backend to Create Order
+    try {
+      const orderResponse = await fetch(`${API_BASE_URL}/api/payment/create-order`, {
+        method: 'POST',
+        body: JSON.stringify({ amount: price, plan: selectedPlan }), // Sending amount in Rupees
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!orderResponse.ok) {
+        alert("Failed to create Razorpay Order. Check server logs.");
+        setIsPaying(false);
+        return;
       }
 
-      user.plan = selectedPlan;
-      user.startDate = startDate.toISOString().split("T")[0];
-      user.endDate = endDate.toISOString().split("T")[0];
-      localStorage.setItem("registeredUser", JSON.stringify(user));
-      // sendUserDetails() //change for backend connection
-      localStorage.removeItem("emailVerification")
-      console.log(JSON.stringify(user))
-      alert(`Login successful! Welcome ${user.firstname}`);
+      const orderData = await orderResponse.json();
+      // orderData should contain { id: "order_...", amount: 100000, currency: "INR", ... }
 
-    }, 2000);
+      const options = {
+        key: RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Padmasini Learning Platform",
+        description: `Subscription for ${selectedPlan.toUpperCase()} Plan`,
+        order_id: orderData.id,
+        handler: async function (response) {
+          // Step B: Call Spring Boot Backend to Verify Payment
+
+          const verificationResponse = await fetch(`${API_BASE_URL}/api/payment/verify`, {
+            method: 'POST',
+            body: JSON.stringify({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              plan: selectedPlan,
+              userId: user.email // Passing email for backend to identify the user
+            }),
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          if (verificationResponse.ok) {
+            // Verification success! Finalize local user data and register.
+            handleSuccessfulPayment(response.razorpay_payment_id);
+          } else {
+            alert("Payment verification failed on the server. Please contact support.");
+            setIsPaying(false);
+          }
+        },
+        prefill: {
+          name: `${user.firstname} ${user.lastname}`,
+          email: user.email,
+          contact: user.mobile
+        },
+        notes: {
+          plan: selectedPlan,
+          user_email: user.email
+        },
+        theme: {
+          color: "#198754"
+        }
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.on('payment.failed', function (response) {
+        alert(`Payment failed. Error: ${response.error.description}`);
+        setIsPaying(false);
+      });
+      paymentObject.open();
+
+    } catch (error) {
+      console.error("Error during Razorpay flow:", error);
+      alert("Payment process error. Please try again.");
+      setIsPaying(false);
+    }
   };
+
+  const handleSuccessfulPayment = (paymentId) => {
+    setPaymentSuccess(true);
+    setIsPaying(false);
+    alert(`Payment Successful! Transaction ID: ${paymentId}`);
+
+    const user = JSON.parse(localStorage.getItem("registeredUser") || "{}");
+
+    // Assign paid plan details and end date
+    user.plan = selectedPlan;
+    user.startDate = new Date().toISOString().split("T")[0];
+    user.endDate = calculateEndDate(selectedPlan);
+    localStorage.setItem("registeredUser", JSON.stringify(user));
+
+    // Final registration call (sends user details and navigates to /Login)
+    sendUserDetails();
+  };
+
+  // Step 3 Primary Action
+  const handleFinalPayment = () => {
+    setPaymentSuccess(false);
+    displayRazorpay();
+  };
+
 
   return (
     <div className="registration-container">
@@ -609,52 +686,6 @@ const RegistrationFlow = () => {
                         </>
                       )}
 
-                      {/* <div className="checkbox-section">
-                        <p>Select Course:</p>
-                        <div className="options">
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={selectedCourses.includes("JEE")}
-                              onChange={() => toggleCourse("JEE")}
-                            />
-                            JEE
-                          </label>
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={selectedCourses.includes("NEET")}
-                              onChange={() => toggleCourse("NEET")}
-                            />
-                            NEET
-                          </label>
-                        </div>
-                      </div>
-
-                      {selectedCourses.length > 0 && (
-                        <div className="checkbox-section">
-                          <p>Select Standard:</p>
-                          <div className="options">
-                            <label>
-                              <input
-                                type="checkbox"
-                                checked={selectedStandards.includes("11th")}
-                                onChange={() => toggleStandard("11th")}
-                              />
-                              11th
-                            </label>
-                            <label>
-                              <input
-                                type="checkbox"
-                                checked={selectedStandards.includes("12th")}
-                                onChange={() => toggleStandard("12th")}
-                              />
-                              12th
-                            </label>
-                          </div>
-                        </div>
-                      )} */}
-
                       <div ref={courseDropdownRef} className="dropdown-wrapper">
                         <label>Course(s):</label>
                         <div
@@ -665,7 +696,7 @@ const RegistrationFlow = () => {
                         </div>
                         {courseDropdownOpen && (
                           <div className="dropdown-menu">
-                            {["JEE", "NEET"].map((course) => (
+                            {["NEET"].map((course) => (
                               <label key={course} className="dropdown-item">
                                 <input
                                   type="checkbox"
@@ -722,49 +753,16 @@ const RegistrationFlow = () => {
             </div>
           )}
 
-          {step === 3 && (
+          {/* Step 3: Payment Section (Razorpay Integration) */}
+          {step === 3 && (selectedPlan && selectedPlan !== 'trial' || isUpgrade) && (
             <div className="payment-section">
-              <h2>{isUpgrade ? "Upgrade Your Plan" : "Select Your Plan"}</h2>
-              <div className="payment-selection">
-                <div className="plans">
-                  {!isUpgrade && (
-                    <label>
-                      <input
-                        type="radio"
-                        name="plan"
-                        value="trial"
-                        checked={selectedPlan === "trial"}
-                        onChange={() => setSelectedPlan("trial")}
-                      />{" "}
-                      15-day Free Trial
-                    </label>
-                  )}
-                  {isUpgrade && (
-                    <>
-                      <label>
-                        <input
-                          type="radio"
-                          name="plan"
-                          value="monthly"
-                          checked={selectedPlan === "monthly"}
-                          onChange={() => setSelectedPlan("monthly")}
-                        />
-                        1 Month – ₹1000
-                      </label>
-                      <label>
-                        <input
-                          type="radio"
-                          name="plan"
-                          value="yearly"
-                          checked={selectedPlan === "yearly"}
-                          onChange={() => setSelectedPlan("yearly")}
-                        />
-                        1 Year – ₹12000
-                      </label>
-                    </>
-                  )}
-                </div>
+              <h2>{isUpgrade ? "Upgrade Plan" : `Pay for ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan`}</h2>
+              <p className="plan-summary">
+                **Selected Plan:** {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} ({selectedPlan === 'monthly' ? '₹1000' : '₹10000'})
+              </p>
 
+              <div className="payment-selection">
+                {/* Promo Code section */}
                 <div className="promo-section">
                   <input
                     type="text"
@@ -775,128 +773,38 @@ const RegistrationFlow = () => {
                   <button onClick={() => alert("Promo Applied: " + promoCode)}>Apply</button>
                 </div>
 
-                {showPaymentOptions && (
-                  <div className="payment-options-modal">
-                    <h3>Select Payment Method</h3>
-                    <div className="methods">
-                      <button onClick={() => completePayment("Google Pay")}>Google Pay</button>
-                      <button onClick={() => completePayment("PhonePe")}>PhonePe</button>
-                      <button onClick={() => completePayment("Paytm")}>Paytm</button>
-                      <button onClick={() => setPaymentMethod("UPI")}>UPI</button>
-                      <button onClick={() => setPaymentMethod("Net Banking")}>Net Banking</button>
-                      <button onClick={() => setPaymentMethod("Credit/Debit Card")}>
-                        Credit/Debit Card
-                      </button>
-                    </div>
-
-                    {paymentMethod === "UPI" && (
-                      <div>
-                        <input
-                          type="text"
-                          placeholder="Enter UPI ID"
-                          value={upiId}
-                          onChange={(e) => setUpiId(e.target.value)}
-                        />
-                      </div>
-                    )}
-
-                    {paymentMethod === "Net Banking" && (
-                      <div>
-                        <select value={bank} onChange={(e) => setBank(e.target.value)}>
-                          <option value="">-- Select Bank --</option>
-                          <option value="SBI">State Bank of India</option>
-                          <option value="HDFC">HDFC Bank</option>
-                          <option value="ICICI">ICICI Bank</option>
-                          <option value="Axis">Axis Bank</option>
-                        </select>
-                      </div>
-                    )}
-
-                    {paymentMethod === "Credit/Debit Card" && (
-                      <div>
-                        <input
-                          type="text"
-                          placeholder="Card Number"
-                          value={cardNumber}
-                          onChange={(e) => setCardNumber(e.target.value)}
-                        />
-                        <input
-                          type="month"
-                          value={expiry}
-                          onChange={(e) => setExpiry(e.target.value)}
-                        />
-                        <input
-                          type="password"
-                          placeholder="CVV"
-                          value={cvv}
-                          onChange={(e) => setCvv(e.target.value)}
-                          maxLength={3}
-                        />
-                      </div>
-                    )}
-
-                    {paymentMethod && !paymentSuccess && (
-                      <button onClick={handleFinalPayment} disabled={isPaying}>
-                        {isPaying ? "Processing..." : "Pay Now"}
-                      </button>
-                    )}
-
-                    {paymentSuccess && (
-                      <button
-                        onClick={async () => {
-                          setIsSubmitting(true);
-                          sendUserDetails();
-                          setIsSubmitting(false);
-
-                          const user = JSON.parse(
-                            sessionStorage.getItem("registeredUser") || "{}"
-                          );
-                          alert(
-                            `Registration Completed Successfully! Welcome ${user.firstname || ""
-                            } ${user.lastname || ""}`
-                          );
-                        }}
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? "Submitting..." : "Submit"}
-                      </button>
-                    )}
-                  </div>
-                )}
+                {/* Razorpay Button */}
+                <div className="razorpay-button-wrapper">
+                  {!paymentSuccess ? (
+                    <button
+                      onClick={handleFinalPayment}
+                      disabled={isPaying}
+                      className="select-plan-btn"
+                      style={{ width: '100%', marginTop: '20px' }}
+                    >
+                      {isPaying ? "Opening Payment Gateway..." : "Proceed to Razorpay Payment"}
+                    </button>
+                  ) : (
+                    <button
+                      disabled
+                      className="select-plan-btn primary-btn"
+                      style={{ width: '100%', marginTop: '20px', backgroundColor: '#34a853' }}
+                    >
+                      Payment Completed ✅
+                    </button>
+                  )}
+                </div>
 
                 <div className="plans-navigation-buttons">
                   <button onClick={() => setStep(2)}>Previous</button>
-                  {!paymentSuccess && (
-                    <button
-                      onClick={() => {
-                        if (!selectedPlan) return alert("Please select a plan.");
-                        setShowPaymentOptions(true);
-                      }}
-                    >
-                      Pay Now
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
           )}
         </div>
       </div>
-
-      {/* WhatsApp Button */}
-      {/* <a
-        href="https://wa.me/8248791389"
-        className="whatsapp-chat-button"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Chat with us on WhatsApp"
-      >
-        <img src={whatsappIcon} alt="WhatsApp" className="whatsapp-icon" />
-        <span>Chat with us on whatsapp</span>
-      </a> */}
     </div>
   );
-
 };
 
 export default RegistrationFlow;

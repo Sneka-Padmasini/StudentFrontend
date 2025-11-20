@@ -1,0 +1,245 @@
+/* src/Pages/PricingPage.css */
+
+/* --- Padmasini Green Theme Variables --- */
+:root {
+    --padmasini-green: #198754;
+    /* Based on the logo/navbar in the sample */
+    --padmasini-light-green: #37b24d;
+    --padmasini-gray-light: #f3f5f7;
+    --padmasini-dark: #176133;
+    --secondary-button-color: #6c757d;
+    --secondary-button-shadow: #545b62;
+}
+
+.pricing-page-container {
+    margin-top: 70px;
+    padding-top: 200px;
+    padding-bottom: 60px;
+    background-color: var(--padmasini-gray-light);
+    text-align: center;
+    min-height: 80vh;
+}
+
+
+.pricing-page-container h2 {
+    font-size: 2.5em;
+    color: var(--padmasini-dark);
+    margin-bottom: 40px;
+    scroll-margin-top: 100px;
+
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+
+    display: inline-block;
+}
+
+.pricing-plans-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    max-width: 1000px;
+    margin: 0 auto;
+    align-items: stretch;
+}
+
+.pricing-card {
+    flex: 1;
+    min-width: 300px;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 30px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.4s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.pricing-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(25, 135, 84, 0.25);
+    border-color: var(--padmasini-green);
+}
+
+
+.pricing-card h3 {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--padmasini-green);
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+/* --- Plan Content Styles --- */
+
+.price {
+    font-size: 2.8em;
+    font-weight: bold;
+    color: var(--padmasini-dark);
+    margin: 10px 0 5px;
+}
+
+.duration {
+    color: var(--padmasini-dark);
+    font-size: 1.1em;
+    margin-bottom: 30px;
+}
+
+.features {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+    margin-top: 20px;
+    color: var(--padmasini-dark);
+    flex-grow: 1;
+}
+
+.features li {
+    margin-bottom: 12px;
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+
+/* --- Paid Plan Pricing Options --- */
+.price-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 30px;
+    padding: 15px 0;
+    border-top: 1px solid #eee;
+}
+
+.plan-option {
+    padding: 10px;
+    border-radius: 8px;
+    background: #fdfdfd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s;
+}
+
+
+.plan-option:hover {
+    border-color: var(--padmasini-green);
+    background: #eaf8f3;
+    /* Light green background */
+    box-shadow: 0 4px 10px rgba(25, 135, 84, 0.15);
+    /* Greenish shadow */
+    cursor: pointer;
+}
+
+
+.price-amount {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--padmasini-green);
+}
+
+.price-term {
+    font-size: 0.9em;
+    color: #666;
+    flex-grow: 1;
+    margin-left: 10px;
+}
+
+/* --- Button Styling (3D Effect) --- */
+.select-plan-btn {
+    background-color: var(--padmasini-green);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s, box-shadow 0.2s;
+    width: 100%;
+    margin-top: auto;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 0 4px 0 0 #156d3c;
+    transform: translateY(0);
+}
+
+.select-plan-btn:hover {
+    background-color: var(--padmasini-light-green);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 0 #156d3c;
+}
+
+.select-plan-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 0 #156d3c;
+}
+
+/* Styling the small buttons inside plan-option */
+.select-plan-btn.small-btn {
+    width: 45%;
+    padding: 8px 15px;
+    font-size: 0.9em;
+    margin-top: 0;
+    border-radius: 5px;
+    box-shadow: 0 3px 0 0 #156d3c;
+}
+
+.select-plan-btn.small-btn:hover {
+    box-shadow: 0 5px 0 0 #156d3c;
+}
+
+/* Secondary Button for Monthly Plan */
+.select-plan-btn.secondary-btn {
+    background-color: var(--secondary-button-color);
+    box-shadow: 0 3px 0 0 var(--secondary-button-shadow);
+}
+
+.select-plan-btn.secondary-btn:hover {
+    background-color: #5a6268;
+    box-shadow: 0 5px 0 0 var(--secondary-button-shadow);
+}
+
+/* Primary button for Yearly Plan */
+.select-plan-btn.primary-btn {
+    background-color: var(--padmasini-green);
+}
+
+
+/* Media Queries for Responsiveness (Retained/Refined) */
+@media (max-width: 900px) {
+    .pricing-plans-wrapper {
+        flex-direction: column;
+        align-items: center;
+        gap: 40px;
+    }
+
+    .pricing-card {
+        max-width: 100%;
+        width: 95%;
+        min-width: unset;
+    }
+
+    .price-options {
+        flex-direction: column;
+    }
+
+    .plan-option {
+        /* Ensure monthly/yearly options take full width */
+        width: 100%;
+    }
+
+    .select-plan-btn.small-btn {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    /* Ensure all buttons have sufficient touch size on mobile */
+    .select-plan-btn,
+    .select-plan-btn.small-btn {
+        min-height: 44px;
+    }
+}

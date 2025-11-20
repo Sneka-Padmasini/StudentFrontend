@@ -21,6 +21,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import About from "./components/About";
 import Courses from "./pages/Courses";
 import ScrollToTop from "./components/ScrollToTop";
+import PricingPage from "./pages/PricingPage";
 import "./App.css";
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
         <Route path="/JeeExplanation" element={<ProtectedRoute allowedCourse="JEE" element={<JeeExplanation />} />} />
         <Route path="/JeeQuiz" element={<ProtectedRoute allowedCourse="JEE" element={<JeeQuiz />} />} /> */}
         <Route path="/padmasini-chat" element={<PadmasiniChat />} />
+        <Route path="/pricing" element={<PricingPage />} />
       </Routes>
       <Footer />
     </div>
