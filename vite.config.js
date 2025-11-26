@@ -2,7 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  base: '/', // ✅ Use '/' instead of './' to avoid routing issues on Render
+  // base: './', // ✅ Use '/' instead of './' to avoid routing issues on Render
+  base: '/Learnforward/',
   plugins: [react()],
   server: {
     host: '0.0.0.0',

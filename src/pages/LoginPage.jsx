@@ -59,19 +59,6 @@ const LoginPage = () => {
 
       standards = [...new Set(standards)]; // remove duplicates
 
-      // const currentUser = {
-      //   userId: data.userId,
-      //   // userName: data.userName || `${data.firstname} ${data.lastname}`,
-      //   userName: data.userName || `${data.firstName || data.firstname || ""} ${data.lastName || data.lastname || ""}`.trim(),
-      //   email: data.email,
-      //   phoneNumber: data.mobile || data.phoneNumber,
-      //   role: data.role || "student",
-      //   coursetype: data.coursetype || data.courseName || "",
-      //   courseName: data.courseName || "",
-      //   subjects: data.subjects || [],
-      //   selectedCourse: data.selectedCourse || {},
-      //   standards: data.standards || []
-      // };
 
       const currentUser = {
         _id: data.userId || data.id || "",   // ✅ store MongoDB id for NeetLearn
@@ -101,6 +88,7 @@ const LoginPage = () => {
     }
   };
 
+
   const handleForgotPassword = async () => {
     if (!email) {
       alert("Please enter your email first");
@@ -108,8 +96,9 @@ const LoginPage = () => {
     }
 
     try {
-      const resp = await fetch(`${API_BASE_URL}/forgot-password`, {
+      const resp = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
         method: "POST",
+        credentials: "include",            // important: include cookies/session
         headers: {
           "Content-Type": "application/json"
         },
@@ -120,11 +109,17 @@ const LoginPage = () => {
 
       if (!resp.ok) throw new Error(data.message || "Something went wrong");
 
-      alert(data.message); // backend will send success message
+      // Save email so Reset page can read it (sessionStorage is fine)
+      sessionStorage.setItem("resetEmail", email);
+
+      alert(data.message); // e.g. "Reset OTP sent to your email"
+      // navigate to reset page where user will enter OTP + new password
+      navigate("/reset-password");
     } catch (err) {
       alert(err.message);
     }
   };
+
 
   return (
     <div className="login-container">
