@@ -203,6 +203,10 @@ const RegistrationFlow = () => {
     formData.append('startDate', user.startDate);
     formData.append('endDate', user.endDate);
 
+    formData.append('paymentId', user.paymentId || "");
+    formData.append('paymentMethod', user.paymentMethod || "");
+    formData.append('amountPaid', user.amountPaid || "0");
+
     // append photo only if selected
     if (photo) {
       console.log("photo is there")
@@ -269,6 +273,12 @@ const RegistrationFlow = () => {
       updatedUser.plan = "trial";
       updatedUser.startDate = new Date().toISOString().split("T")[0];
       updatedUser.endDate = calculateEndDate('trial'); // 10 days
+
+      // 🔥 ADD PAYMENT DETAILS FOR TRIAL 🔥
+      updatedUser.paymentId = "TRIAL_" + Date.now(); // Generate a fake ID
+      updatedUser.paymentMethod = "Free Trial";
+      updatedUser.amountPaid = "0";
+
       localStorage.setItem("registeredUser", JSON.stringify(updatedUser));
 
       alert(`Registration Completed! Starting your 10-day Free Trial!`);
@@ -471,6 +481,12 @@ const RegistrationFlow = () => {
     user.plan = selectedPlan;
     user.startDate = new Date().toISOString().split("T")[0];
     user.endDate = calculateEndDate(selectedPlan);
+
+    // 🔥 ADD PAYMENT DETAILS FOR RAZORPAY 🔥
+    user.paymentId = paymentId; // The ID from Razorpay
+    user.paymentMethod = "Razorpay";
+    user.amountPaid = getPlanPrice(selectedPlan).toString(); // "1000" or "10000"
+
     localStorage.setItem("registeredUser", JSON.stringify(user));
 
     // Final registration call (sends user details and navigates to /Login)

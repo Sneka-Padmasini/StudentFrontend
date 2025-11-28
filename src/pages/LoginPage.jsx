@@ -175,7 +175,7 @@ const LoginPage = () => {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate("/register");
+                    navigate("/pricing");
                   }}
                 >
                   Register

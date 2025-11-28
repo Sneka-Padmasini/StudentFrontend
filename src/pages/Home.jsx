@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Home.css";
 
@@ -30,8 +30,35 @@ const Home = () => {
   const [courseType, setCourseType] = useState(null);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const { login, logout } = useUser()
+  const alertShownRef = useRef(false);
 
+  // 🔒 SUBSCRIPTION ENFORCEMENT CHECK
+  useEffect(() => {
+    const checkSubscription = () => {
+      const userStr = localStorage.getItem("currentUser");
+      if (!userStr) return;
 
+      const user = JSON.parse(userStr);
+
+      if (user.endDate) {
+        const today = new Date();
+        const planEndDate = new Date(user.endDate);
+        today.setHours(0, 0, 0, 0);
+        planEndDate.setHours(0, 0, 0, 0);
+
+        if (today > planEndDate) {
+          // 2. Check if alert was already shown
+          if (!alertShownRef.current) {
+            alert("⚠️ Your Subscription has expired! Please renew.");
+            alertShownRef.current = true; // Mark as shown
+            navigate("/pricing?upgrade=true");
+          }
+        }
+      }
+    };
+
+    checkSubscription();
+  }, [navigate]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("currentUser");
@@ -205,7 +232,7 @@ const Home = () => {
                     <img className="card-image" src={card.img} alt={card.title} />
                     <button
                       className="explore-btn"
-                      onClick={() => navigate("/register")}
+                      onClick={() => navigate("/pricing")}
                     >
                       Learn More
                     </button>

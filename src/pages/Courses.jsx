@@ -36,7 +36,7 @@ const Courses = () => {
 
     const handleLearnMore = (courseType) => {
         if (!currentUser) {
-            navigate("/register");
+            navigate("/pricing");
         } else {
             // if (courseType === "JEE") navigate("/JEE");
             if (courseType === "NEET") navigate("/NEET");
@@ -93,7 +93,7 @@ const Courses = () => {
             <section className="courses-cta">
                 <h2 className="section-heading">Ready to Start Your Learning Journey?</h2>
                 <div className="cta-wrapper">
-                    <button onClick={() => navigate("/register")}>Enroll Now</button>
+                    <button onClick={() => navigate("/pricing")}>Enroll Now</button>
                 </div>
             </section>
 

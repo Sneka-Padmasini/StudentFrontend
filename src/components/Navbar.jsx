@@ -173,7 +173,7 @@ const Navbar = () => {
             to="/courses"
             onClick={() => setMenuOpen(false)}
           >
-            Courses
+            Skilling
           </Link>
         </li>
 
@@ -279,10 +279,11 @@ const Navbar = () => {
                       className="upgrade-btn small-btn"
                       onClick={() => {
                         setUserDropdownOpen(false);
-                        navigate("/register?step=2&upgrade=true");
+                        // navigate("/register?step=2&upgrade=true");
+                        navigate("/pricing");
                       }}
                     >
-                      🪙 Upgrade
+                      🪙 Upgrade Plan
                     </button>
                   </li>
 
