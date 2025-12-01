@@ -1,20 +1,41 @@
 // src/Pages/PricingPage.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react'; // ✅ Import useState and useEffect
 import { useNavigate } from 'react-router-dom';
-import './PricingPage.css'; // You'll need to create this CSS file
+import './PricingPage.css';
 
 const PricingPage = () => {
     const navigate = useNavigate();
+    const [currentUser, setCurrentUser] = useState(null); // ✅ State to store logged-in user
+
+    // ✅ Check if user is already logged in when page loads
+    useEffect(() => {
+        const userStr = localStorage.getItem("currentUser");
+        if (userStr) {
+            setCurrentUser(JSON.parse(userStr));
+        }
+    }, []);
 
     const handlePlanSelection = (planType) => {
-        // All plans (trial, monthly, yearly) should start the registration flow at step 1.
-        // We pass the selected plan as a query parameter.
-        navigate(`/register?plan=${planType}`);
+        if (currentUser) {
+            // ✅ CASE 1: USER IS LOGGED IN -> UPGRADE FLOW
+            // We pass '&upgrade=true' so Registration page knows to skip password/OTP
+            navigate(`/register?plan=${planType}&upgrade=true`);
+        } else {
+            // ❌ CASE 2: NEW USER -> REGISTRATION FLOW
+            navigate(`/register?plan=${planType}`);
+        }
     };
 
     return (
         <div className="pricing-page-container">
             <h2>Choose Your Learning Plan</h2>
+
+            {/* ✅ Optional: Show a friendly message if logged in */}
+            {currentUser && (
+                <div style={{ textAlign: 'center', marginBottom: '20px', color: '#555' }}>
+                    <p>Current Plan: <strong>{currentUser.plan ? currentUser.plan.toUpperCase() : "None"}</strong></p>
+                </div>
+            )}
 
             <div className="pricing-plans-wrapper">
 
@@ -32,8 +53,11 @@ const PricingPage = () => {
                     <button
                         className="select-plan-btn"
                         onClick={() => handlePlanSelection('trial')}
+                        // ✅ Disable if they are already on trial to prevent abuse
+                        disabled={currentUser && currentUser.plan === 'trial'}
+                        style={currentUser && currentUser.plan === 'trial' ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                     >
-                        Start 10-Day Free Trial
+                        {currentUser && currentUser.plan === 'trial' ? "Current Plan" : "Start 10-Day Free Trial"}
                     </button>
                 </div>
 
