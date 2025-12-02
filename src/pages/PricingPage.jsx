@@ -1,39 +1,66 @@
 // src/Pages/PricingPage.jsx
-import React, { useState, useEffect } from 'react'; // ✅ Import useState and useEffect
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './PricingPage.css';
+import { API_BASE_URL } from "../config"; // Ensure this is imported correctly
 
 const PricingPage = () => {
     const navigate = useNavigate();
-    const [currentUser, setCurrentUser] = useState(null); // ✅ State to store logged-in user
+    const [currentUser, setCurrentUser] = useState(null);
 
-    // ✅ Check if user is already logged in when page loads
     useEffect(() => {
+        // 1. Try local storage first (Immediate UI update)
         const userStr = localStorage.getItem("currentUser");
         if (userStr) {
             setCurrentUser(JSON.parse(userStr));
         }
+
+        // 2. Fetch fresh data from server (Critical Fix for "Plan: None")
+        fetch(`${API_BASE_URL}/api/checkSession`, {
+            method: "GET",
+            credentials: 'include'
+        })
+            .then(resp => resp.json())
+            .then(data => {
+                if (data.status === "pass") {
+                    console.log("Pricing Page - Fresh Data:", data);
+                    setCurrentUser(data); // Update state with fresh plan
+                    localStorage.setItem("currentUser", JSON.stringify(data)); // Sync local storage
+                }
+            })
+            .catch(err => console.error("Pricing session check failed", err));
+
     }, []);
 
     const handlePlanSelection = (planType) => {
+        // Logic: Is this a renewal of the SAME plan?
+        const isSamePlan = currentUser && currentUser.plan === planType;
+
+        let url = `/register?plan=${planType}`;
+
         if (currentUser) {
-            // ✅ CASE 1: USER IS LOGGED IN -> UPGRADE FLOW
-            // We pass '&upgrade=true' so Registration page knows to skip password/OTP
-            navigate(`/register?plan=${planType}&upgrade=true`);
-        } else {
-            // ❌ CASE 2: NEW USER -> REGISTRATION FLOW
-            navigate(`/register?plan=${planType}`);
+            url += `&upgrade=true`; // Skip password step
         }
+
+        if (isSamePlan) {
+            url += `&renew=true`; // ✅ Renewal Flag
+        }
+
+        navigate(url);
     };
+
+    const currentPlanText = currentUser?.plan ? currentUser.plan.toUpperCase() : "NONE";
 
     return (
         <div className="pricing-page-container">
             <h2>Choose Your Learning Plan</h2>
 
-            {/* ✅ Optional: Show a friendly message if logged in */}
+            {/* ✅ Display Plan Status */}
             {currentUser && (
                 <div style={{ textAlign: 'center', marginBottom: '20px', color: '#555' }}>
-                    <p>Current Plan: <strong>{currentUser.plan ? currentUser.plan.toUpperCase() : "None"}</strong></p>
+                    <p>Current Plan: <strong>{currentPlanText}</strong></p>
+                    {/* Optional: Show expiry date */}
+                    {currentUser.endDate && <p style={{ fontSize: '12px', color: '#777' }}>Valid till: {currentUser.endDate}</p>}
                 </div>
             )}
 
@@ -53,31 +80,36 @@ const PricingPage = () => {
                     <button
                         className="select-plan-btn"
                         onClick={() => handlePlanSelection('trial')}
-                        // ✅ Disable if they are already on trial to prevent abuse
-                        disabled={currentUser && currentUser.plan === 'trial'}
-                        style={currentUser && currentUser.plan === 'trial' ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                        // 🛑 FREE TRIAL CANNOT BE RENEWED/EXTENDED
+                        disabled={currentUser && (currentUser.plan === 'trial' || currentUser.plan === 'monthly' || currentUser.plan === 'yearly')}
+                        style={currentUser && currentUser.plan ? { opacity: 0.5, cursor: 'not-allowed', backgroundColor: '#ccc' } : {}}
                     >
-                        {currentUser && currentUser.plan === 'trial' ? "Current Plan" : "Start 10-Day Free Trial"}
+                        {currentUser && currentUser.plan === 'trial' ? "Trial Active" : "Start 10-Day Free Trial"}
                     </button>
                 </div>
 
-                {/* Plan 2: Paid Plans (Monthly/Yearly) */}
+                {/* Plan 2: Paid Plans */}
                 <div className="pricing-card">
                     <h3>Full Access Plan 🚀</h3>
                     <div className="price-options">
-                        {/* Monthly Option */}
+
+                        {/* MONTHLY BUTTON */}
                         <div className="plan-option">
                             <span className="price-amount">₹1000</span>
                             <span className="price-term">/month</span>
                             <button
                                 className="select-plan-btn small-btn primary-btn"
                                 onClick={() => handlePlanSelection('monthly')}
+                                // ✅ ENABLED ALWAYS (Unless on Yearly)
+                                disabled={currentUser && currentUser.plan === 'yearly'}
+                                style={currentUser && currentUser.plan === 'yearly' ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                             >
-                                Go Monthly
+                                {/* Change text based on status */}
+                                {currentUser && currentUser.plan === 'monthly' ? "Extend +1 Month" : "Go Monthly"}
                             </button>
                         </div>
 
-                        {/* Yearly Option */}
+                        {/* YEARLY BUTTON */}
                         <div className="plan-option">
                             <span className="price-amount">₹10000</span>
                             <span className="price-term">/year (Save ₹2000!)</span>
@@ -85,7 +117,7 @@ const PricingPage = () => {
                                 className="select-plan-btn small-btn primary-btn"
                                 onClick={() => handlePlanSelection('yearly')}
                             >
-                                Go Yearly
+                                {currentUser && currentUser.plan === 'yearly' ? "Extend +1 Year" : "Go Yearly"}
                             </button>
                         </div>
                     </div>
@@ -97,7 +129,6 @@ const PricingPage = () => {
                         <li>✅ Full access to personalized learning modules</li>
                     </ul>
                 </div>
-
             </div>
         </div>
     );

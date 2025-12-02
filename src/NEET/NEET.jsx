@@ -270,13 +270,14 @@ const Subjects = () => {
         <span className="badge certified">Certified</span>
         <span className="badge limited">Limited Access Only</span>
 
-        {startDate && endDate && (
+        {/* Batch dates */}
+        {/* {startDate && endDate && (
           <div className="cohort-details">
             <h4>Your Batch</h4>
             <p><strong>Start Date:</strong> {startDate}</p>
             <p><strong>End Date:</strong> {endDate}</p>
           </div>
-        )}
+        )} */}
       </aside>
 
       <main className="content">

@@ -16,7 +16,9 @@ const RegistrationFlow = () => {
   // --- URL PARAMS ---
   const stepFromURL = parseInt(queryParams.get("step"));
   const isUpgrade = queryParams.get("upgrade") === "true"; // ✅ Detect Upgrade Mode
+  const isRenew = queryParams.get("renew") === "true";
   const planFromURL = queryParams.get("plan");
+
 
   const [step, setStep] = useState(1);
 
@@ -128,11 +130,45 @@ const RegistrationFlow = () => {
   const validateEmail = (email) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(email);
   const validateMobile = (mobile) => /^[0-9]{10}$/.test(mobile);
 
+  // const calculateEndDate = (plan) => {
+  //   const startDate = new Date();
+  //   let days = plan === "trial" ? 10 : plan === "monthly" ? 30 : plan === "yearly" ? 365 : 0;
+  //   const endDate = new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000);
+  //   return endDate.toISOString().split("T")[0];
+  // }
+
   const calculateEndDate = (plan) => {
-    const startDate = new Date();
+    // 1. Determine how many days to add
     let days = plan === "trial" ? 10 : plan === "monthly" ? 30 : plan === "yearly" ? 365 : 0;
-    const endDate = new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000);
-    return endDate.toISOString().split("T")[0];
+
+    // 2. Determine the Base Date (Start Date)
+    let baseDate = new Date(); // Default: Start from TODAY
+
+    // ✅ RENEWAL LOGIC: Check if we should extend an existing date
+    if (isRenew) {
+      // Try getting user from one of the keys
+      const userStr = localStorage.getItem("upgradingUser") || localStorage.getItem("currentUser");
+      const currentUser = userStr ? JSON.parse(userStr) : null;
+
+      // If user has an existing end date
+      if (currentUser && currentUser.endDate) {
+        const currentEndDate = new Date(currentUser.endDate);
+        const today = new Date();
+
+        // Logic: If plan is NOT expired yet, extend from the end date.
+        // If plan IS expired, restart from today.
+        if (currentEndDate > today) {
+          baseDate = currentEndDate;
+          console.log("🔄 Extending plan from:", baseDate);
+        } else {
+          console.log("⚠️ Plan expired. Restarting from Today.");
+        }
+      }
+    }
+
+    // 3. Add the days
+    const newEndDate = new Date(baseDate.getTime() + days * 24 * 60 * 60 * 1000);
+    return newEndDate.toISOString().split("T")[0];
   }
 
   const getPlanPrice = (plan) => (plan === 'monthly' ? 1000 : plan === 'yearly' ? 10000 : 0);
@@ -217,6 +253,7 @@ const RegistrationFlow = () => {
       formData.append('paymentId', user.paymentId || "");
       formData.append('paymentMethod', user.paymentMethod || "");
       formData.append('amountPaid', user.amountPaid || "0");
+      formData.append('payerId', user.payerId || "");
       if (photo) formData.append('photo', photo);
 
       try {
@@ -352,12 +389,23 @@ const RegistrationFlow = () => {
           });
 
           if (verifyRes.ok) {
-            handleSuccessfulPayment(response.razorpay_payment_id);
+            const verifyData = await verifyRes.json(); // ✅ Parse JSON response
+
+            // ✅ Pass the retrieved payerId (UPI ID) to the success handler
+            handleSuccessfulPayment(response.razorpay_payment_id, verifyData.payerId);
           } else {
             alert("Payment Verification Failed");
             setIsPaying(false);
           }
         },
+
+        //   if (verifyRes.ok) {
+        //     handleSuccessfulPayment(response.razorpay_payment_id);
+        //   } else {
+        //     alert("Payment Verification Failed");
+        //     setIsPaying(false);
+        //   }
+        // },
         prefill: {
           name: `${user.firstname} ${user.lastname}`,
           email: user.email,
@@ -380,14 +428,35 @@ const RegistrationFlow = () => {
     }
   };
 
-  const handleSuccessfulPayment = (paymentId) => {
+  // const handleSuccessfulPayment = (paymentId) => {
+  //   setPaymentSuccess(true);
+  //   setIsPaying(false);
+
+  //   const storageKey = isUpgrade ? "upgradingUser" : "registeredUser";
+  //   const user = JSON.parse(localStorage.getItem(storageKey) || "{}");
+
+  //   // ✅ Set Payment & Date Details
+  //   user.plan = selectedPlan;
+  //   user.startDate = new Date().toISOString().split("T")[0];
+  //   user.endDate = calculateEndDate(selectedPlan);
+  //   user.paymentId = paymentId;
+  //   user.paymentMethod = "Razorpay";
+  //   user.amountPaid = getPlanPrice(selectedPlan).toString();
+
+  //   localStorage.setItem(storageKey, JSON.stringify(user));
+
+  //   // ✅ Trigger Final API Call
+  //   sendUserDetails();
+  // };
+
+  // ✅ Accept payerId as 2nd argument
+  const handleSuccessfulPayment = (paymentId, payerId) => {
     setPaymentSuccess(true);
     setIsPaying(false);
 
     const storageKey = isUpgrade ? "upgradingUser" : "registeredUser";
     const user = JSON.parse(localStorage.getItem(storageKey) || "{}");
 
-    // ✅ Set Payment & Date Details
     user.plan = selectedPlan;
     user.startDate = new Date().toISOString().split("T")[0];
     user.endDate = calculateEndDate(selectedPlan);
@@ -395,9 +464,10 @@ const RegistrationFlow = () => {
     user.paymentMethod = "Razorpay";
     user.amountPaid = getPlanPrice(selectedPlan).toString();
 
-    localStorage.setItem(storageKey, JSON.stringify(user));
+    // ✅ SAVE THE UPI ID / PAYER ID
+    user.payerId = payerId || "Unknown";
 
-    // ✅ Trigger Final API Call
+    localStorage.setItem(storageKey, JSON.stringify(user));
     sendUserDetails();
   };
 
@@ -507,7 +577,8 @@ const RegistrationFlow = () => {
           {/* --- STEP 2: Course & Standard (Common for New & Upgrade) --- */}
           {step === 2 && (
             <div className="student-details">
-              <h2>{isUpgrade ? "Update Plan & Courses" : "Student Details"}</h2>
+              {/* <h2>{isUpgrade ? "Update Plan & Courses" : "Student Details"}</h2> */}
+              <h2>{isRenew ? "Renew / Extend Plan" : (isUpgrade ? "Update Plan & Courses" : "Student Details")}</h2>
               {isUpgrade && currentUserCourses()}
 
               <div className="student-details-wrapper">
@@ -597,10 +668,11 @@ const RegistrationFlow = () => {
               </p>
 
               <div className="payment-selection">
-                <div className="promo-section">
+                {/* Apply promo code */}
+                {/* <div className="promo-section">
                   <input type="text" placeholder="Enter Promo Code" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} />
                   <button onClick={() => alert("Promo Applied: " + promoCode)}>Apply</button>
-                </div>
+                </div> */}
 
                 <div className="razorpay-button-wrapper">
                   {!paymentSuccess ? (

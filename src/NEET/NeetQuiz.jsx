@@ -28,9 +28,11 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
   const [submitted, setSubmitted] = useState(false);
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(2400);
+
+  // CHANGED: 180 minutes = 10800 seconds
+  const [timeRemaining, setTimeRemaining] = useState(10800);
+
   const [hasStarted, setHasStarted] = useState(false);
-  // const [isComplete, setIsComplete] = useState(false);
   const [isComplete, setIsComplete] = useState(isAlreadyComplete);
   const [showResultPopup, setShowResultPopup] = useState(false);
 
@@ -39,33 +41,26 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
 
     // --- New Shuffle and Slice Logic ---
     const shuffledQuestions = shuffleArray([...allQuestions]); // Shuffle a copy
-    const MAX_QUESTIONS = 40;
+
+    // CHANGED: Set to 180 Questions for NEET Pattern
+    const MAX_QUESTIONS = 180;
+
     const finalQuestionList = shuffledQuestions.slice(0, MAX_QUESTIONS);
     // --- End of New Logic ---
 
-    setQuestions(finalQuestionList); // Set the new 40-question list
-    setUserAnswers(Array(finalQuestionList.length).fill("")); // Base answers on new length
+    setQuestions(finalQuestionList);
+    setUserAnswers(Array(finalQuestionList.length).fill(""));
     setSubmitted(false);
     setCurrentQIndex(0);
-    setTimeRemaining(2400); // Set time to 40 minutes (2400 seconds)
+
+    // CHANGED: Reset time to 180 minutes (10800 seconds)
+    setTimeRemaining(10800);
+
     setHasStarted(false);
     setShowConfirmation(false);
     setIsComplete(false);
     setShowResultPopup(false);
   }, [test, subtopicTitle]);
-
-  // useEffect(() => {
-  //   const questionList = test?.[0]?.questionsList || [];
-  //   setQuestions(questionList);
-  //   setUserAnswers(Array(questionList.length).fill(""));
-  //   setSubmitted(false);
-  //   setCurrentQIndex(0);
-  //   setTimeRemaining(1200);
-  //   setHasStarted(false);
-  //   setShowConfirmation(false);
-  //   setIsComplete(false);
-  //   setShowResultPopup(false);
-  // }, [test, subtopicTitle]);
 
   useEffect(() => {
     if (timeRemaining > 0 && !submitted && hasStarted) {
@@ -98,10 +93,9 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     });
   };
 
-
   useEffect(() => {
     setIsComplete(isAlreadyComplete);
-  }, [isAlreadyComplete, subtopicTitle]); // Syncs when the prop or subtopic changes
+  }, [isAlreadyComplete, subtopicTitle]);
 
   const handleOptionChange = (selected) => {
     const updatedAnswers = [...userAnswers];
@@ -109,7 +103,22 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     setUserAnswers(updatedAnswers);
   };
 
+  // Helper function to calculate NEET Score (+4 for correct, -1 for wrong)
+  const calculateNEETScore = () => {
+    return questions.reduce((acc, q, i) => {
+      const correctAnswer = q[`option${Number(q.correctIndex) + 1}`];
+      const userAnswer = userAnswers[i];
 
+      if (!userAnswer) {
+        return acc; // 0 marks for unattempted
+      }
+      if (userAnswer === correctAnswer) {
+        return acc + 4; // +4 marks for correct
+      } else {
+        return acc - 1; // -1 mark for wrong
+      }
+    }, 0);
+  };
 
   const handleSubmit = () => {
     setSubmitted(true);
@@ -117,20 +126,16 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     sessionStorage.setItem(`answers-neet-${subtopicTitle}`, JSON.stringify(userAnswers));
     sessionStorage.setItem(`quizData-neet-${subtopicTitle}`, JSON.stringify(questions));
 
-    const score = questions.reduce((acc, q, i) => {
-      const correctAnswer = q[`option${Number(q.correctIndex) + 1}`];
-      return userAnswers[i] === correctAnswer ? acc + 1 : acc;
-    }, 0);
+    const finalScore = calculateNEETScore();
+    const maxMarks = questions.length * 4; // Should be 720 if 180 questions
+    const percentage = ((finalScore / maxMarks) * 100).toFixed(2);
 
-    const percentage = ((score / questions.length) * 100).toFixed(2);
-
-    // AUTOMATICALLY mark as complete if 100% score
+    // Logic: In real NEET, you don't need 100% to "pass", 
+    // but I kept your logic that marks it 'Complete' only on high performance.
+    // You might want to lower this threshold or remove the check entirely.
     if (percentage === "100.00") {
       console.log("🎯 Perfect score! Marking as complete...");
-
       setIsComplete(true);
-
-      // IMPORTANT: Call onMarkComplete to update parent progress
       if (onMarkComplete) {
         onMarkComplete();
       }
@@ -141,14 +146,10 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
 
   const handleMarkComplete = () => {
     console.log("🔄 Manually marking test as complete");
-
     setIsComplete(true);
-
-    // IMPORTANT: Call onMarkComplete to update parent progress
     if (onMarkComplete) {
       onMarkComplete();
     }
-
     alert("Test marked as complete! Progress updated.");
   };
 
@@ -167,11 +168,11 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
   };
 
   const currentQuestion = questions[currentQIndex];
-  const score = questions.reduce((acc, q, i) => {
-    const correctAnswer = q[`option${Number(q.correctIndex) + 1}`];
-    return userAnswers[i] === correctAnswer ? acc + 1 : acc;
-  }, 0);
-  const percentage = ((score / questions.length) * 100).toFixed(2);
+
+  // Calculate stats for display
+  const finalScore = calculateNEETScore();
+  const maxMarks = questions.length * 4;
+  const percentage = maxMarks > 0 ? ((finalScore / maxMarks) * 100).toFixed(2) : 0;
 
   if (!currentQuestion) {
     return (
@@ -185,13 +186,18 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     );
   }
 
-
+  // Format time for display (Hours : Minutes : Seconds)
+  const formatTime = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h > 0 ? h + ':' : ''}${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
 
   return (
     <div className="quiz-wrapper">
       <div className="quiz-container">
         <h2>{subtopicTitle}</h2>
-
 
         <button
           onClick={handleMarkComplete}
@@ -204,15 +210,18 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
         {!hasStarted ? (
           <div className="start-screen">
             <p><strong>Total Questions:</strong> {questions.length}</p>
-            <p><strong>Time Limit:</strong> 40 minutes</p>
-            <p><strong>Minimum Marks to Pass:</strong> 100%</p>
+            <p><strong>Total Marks:</strong> {questions.length * 4}</p>
+            <p><strong>Time Limit:</strong> 180 minutes</p>
+            <p style={{ fontSize: "1rem", color: "#666", marginTop: "10px" }}>
+              Pattern: +4 for Correct, -1 for Wrong, 0 for Unattempted.
+            </p>
             <button className="start-btn" onClick={() => setHasStarted(true)}>Start Assessment</button>
             <button className="back-btn" onClick={onBack}>Back to Topics</button>
           </div>
         ) : (
           <>
             <div className="timer">
-              <p>Time Remaining: {Math.floor(timeRemaining / 60)}:{String(timeRemaining % 60).padStart(2, "0")}</p>
+              <p>Time Remaining: {formatTime(timeRemaining)}</p>
             </div>
 
             <div className="quiz-question">
@@ -229,7 +238,6 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                       {currentQuestion.tableData.map((row, rIdx) => (
                         <tr key={rIdx}>
                           {row.map((cell, cIdx) => (
-                            // <td key={cIdx} style={{ border: "1px solid #ccc", padding: "8px", textAlign: "center" }}>{cell}</td>
                             <td key={cIdx} style={{ border: "1px solid #ccc", padding: "8px", textAlign: "left" }}>{cell}</td>
                           ))}
                         </tr>
@@ -250,7 +258,6 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                   const isIncorrect = submitted && isSelected && optText !== correctAnswer;
 
                   return (
-
                     <label
                       key={num}
                       className={`option-label ${isCorrect ? "correct" : ""} ${isIncorrect ? "incorrect" : ""}`}
@@ -273,8 +280,6 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                         )}
                       </div>
                     </label>
-
-
                   );
                 })}
               </div>
@@ -287,8 +292,8 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                     : "incorrect"}`
                 }>
                   {userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`]
-                    ? "Correct!"
-                    : `Incorrect. Correct answer: ${currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`]}`}
+                    ? "Correct! (+4 Marks)"
+                    : `Incorrect. (-1 Mark) Correct answer: ${currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`]}`}
                 </p>
               )}
 
@@ -336,14 +341,20 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
         <div className="result-popup">
           <div className="result-popup-content">
             <h3>Quiz Result</h3>
-            <p>You scored {score} out of {questions.length} ({percentage}%)</p>
-            {percentage !== "100.00" && (
-              <p className="not-eligible-msg">
-                You must score 100% to mark this quiz as completed. Try again!
-              </p>
-            )}
+            <p style={{ fontSize: "1.2rem", fontWeight: "bold" }}>
+              Score: {finalScore} / {maxMarks}
+            </p>
+            <p>Percentage: {percentage}%</p>
+
+            {/* Display detailed breakdown */}
+            <div style={{ margin: "10px 0", fontSize: "0.9rem", color: "#555" }}>
+              <p>Correct: {questions.filter((q, i) => userAnswers[i] === q[`option${Number(q.correctIndex) + 1}`]).length} (+4 each)</p>
+              <p>Wrong: {questions.filter((q, i) => userAnswers[i] !== "" && userAnswers[i] !== q[`option${Number(q.correctIndex) + 1}`]).length} (-1 each)</p>
+              <p>Unattempted: {questions.filter((q, i) => userAnswers[i] === "").length} (0 marks)</p>
+            </div>
+
             <button onClick={() => { setShowResultPopup(false); setCurrentQIndex(0); }} className="back-btn">
-              Back to Test
+              Review Answers
             </button>
           </div>
         </div>

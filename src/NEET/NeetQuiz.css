@@ -1,15 +1,23 @@
 /* General Styles */
+
+* {
+  box-sizing: border-box;
+}
+
 .quiz-wrapper {
   display: flex;
   justify-content: center;
-  padding: 5px 75px;
+  align-items: flex-start;
+  padding: 40px 20px;
   min-height: 100vh;
 }
 
 .quiz-container {
   max-width: 900px;
-  margin: 20px auto;
-  padding: 0px 75px;
+  width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  padding: 40px 75px 60px 75px;
   background-color: #eefcea;
   border-radius: 15px;
   font-family: 'Arial', sans-serif;
@@ -371,11 +379,12 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .quiz-wrapper {
-    padding: 1px 0px;
+    padding: 10px;
   }
 
   .quiz-container {
-    padding: 0px;
+    padding: 20px 20px 40px 20px;
+    width: 100%;
   }
 
   .quiz-container h2 {
