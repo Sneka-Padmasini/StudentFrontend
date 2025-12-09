@@ -1153,3 +1153,167 @@ details[open] p {
   margin-top: 8px;
   /* keeps space between text and image */
 }
+
+/* --- CHEEKU SECTION STYLES (Text Only & Clean) --- */
+
+/* Wrapper - spacing from top */
+.cheeku-section-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 0 20px;
+  margin-top: 120px;
+  /* Kept the spacing large as requested */
+  margin-bottom: 60px;
+  position: relative;
+  z-index: 10;
+  clear: both;
+}
+
+/* The Card Design */
+.cheeku-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f8fbf8 100%);
+  border: 1px solid #e0e0e0;
+  border-radius: 30px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
+  max-width: 1000px;
+  /* Slightly narrower for better reading focus */
+  width: 100%;
+  padding: 60px 40px;
+  /* More vertical padding */
+  position: relative;
+  text-align: center;
+  /* Centers everything */
+}
+
+/* Flex Layout */
+.cheeku-content {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Text Styling */
+.cheeku-text-wrapper.centered-text {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.badge {
+  background-color: #dcedc8;
+  color: #33691e;
+  padding: 8px 18px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.cheeku-text-wrapper h2 {
+  font-size: 3rem;
+  /* Made slightly larger */
+  color: #1b5e20;
+  margin: 0 0 10px 0;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.cheeku-text-wrapper h3 {
+  font-size: 1.4rem;
+  color: #d81b60;
+  margin: 0 0 30px 0;
+  font-weight: 600;
+}
+
+.cheeku-desc {
+  font-size: 1.2rem;
+  line-height: 1.8;
+  color: #555;
+  margin-bottom: 40px;
+  max-width: 750px;
+  /* Limits width so text lines aren't too long */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Button */
+.cheeku-cta {
+  background: linear-gradient(to right, #2e7d32, #43a047);
+  color: white;
+  padding: 16px 40px;
+  /* Larger button */
+  border: none;
+  border-radius: 50px;
+  /* Rounder button looks friendlier */
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 10px 20px rgba(46, 125, 50, 0.2);
+}
+
+.cheeku-cta:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 25px rgba(46, 125, 50, 0.3);
+}
+
+/* Wave Animation */
+.wave-emoji {
+  display: inline-block;
+  animation: wave 2s infinite;
+  transform-origin: 70% 70%;
+}
+
+@keyframes wave {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  10% {
+    transform: rotate(14deg);
+  }
+
+  20% {
+    transform: rotate(-8deg);
+  }
+
+  30% {
+    transform: rotate(14deg);
+  }
+
+  40% {
+    transform: rotate(-4deg);
+  }
+
+  50% {
+    transform: rotate(10deg);
+  }
+
+  60% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .cheeku-text-wrapper h2 {
+    font-size: 2.2rem;
+  }
+
+  .cheeku-desc {
+    font-size: 1rem;
+  }
+
+  .cheeku-card {
+    padding: 40px 20px;
+  }
+}

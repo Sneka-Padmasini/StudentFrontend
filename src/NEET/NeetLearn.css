@@ -356,6 +356,34 @@
   /* Firefox */
 }
 
+.neet-mock-test-wrapper {
+  width: 100%;
+  max-width: 1200px;
+  /* Limit width for better readability on large screens */
+  margin: 0 auto;
+  /* Center horizontally */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  /* Start from top */
+  min-height: 100vh;
+}
+
+/* Ensure the quiz container itself is centered and looks good */
+.quiz-container {
+  width: 100%;
+  max-width: 900px;
+  /* Standard width for the quiz card */
+  margin: 20px auto;
+  /* Center it */
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
 @media (max-width: 768px) {
 
   /* allow full scroll when dropdowns expand */

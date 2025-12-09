@@ -50,6 +50,16 @@ const About = () => {
                 <div className="hero-content">
                     <h1 className="company-name">Padmasini Innovations Pvt Ltd</h1>
                     <p className="company-tagline">Innovating Education, Empowering Students</p>
+
+                    {/* ADDED SUMMARY HERE */}
+                    <div className="hero-summary" style={{ marginTop: '20px', maxWidth: '800px' }}>
+                        <p>
+                            Home of <strong> Cheeku</strong> – Your personal AI-powered NEET Companion.
+                            We go beyond traditional learning by providing an AI agent that listens, plans, teaches,
+                            and motivates you daily. It's not just an app; it's a study partner dedicated to your victory.
+                        </p>
+                    </div>
+
                     <div className="hero-stats">
                         <div className="stat">
                             <h3>2+</h3>

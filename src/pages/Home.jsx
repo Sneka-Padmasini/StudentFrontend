@@ -282,6 +282,31 @@ const Home = () => {
         </div>
       </div>
 
+      <div className="cheeku-section-wrapper">
+        <div className="cheeku-card">
+          <div className="cheeku-content">
+            <div className="cheeku-text-wrapper centered-text">
+              <span className="badge">New AI Companion</span>
+              <h2>Meet Cheeku the Gr8 <span className="wave-emoji">👋</span></h2>
+              <h3>Your Personal AI-Powered NEET Study Buddy</h3>
+
+              <p className="cheeku-desc">
+                <strong>“Hi! I am Cheeku.”</strong> I am here to guide you, support you, and learn with you.
+                Unlike standard coaching, I create personalized schedules, explain tough concepts in simple language,
+                and keep you motivated emotionally.
+              </p>
+
+              <button
+                className="cheeku-cta"
+                onClick={() => navigate('/about')}
+              >
+                Meet Cheeku
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Why Choose Us Section */}
       <section className="why-choose-us">
         <h2 className="heading">Why Choose Us</h2>

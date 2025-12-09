@@ -34,6 +34,35 @@ const subjectList = [
 //   }
 // };
 
+
+const shuffleArray = (array) => {
+  let currentIndex = array.length, randomIndex;
+  while (currentIndex !== 0) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+  }
+  return array;
+};
+
+const extractQuestionsFromUnits = (units) => {
+  let questions = [];
+  if (!Array.isArray(units)) return questions;
+  units.forEach((unit) => {
+    if (unit.test && Array.isArray(unit.test)) {
+      unit.test.forEach(t => {
+        if (t.questionsList && Array.isArray(t.questionsList)) {
+          questions = [...questions, ...t.questionsList];
+        }
+      });
+    }
+    if (unit.units && Array.isArray(unit.units)) {
+      questions = [...questions, ...extractQuestionsFromUnits(unit.units)];
+    }
+  });
+  return questions;
+};
+
 const loadSubjectCompletionFromServer = async (userId, setSubjectCompletion, course, standard) => {
   try {
     // Ensure standard is always a single string, not an array
@@ -64,6 +93,7 @@ const Subjects = () => {
   const [subjectCompletion, setSubjectCompletion] = useState({});
   const learningPathRef = useRef(null);
   const { login, logout } = useUser(); // Make sure logout is included
+  const [loadingMock, setLoadingMock] = useState(false);
 
   // ✅ FIX: This useEffect ONLY sets up the standard and dates
   useEffect(() => {
@@ -196,6 +226,8 @@ const Subjects = () => {
   }, [login, logout, navigate])
 
 
+
+
   const calculateProgress = () => {
 
     const totalSubjects = normalizedSubjects.length;
@@ -238,6 +270,74 @@ const Subjects = () => {
     localStorage.setItem("currentClass", selected);
   };
 
+
+  const handleStartMockTest = async () => {
+    if (!selectedClass) {
+      alert("Please select a Class (11th or 12th) first.");
+      return;
+    }
+
+    setLoadingMock(true);
+    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    let courseName = "professional";
+    if (currentUser?.coursetype && currentUser.coursetype.toLowerCase().includes("school")) {
+      courseName = "local";
+    }
+
+    const stdNumber = selectedClass.replace(/\D/g, ""); // "11th" -> "11"
+
+    // NEET Pattern: 45 Physics, 45 Chemistry, 45 Botany, 45 Zoology
+    const subjectConfig = [
+      { name: "Physics", count: 45 },
+      { name: "Chemistry", count: 45 },
+      { name: "Botany", count: 45 },
+      { name: "Zoology", count: 45 }
+    ];
+
+    let finalExamQuestions = [];
+
+    try {
+      const fetchPromises = subjectConfig.map(sub =>
+        fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${sub.name}/${stdNumber}`, { credentials: "include" })
+          .then(res => res.json())
+          .then(data => ({ name: sub.name, count: sub.count, data: Array.isArray(data) ? data : [] }))
+      );
+
+      const results = await Promise.all(fetchPromises);
+
+      results.forEach(result => {
+        const allQuestions = extractQuestionsFromUnits(result.data);
+        const shuffled = shuffleArray([...allQuestions]);
+        const selected = shuffled.slice(0, result.count);
+        finalExamQuestions = [...finalExamQuestions, ...selected];
+      });
+
+      // Shuffle the final mix of 180 questions
+      const mixedQuestions = shuffleArray(finalExamQuestions);
+
+      if (mixedQuestions.length === 0) {
+        alert("No questions found. Please try another class.");
+        setLoadingMock(false);
+        return;
+      }
+
+      navigate("/NeetLearn", {
+        state: {
+          isMock: true,
+          mockData: mixedQuestions,
+          subject: "Full Mock Test",
+          selectedClass: selectedClass
+        },
+      });
+
+    } catch (error) {
+      console.error("Mock Test Generation Error:", error);
+      alert("Failed to generate test. Check connection.");
+    } finally {
+      setLoadingMock(false);
+    }
+  };
+
   return (
     <div className="subjects-page">
       <aside className="sidebar">
@@ -269,6 +369,7 @@ const Subjects = () => {
 
         <span className="badge certified">Certified</span>
         <span className="badge limited">Limited Access Only</span>
+
 
         {/* Batch dates */}
         {/* {startDate && endDate && (
@@ -370,6 +471,53 @@ const Subjects = () => {
             ))}
           </div>
         </section>
+
+        <section className="mock-test-section" style={{ marginTop: "30px", marginBottom: "50px", padding: "25px", backgroundColor: "#fff", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.08)", borderLeft: "5px solid #006400" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "20px" }}>
+
+            <div className="mock-text-content">
+              <h3 style={{ margin: "0 0 8px 0", color: "#2c3e50", fontSize: "1.5rem" }}>Full Syllabus Mock Test</h3>
+              <p style={{ margin: "0 0 10px 0", color: "#555" }}>
+                Take a comprehensive exam combining Physics, Chemistry, Botany, and Zoology.
+              </p>
+              <div style={{ display: "flex", gap: "15px", fontSize: "0.9rem", color: "#666", fontWeight: "500" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>⏱️ 180 Mins</span>
+                <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>📝 180 Questions</span>
+                <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>🏆 720 Marks</span>
+              </div>
+            </div>
+
+            <button
+              onClick={handleStartMockTest}
+              disabled={loadingMock}
+              style={{
+                backgroundColor: loadingMock ? "#9ca3af" : "#006400", /* Padmasini Green */
+                color: "white",
+                padding: "12px 28px",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "1rem",
+                fontWeight: "bold",
+                cursor: loadingMock ? "not-allowed" : "pointer",
+                boxShadow: "0 4px 6px rgba(0, 100, 0, 0.2)",
+                transition: "transform 0.2s, background-color 0.2s",
+                minWidth: "200px"
+              }}
+              onMouseOver={(e) => !loadingMock && (e.target.style.transform = "translateY(-2px)")}
+              onMouseOut={(e) => !loadingMock && (e.target.style.transform = "translateY(0)")}
+            >
+              {loadingMock ? "Preparing Test..." : "Start Full Mock Test"}
+            </button>
+          </div>
+
+          {/* Helper text for validation */}
+          {!selectedClass && (
+            <p style={{ marginTop: "15px", color: "#d32f2f", fontSize: "0.9rem", fontStyle: "italic" }}>
+              * Please select a Standard (Class 11 or 12) from the sidebar to unlock the test.
+            </p>
+          )}
+        </section>
+
       </main>
 
       <PadmasiniChat subjectName="NEET" />

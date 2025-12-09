@@ -246,6 +246,8 @@ const SubtopicTree = ({
 const NeetLearn = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const isMockMode = location.state?.isMock || false;
+  const mockData = location.state?.mockData || [];
   const subject = location.state?.subject || "Physics";
   const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
   const selectedStandard =
@@ -742,6 +744,40 @@ const NeetLearn = () => {
     }
   };
 
+  if (isMockMode) {
+    const mockTestObject = [{
+      testName: "Full NEET Mock Test",
+      questionsList: mockData
+    }];
+
+    return (
+      // <div className="Neet-container">
+      //   <NeetQuiz
+      //     topicTitle="Full Syllabus"
+      //     subtopicTitle={`NEET Mock Test`}
+      //     test={mockTestObject}
+      //     onBack={() => navigate("/NEET")}
+      //     onMarkComplete={() => navigate("/NEET")}
+      //     isAlreadyComplete={false}
+      //     isMock={true} // Passing flag to Quiz
+      //   />
+      // </div>
+      <div className="neet-mock-test-wrapper" style={{ marginTop: "60px" }}>
+        <NeetQuiz
+          topicTitle="Full Syllabus"
+          subtopicTitle={`NEET Mock Test - ${mockData.length} Questions`}
+          test={mockTestObject}
+          onBack={() => navigate("/Neet")}
+          onMarkComplete={() => {
+            alert("Mock Test Completed!");
+            navigate("/Neet");
+          }}
+          isAlreadyComplete={false}
+          isMock={true}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="Neet-container">

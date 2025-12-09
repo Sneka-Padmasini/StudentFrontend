@@ -80,7 +80,8 @@ const LoginPage = () => {
       login(currentUser);
 
       // navigate to dashboard/home page
-      navigate("/home");
+      // navigate("/home");
+      navigate("/NEET");
 
     } catch (err) {
       console.error("Login failed:", err);

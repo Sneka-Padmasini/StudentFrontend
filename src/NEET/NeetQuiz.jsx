@@ -22,7 +22,7 @@ const shuffleArray = (array) => {
   return array;
 };
 
-const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isAlreadyComplete }) => {
+const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isAlreadyComplete, isMock }) => {
   const [questions, setQuestions] = useState([]);
   const [userAnswers, setUserAnswers] = useState([]);
   const [submitted, setSubmitted] = useState(false);
@@ -39,13 +39,25 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
   useEffect(() => {
     const allQuestions = test?.[0]?.questionsList || [];
 
+    let finalQuestionList = [];
+
+    if (isMock) {
+      // If it's a mock test, take data AS IS (it's already shuffled & counted in NEET.jsx)
+      finalQuestionList = allQuestions;
+    } else {
+      // Normal unit test: Shuffle and limit
+      const shuffledQuestions = shuffleArray([...allQuestions]);
+      const MAX_QUESTIONS = 180;
+      finalQuestionList = shuffledQuestions.slice(0, MAX_QUESTIONS);
+    }
+
     // --- New Shuffle and Slice Logic ---
-    const shuffledQuestions = shuffleArray([...allQuestions]); // Shuffle a copy
+    // const shuffledQuestions = shuffleArray([...allQuestions]); // Shuffle a copy
 
     // CHANGED: Set to 180 Questions for NEET Pattern
-    const MAX_QUESTIONS = 180;
+    // const MAX_QUESTIONS = 180;
 
-    const finalQuestionList = shuffledQuestions.slice(0, MAX_QUESTIONS);
+    // const finalQuestionList = shuffledQuestions.slice(0, MAX_QUESTIONS);
     // --- End of New Logic ---
 
     setQuestions(finalQuestionList);
@@ -60,7 +72,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     setShowConfirmation(false);
     setIsComplete(false);
     setShowResultPopup(false);
-  }, [test, subtopicTitle]);
+  }, [test, subtopicTitle, isMock]);
 
   useEffect(() => {
     if (timeRemaining > 0 && !submitted && hasStarted) {
@@ -299,15 +311,27 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
 
               {/* Solution explanation & images */}
               {submitted && (
-                <div className="solution-explanation">
-                  {currentQuestion.explanation && <p><strong>Explanation:</strong> {parseTextWithFormulas(currentQuestion.explanation)}</p>}
-                  {currentQuestion.solutionImages?.map((url, idx) =>
-                    url !== "NO_SOLUTION_IMAGE" && (
-                      <img key={idx} src={url} alt={`Solution ${idx + 1}`} style={{ maxWidth: "100%", borderRadius: "8px", marginBottom: "10px" }} />
-                    )
-                  )}
-                </div>
-              )}
+                // 1. Check if we have Explanation Text OR Valid Images before rendering the div
+                (currentQuestion.explanation ||
+                  (currentQuestion.solutionImages && currentQuestion.solutionImages.some(url => url !== "NO_SOLUTION_IMAGE")))
+              ) && (
+                  <div className="solution-explanation">
+                    {currentQuestion.explanation && (
+                      <p><strong>Explanation:</strong> {parseTextWithFormulas(currentQuestion.explanation)}</p>
+                    )}
+
+                    {currentQuestion.solutionImages?.map((url, idx) =>
+                      url !== "NO_SOLUTION_IMAGE" && (
+                        <img
+                          key={idx}
+                          src={url}
+                          alt={`Solution ${idx + 1}`}
+                          style={{ maxWidth: "100%", borderRadius: "8px", marginBottom: "10px", display: "block" }}
+                        />
+                      )
+                    )}
+                  </div>
+                )}
 
               {/* Navigation */}
               <div className="navigation-buttons">

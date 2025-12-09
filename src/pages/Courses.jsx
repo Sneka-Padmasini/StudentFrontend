@@ -20,12 +20,46 @@ const Courses = () => {
     }, [currentUser]);
 
     const courses = [
+
         {
             type: "NEET",
-            title: "NEET",
-            description: "Prepare effectively for NEET with guided study plans, practice papers, and interactive learning materials. Covers Physics, Chemistry, and Biology with detailed NCERT solutions, mock tests, and important questions to help you excel.",
-            img: importantImg
+            title: "NEET Companion – Cheeku",
+            img: importantImg,
+            // We use JSX in description for the full rich content
+            description: (
+                <div className="course-full-details">
+                    <p className="highlight-text" style={{ fontSize: '1.1rem', marginBottom: '15px' }}>
+                        <strong>Your personal AI-powered NEET study buddy.</strong> Each student gets a dedicated AI agent customised to their learning style.
+                    </p>
+
+                    <h4 style={{ color: '#d81b60', marginTop: '20px', marginBottom: '10px' }}>What Cheeku Can Do for You:</h4>
+                    <ul style={{ paddingLeft: '20px', lineHeight: '1.8' }}>
+                        <li><strong>Listen to you:</strong> Anytime you feel stressed, confused, or need clarity.</li>
+                        <li><strong>Talk to you:</strong> Explains concepts in simple, student-friendly language.</li>
+                        <li><strong>Create your tasks:</strong> Daily goals, chapter plans, and micro-targets.</li>
+                        <li><strong>Build your schedule:</strong> Personalised timetables based on school and personal pace.</li>
+                        <li><strong>Teach tough topics:</strong> Easy breakdowns of Physics, Chemistry, and Biology.</li>
+                        <li><strong>Track readiness:</strong> Tells you what you are missing and how far you are from exam-level preparation.</li>
+                        <li><strong>Motivate you emotionally:</strong> Jokes, breaks, encouragement, and mental wellness nudges.</li>
+                    </ul>
+
+                    <h4 style={{ color: '#1565c0', marginTop: '20px', marginBottom: '10px' }}>Why Students Love Cheeku:</h4>
+                    <ul style={{ paddingLeft: '20px', lineHeight: '1.8' }}>
+                        <li>It feels like studying with a friendly partner.</li>
+                        <li>You never feel alone.</li>
+                        <li>You get personalised support that typical coaching can’t provide.</li>
+                        <li><strong>Cheeku does everything for you and with you.</strong></li>
+                    </ul>
+                </div>
+            )
         },
+
+        // {
+        //     type: "NEET",
+        //     title: "NEET",
+        //     description: "Prepare effectively for NEET with guided study plans, practice papers, and interactive learning materials. Covers Physics, Chemistry, and Biology with detailed NCERT solutions, mock tests, and important questions to help you excel.",
+        //     img: importantImg
+        // },
         // {
         //     type: "JEE",
         //     title: "JEE",
@@ -67,8 +101,10 @@ const Courses = () => {
                                 <img src={course.img} alt={course.title} className="course-image" />
                             </div>
                             <div className="course-content-wrapper">
+                                {/* <h2 className="course-title">{course.title}</h2>
+                                <p>{course.description}</p> */}
                                 <h2 className="course-title">{course.title}</h2>
-                                <p>{course.description}</p>
+                                <div className="course-desc-wrapper">{course.description}</div>
                                 <button className="learn-btn" onClick={() => handleLearnMore(course.type)}>Learn More</button>
                             </div>
                         </div>
