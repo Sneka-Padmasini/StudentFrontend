@@ -241,7 +241,12 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                 {parseTextWithFormulas(`${currentQIndex + 1}. ${currentQuestion.question}`)}
 
                 {currentQuestion.questionImages?.map((url, idx) => (
-                  <img key={idx} src={url} alt={`Question ${currentQIndex + 1} Image ${idx + 1}`} style={{ maxWidth: "100%", margin: "10px 0", borderRadius: "8px" }} />
+                  <img
+                    key={idx}
+                    src={url}
+                    alt={`Question ${currentQIndex + 1} Image ${idx + 1}`}
+                    className="quiz-question-image"
+                  />
                 ))}
 
                 {currentQuestion.tableData?.length > 0 && (
@@ -288,6 +293,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                           <img
                             src={optImage}
                             alt={`Option ${num} Image`}
+                            className="quiz-option-image"
                           />
                         )}
                       </div>
