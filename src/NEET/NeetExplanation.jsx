@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './NeetExplanation.css';
-import { FaPlay, FaPause, FaCheckCircle } from 'react-icons/fa';
+import { FaPlay, FaPause, FaArrowLeft, FaArrowRight, FaCheckCircle } from 'react-icons/fa';
 import katex from 'katex';
 import parse from 'html-react-parser';
 import 'katex/dist/katex.min.css';
@@ -14,7 +14,9 @@ const NeetExplanation = ({
   videoUrl = '',
   onBack,
   onMarkComplete,
-  isAlreadyComplete
+  isAlreadyComplete,
+  onNext,
+  onPrevious
 }) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voice, setVoice] = useState(null);
@@ -122,34 +124,88 @@ const NeetExplanation = ({
     if (onMarkComplete) onMarkComplete();
   };
 
+  // const parseTextWithFormulas = (texts) => {
+  //   if (!texts) return null;
+
+  //   // Keep proper newlines and lists formatting
+  //   let text = texts
+  //     .replace(/\\\\/g, "\\") // cleanup slashes
+  //     .replace(/\r?\n/g, "<br/>"); // handle newlines from admin textareas
+
+  //   // Handle $...$ LaTeX formulas
+  //   const TEMP_DOLLAR = "__DOLLAR__";
+  //   const safeText = text.replace(/\\\$/g, TEMP_DOLLAR);
+  //   const parts = safeText.split(/(\$[^$]+\$)/g);
+
+  //   const renderedParts = parts.map((part, index) => {
+  //     if (part.startsWith("$") && part.endsWith("$")) {
+  //       const latex = part.slice(1, -1);
+  //       try {
+  //         const html = katex.renderToString(latex, { throwOnError: false, output: "html" });
+  //         return `<span>${html}</span>`;
+  //       } catch (err) {
+  //         return `<span style="color:red">${latex}</span>`;
+  //       }
+  //     } else {
+  //       return part.replaceAll(TEMP_DOLLAR, "$");
+  //     }
+  //   });
+
+  //   // Join everything and parse as HTML (so <ul>, <li>, <b>, <br> all work)
+  //   const combinedHTML = renderedParts.join("");
+  //   return parse(combinedHTML);
+  // };
+
   const parseTextWithFormulas = (texts) => {
     if (!texts) return null;
 
-    // Keep proper newlines and lists formatting
+    // 1. Clean up the input string
     let text = texts
-      .replace(/\\\\/g, "\\") // cleanup slashes
-      .replace(/\r?\n/g, "<br/>"); // handle newlines from admin textareas
+      .replace(/\\\\/g, "\\")
+      .replace(/\t/g, "    ")
+      .replace(/<\s*br\s*\/?\s*>/gi, "<br/>")
+      .replace(/\r?\n/g, "<br/>");
 
-    // Handle $...$ LaTeX formulas
-    const TEMP_DOLLAR = "__DOLLAR__";
-    const safeText = text.replace(/\\\$/g, TEMP_DOLLAR);
-    const parts = safeText.split(/(\$[^$]+\$)/g);
+    const regex = /(\$\$[\s\S]*?\$\$|\$[^$]+?\$)/g;
+
+    const parts = text.split(regex);
 
     const renderedParts = parts.map((part, index) => {
-      if (part.startsWith("$") && part.endsWith("$")) {
-        const latex = part.slice(1, -1);
+      // Check for Display Mode ($$ equation $$)
+      if (part.startsWith("$$") && part.endsWith("$$")) {
+        const latex = part.slice(2, -2); // Remove the $$
         try {
-          const html = katex.renderToString(latex, { throwOnError: false, output: "html" });
-          return `<span>${html}</span>`;
+          const html = katex.renderToString(latex, {
+            throwOnError: false,
+            output: "html",
+            displayMode: true // This makes it centered and big
+          });
+          return `<div key="${index}" class="latex-block">${html}</div>`;
         } catch (err) {
           return `<span style="color:red">${latex}</span>`;
         }
-      } else {
-        return part.replaceAll(TEMP_DOLLAR, "$");
+      }
+      // Check for Inline Mode ($ equation $)
+      else if (part.startsWith("$") && part.endsWith("$")) {
+        const latex = part.slice(1, -1); // Remove the $
+        try {
+          const html = katex.renderToString(latex, {
+            throwOnError: false,
+            output: "html",
+            displayMode: false // This keeps it inside the text line
+          });
+          return `<span key="${index}">${html}</span>`;
+        } catch (err) {
+          return `<span style="color:red">${latex}</span>`;
+        }
+      }
+      // Regular text
+      else {
+        return part;
       }
     });
 
-    // Join everything and parse as HTML (so <ul>, <li>, <b>, <br> all work)
+    // Join and parse HTML
     const combinedHTML = renderedParts.join("");
     return parse(combinedHTML);
   };
@@ -159,30 +215,13 @@ const NeetExplanation = ({
       <div className="explanation-content">
         <h2>{subtopicTitle}</h2>
 
-        <div className="centered-buttons">
-          <button
-            onClick={handleMarkComplete}
-            className={`complete-btn ${isComplete ? 'completed' : ''}`}
-            disabled={isComplete}
-          >
-            {isComplete ? (
-              <>
-                Completed <FaCheckCircle className="check-icon" />
-              </>
-            ) : (
-              'Mark as Complete'
-            )}
-          </button>
 
-          <>
-
-
-            {/* Explanation text with voice controls */}
-            <div className="explanation-text-with-controls">
-              <div className="explanation-text">
-                {parseTextWithFormulas(explanation || "No explanation available")}
-              </div>
-              {/* {!isIntroIframe && (
+        {/* Explanation text with voice controls */}
+        <div className="explanation-text-with-controls">
+          <div className="explanation-text">
+            {parseTextWithFormulas(explanation || "No explanation available")}
+          </div>
+          {/* {!isIntroIframe && (
                   <div className="voice-controls-container">
                     <button className="voice-play-button" onClick={handleTogglePlayPause}>
                       {isSpeaking ? <FaPause /> : <FaPlay />}
@@ -202,10 +241,10 @@ const NeetExplanation = ({
                   </div>
                 )} */}
 
-            </div>
 
-            {/* Audio File Playback (temporarily disabled) */}
-            {/* <div className="subject-info">
+
+          {/* Audio File Playback (temporarily disabled) */}
+          {/* <div className="subject-info">
 
                 {audioFileId && audioFileId.length > 0 && (
                   <div className="audio-files">
@@ -218,32 +257,31 @@ const NeetExplanation = ({
                 )}
               </div> */}
 
-            {/* Display all images */}
-            {imageUrls && imageUrls.length > 0 && (
-              <div className="explanation-images">
-                {imageUrls.map((url, index) => (
-                  <img
-                    key={index}
-                    src={url}
-                    alt={`Unit Image ${index + 1}`}
-                    style={{
-                      maxWidth: "100%",
-                      margin: "10px 0",
-                      borderRadius: "10px",
-                      display: "block",
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          </>
+          {/* Display all images */}
+          {imageUrls && imageUrls.length > 0 && (
+            <div className="explanation-images">
+              {imageUrls.map((url, index) => (
+                <img
+                  key={index}
+                  src={url}
+                  alt={`Unit Image ${index + 1}`}
+                  style={{
+                    maxWidth: "100%",
+                    margin: "10px 0",
+                    borderRadius: "10px",
+                    display: "block",
+                  }}
+                />
+              ))}
+            </div>
+          )}
 
         </div>
 
 
 
         {/* ✅ AI Generated Video - placed between content and back button */}
-        {videoUrl && (
+        {/* {videoUrl && (
           <div className="ai-video-container">
             <h5>AI Generated Video</h5>
             <video width="100%" controls>
@@ -251,7 +289,31 @@ const NeetExplanation = ({
               Your browser does not support the video tag.
             </video>
           </div>
+        )} */}
+        {videoUrl && typeof videoUrl === 'string' && videoUrl.trim() !== "" && videoUrl !== "null" && (
+          <div className="ai-video-container">
+            <h5>AI Generated Video</h5>
+            {/* Key ensures video reloads if URL changes */}
+            <video key={videoUrl} width="100%" controls>
+              <source src={videoUrl} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
         )}
+
+        {/* ✅ Navigation Buttons (Previous / Next) */}
+        <div className="nav-container">
+          <button onClick={onPrevious} className="nav-btn prev-btn">
+            <FaArrowLeft /> Previous
+          </button>
+
+          <button
+            onClick={() => { if (onNext) onNext(); }}
+            className="nav-btn next-btn"
+          >
+            {isComplete ? "Next" : "Complete"} <FaArrowRight />
+          </button>
+        </div>
 
         <button onClick={handleBack} className="back-btn">
           Back to Topics

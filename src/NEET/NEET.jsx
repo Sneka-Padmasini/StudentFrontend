@@ -271,22 +271,98 @@ const Subjects = () => {
   };
 
 
+  // const handleStartMockTest = async () => {
+  //   if (!selectedClass) {
+  //     alert("Please select a Class (11th or 12th) first.");
+  //     return;
+  //   }
+
+  //   setLoadingMock(true);
+  //   const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+  //   let courseName = "professional";
+  //   if (currentUser?.coursetype && currentUser.coursetype.toLowerCase().includes("school")) {
+  //     courseName = "local";
+  //   }
+
+  //   const stdNumber = selectedClass.replace(/\D/g, ""); // "11th" -> "11"
+
+  //   // NEET Pattern: 45 Physics, 45 Chemistry, 45 Botany, 45 Zoology
+  //   const subjectConfig = [
+  //     { name: "Physics", count: 45 },
+  //     { name: "Chemistry", count: 45 },
+  //     { name: "Botany", count: 45 },
+  //     { name: "Zoology", count: 45 }
+  //   ];
+
+  //   let finalExamQuestions = [];
+
+  //   try {
+  //     const fetchPromises = subjectConfig.map(sub =>
+  //       fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${sub.name}/${stdNumber}`, { credentials: "include" })
+  //         .then(res => res.json())
+  //         .then(data => ({ name: sub.name, count: sub.count, data: Array.isArray(data) ? data : [] }))
+  //     );
+
+  //     const results = await Promise.all(fetchPromises);
+
+  //     results.forEach(result => {
+  //       const allQuestions = extractQuestionsFromUnits(result.data);
+  //       const shuffled = shuffleArray([...allQuestions]);
+  //       const selected = shuffled.slice(0, result.count);
+  //       finalExamQuestions = [...finalExamQuestions, ...selected];
+  //     });
+
+  //     // Shuffle the final mix of 180 questions
+  //     const mixedQuestions = shuffleArray(finalExamQuestions);
+
+  //     if (mixedQuestions.length === 0) {
+  //       alert("No questions found. Please try another class.");
+  //       setLoadingMock(false);
+  //       return;
+  //     }
+
+  //     navigate("/NeetLearn", {
+  //       state: {
+  //         isMock: true,
+  //         mockData: mixedQuestions,
+  //         subject: "Full Mock Test",
+  //         selectedClass: selectedClass
+  //       },
+  //     });
+
+  //   } catch (error) {
+  //     console.error("Mock Test Generation Error:", error);
+  //     alert("Failed to generate test. Check connection.");
+  //   } finally {
+  //     setLoadingMock(false);
+  //   }
+  // };
+
+  // ✅ CHANGE 3: Update Test Logic to handle "Both"
   const handleStartMockTest = async () => {
     if (!selectedClass) {
-      alert("Please select a Class (11th or 12th) first.");
+      alert("Please select a Class first.");
       return;
     }
 
     setLoadingMock(true);
     const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+
+    // Check if user is school or professional
     let courseName = "professional";
     if (currentUser?.coursetype && currentUser.coursetype.toLowerCase().includes("school")) {
       courseName = "local";
     }
 
-    const stdNumber = selectedClass.replace(/\D/g, ""); // "11th" -> "11"
+    // 🟢 Logic: If "Both", fetch from [11, 12]. If single class, fetch from just that one.
+    let standardsToFetch = [];
+    if (selectedClass === "Both") {
+      standardsToFetch = ["11", "12"];
+    } else {
+      standardsToFetch = [selectedClass.replace(/\D/g, "")]; // "11th" -> "11"
+    }
 
-    // NEET Pattern: 45 Physics, 45 Chemistry, 45 Botany, 45 Zoology
+    // NEET Pattern: 45 questions per subject
     const subjectConfig = [
       { name: "Physics", count: 45 },
       { name: "Chemistry", count: 45 },
@@ -297,22 +373,37 @@ const Subjects = () => {
     let finalExamQuestions = [];
 
     try {
-      const fetchPromises = subjectConfig.map(sub =>
-        fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${sub.name}/${stdNumber}`, { credentials: "include" })
-          .then(res => res.json())
-          .then(data => ({ name: sub.name, count: sub.count, data: Array.isArray(data) ? data : [] }))
-      );
+      // Fetch questions for every subject
+      const subjectPromises = subjectConfig.map(async (sub) => {
+        let subjectPool = [];
 
-      const results = await Promise.all(fetchPromises);
+        // For this subject, fetch from ALL required standards (11, 12, or both)
+        const stdPromises = standardsToFetch.map(stdNum =>
+          fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${sub.name}/${stdNum}`, { credentials: "include" })
+            .then(res => res.json())
+            .then(data => (Array.isArray(data) ? data : []))
+        );
 
-      results.forEach(result => {
-        const allQuestions = extractQuestionsFromUnits(result.data);
-        const shuffled = shuffleArray([...allQuestions]);
-        const selected = shuffled.slice(0, result.count);
-        finalExamQuestions = [...finalExamQuestions, ...selected];
+        const stdResults = await Promise.all(stdPromises);
+
+        // Combine questions from 11th and 12th into one big pool for this subject
+        stdResults.forEach(data => {
+          subjectPool = [...subjectPool, ...extractQuestionsFromUnits(data)];
+        });
+
+        // Shuffle the pool and pick exactly 45 questions
+        const shuffledPool = shuffleArray([...subjectPool]);
+        return shuffledPool.slice(0, sub.count);
       });
 
-      // Shuffle the final mix of 180 questions
+      const results = await Promise.all(subjectPromises);
+
+      // Combine all subjects (Phys + Chem + Bot + Zoo)
+      results.forEach(questions => {
+        finalExamQuestions = [...finalExamQuestions, ...questions];
+      });
+
+      // Final shuffle of the 180 questions
       const mixedQuestions = shuffleArray(finalExamQuestions);
 
       if (mixedQuestions.length === 0) {
@@ -325,7 +416,7 @@ const Subjects = () => {
         state: {
           isMock: true,
           mockData: mixedQuestions,
-          subject: "Full Mock Test",
+          subject: selectedClass === "Both" ? "Cumulative Mock (11th + 12th)" : `Full Mock Test (${selectedClass})`,
           selectedClass: selectedClass
         },
       });
@@ -354,6 +445,12 @@ const Subjects = () => {
                     {std === "11th" ? "Class 11" : std === "12th" ? "Class 12" : std}
                   </option>
                 ))}
+
+                {/* ✅ CHANGE 1: Add the Cumulative Option */}
+                {Array.isArray(standard) && standard.includes("11th") && standard.includes("12th") && (
+                  <option value="Both">Cumulative (Class 11 & 12)</option>
+                )}
+
               </select>
             ) : (
               <span>
@@ -381,7 +478,7 @@ const Subjects = () => {
         )} */}
       </aside>
 
-      <main className="content">
+      {/* <main className="content">
         <section className="progress-section">
           <h3>My Completion Progress</h3>
           <div className="progress-header">
@@ -424,9 +521,9 @@ const Subjects = () => {
               </button>
             </div>
           </div>
-        </section>
+        </section> */}
 
-        <section className="learning-path" ref={learningPathRef}>
+      {/* <section className="learning-path" ref={learningPathRef}>
           <h3>Learning Path</h3>
           <div className="timeline">
             {normalizedSubjects.map((subject, index) => (
@@ -470,7 +567,102 @@ const Subjects = () => {
               </div>
             ))}
           </div>
-        </section>
+        </section> */}
+
+
+      <main className="content">
+        {/* ✅ CHANGE 1: Hide Progress Section if 'Both' is selected */}
+        {selectedClass !== "Both" && (
+          <section className="progress-section">
+            <h3>My Completion Progress</h3>
+            <div className="progress-header">
+              <div className="progress-info">
+                <p>{normalizedSubjects.filter((s) => s.certified).length} of {normalizedSubjects.length} subjects completed</p>
+
+                <div className="progress-bar-container">
+                  <div
+                    className="progress-bar"
+                    style={{
+                      width: `${safeProgress}%`,
+                      backgroundColor:
+                        safeProgress === 100
+                          ? "#4CAF50"
+                          : safeProgress > 50
+                            ? "#FFEB3B"
+                            : "#B0BEC5",
+                    }}
+                    title={`Completed: ${Math.round(safeProgress)}%`}
+                  >
+                    <div className="progress-filled">
+                      <span className="progress-percentage">{Math.round(safeProgress)}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="subtext">
+                  {progressPercentage === 100
+                    ? "You've completed all subjects!"
+                    : "Complete all mandatory subjects to earn your certificate"}
+                </p>
+              </div>
+
+              <div className="certificate-box">
+                <button
+                  className={`certificate-btn ${progressPercentage === 100 ? "btn-completed" : "btn-continue"}`}
+                  onClick={handleScrollToLearningPath}
+                >
+                  {progressPercentage === 100 ? "Download Certificate" : "Continue Learning"}
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ✅ CHANGE 2: Hide Subject Cards if 'Both' is selected */}
+        {selectedClass !== "Both" && (
+          <section className="learning-path" ref={learningPathRef}>
+            <h3>Learning Path</h3>
+            <div className="timeline">
+              {normalizedSubjects.map((subject, index) => (
+                <div key={subject.name} className="timeline-item">
+                  <div className="timeline-dot"></div>
+                  <div className="timeline-content">
+                    <div className={`subject-card subject-card-${index}`}>
+                      <img src={subject.image} alt={subject.name} className="subject-thumbnail" />
+                      <div className="neet-subject-info">
+                        <span className="course-number">Course {index + 1}</span>
+                        <h4 className="subject-title">{subject.name}</h4>
+                        {subject.certified && <span className="certified-badge">Certified</span>}
+                      </div>
+                      <button
+                        className="continue-btn"
+                        onClick={() => {
+                          if (!standard) {
+                            alert("please select a standard");
+                            return;
+                          }
+                          if (Array.isArray(standard) && !selectedClass) {
+                            alert("Please select a class before proceeding");
+                            return;
+                          }
+                          navigate("/NeetLearn", {
+                            state: {
+                              subject: subject.name,
+                              selectedClass: Array.isArray(standard) ? selectedClass : standard,
+                            },
+                          });
+                        }}
+                        disabled={standard === "both" && !selectedClass}
+                      >
+                        {subject.certified ? "Review" : "Learn More"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="mock-test-section" style={{ marginTop: "30px", marginBottom: "50px", padding: "25px", backgroundColor: "#fff", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.08)", borderLeft: "5px solid #006400" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "20px" }}>

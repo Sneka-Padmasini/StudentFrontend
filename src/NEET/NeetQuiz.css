@@ -109,7 +109,8 @@
 
 .option-label {
   display: flex;
-  align-items: center;
+  /* align-items: center; */
+  align-items: flex-start;
   padding: 12px 20px;
   border-radius: 8px;
   background-color: #ecf1ed;
@@ -128,6 +129,7 @@
 }
 
 .option-label input[type="radio"] {
+  margin-top: 4px;
   appearance: none;
   -webkit-appearance: none;
   border: 2px solid #999;
@@ -347,20 +349,35 @@
   margin: 10px 0;
 }
 
-.option-content {
+/* .option-content {
   display: flex;
   flex-direction: column;
-  /* stack text + image */
   align-items: flex-start;
-  /* align left inside the label */
   width: 100%;
-  /* ensures image stays inside option box */
+} */
+
+.option-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 10px;
+}
+
+.option-text-inner {
+  display: inline-block;
+  width: 100%;
+  word-break: break-word;
+}
+
+.katex {
+  font-size: 1.1em;
 }
 
 .option-content img {
   display: block;
   max-width: 100%;
-  /* prevent overflow */
   margin-top: 5px;
   border-radius: 5px;
   object-fit: contain;
@@ -415,6 +432,167 @@
 /* Ensure the option label accommodates the image nicely */
 .option-label {
   align-items: flex-start;
+}
+
+/* --- Modern Result Popup Styling --- */
+.modern-result {
+  text-align: center;
+  padding: 30px;
+  max-width: 450px;
+  border-radius: 20px;
+  background: white;
+  animation: popIn 0.4s ease-out;
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Header */
+.result-header {
+  margin-bottom: 20px;
+}
+
+.result-emoji {
+  font-size: 3.5rem;
+  display: block;
+  margin-bottom: 10px;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Gauge (The Circle Meter) */
+.gauge-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.gauge-circle {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  /* The gradient is handled in JS */
+}
+
+.gauge-inner {
+  width: 110px;
+  height: 110px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.gauge-score {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #333;
+}
+
+.gauge-total {
+  font-size: 0.9rem;
+  color: #888;
+}
+
+.gauge-percentage {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+/* Stat Cards (Replacing the text lines) */
+.stats-grid {
+  display: flex;
+  justify-content: space-around;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.stat-card {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+/* Colors for cards */
+.stat-card.correct {
+  color: #2e7d32;
+  background: #e8f5e9;
+  border: 1px solid #c8e6c9;
+}
+
+.stat-card.wrong {
+  color: #c62828;
+  background: #ffebee;
+  border: 1px solid #ffcdd2;
+}
+
+.stat-card.skipped {
+  color: #616161;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+}
+
+/* Review Button */
+.review-btn {
+  width: 100%;
+  padding: 12px;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s, filter 0.2s;
+}
+
+.review-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
 }
 
 /* Responsive Design */

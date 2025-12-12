@@ -110,6 +110,13 @@
 }
 
 /* === FIX FOR VOICE CONTROLS === */
+
+.explanation-text {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.6;
+}
+
 .explanation-text-with-controls {
   position: relative;
   width: 100%;
@@ -190,6 +197,32 @@
   font-weight: 600;
   color: #0a7904;
   min-width: 30px;
+}
+
+/* 1. Container for the list of images at the bottom */
+.explanation-images {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-top: 20px;
+}
+
+/* 2. Styling for the images in the list */
+.explanation-images img {
+  max-width: 100%;
+  height: auto;
+  margin: 10px auto !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 3. Styling for images embedded INSIDE the text (Explanation) */
+.explanation-text img {
+  display: block;
+  margin: 20px auto;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
 }
 
 /* MOBILE VIEW STYLES */
@@ -364,4 +397,90 @@
   max-width: 100%;
   height: auto;
   border-radius: 8px;
+}
+
+/* --- New Navigation Layout --- */
+.nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 40px 0 20px 0;
+  gap: 15px;
+  width: 100%;
+}
+
+/* Common Button Styles */
+.nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  /* Makes buttons equal width */
+  max-width: 48%;
+  /* Prevents buttons from touching */
+}
+
+/* Previous Button - Theme Matched (Green Outline) */
+.prev-btn {
+  background-color: white;
+  color: #0c8905;
+  /* Matches your theme green */
+  border: 2px solid #0c8905;
+}
+
+.prev-btn:hover {
+  background-color: #e8f5e9;
+  /* Light green hover effect */
+  transform: translateY(-2px);
+}
+
+/* Next Button - Theme Matched (Solid Green) */
+.next-btn {
+  background-color: #0c8905;
+  /* Matches your theme green */
+  color: white;
+  border: 2px solid #0c8905;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.next-btn:hover {
+  background-color: #07ae12;
+  border-color: #07ae12;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+  .nav-container {
+    gap: 10px;
+    margin: 20px 0;
+  }
+
+  .nav-btn {
+    padding: 12px 15px;
+    font-size: 0.9rem;
+    /* Smaller text for mobile */
+  }
+}
+
+/* --- Small Phones --- */
+@media (max-width: 400px) {
+  .nav-container {
+    flex-direction: column;
+    /* Stack buttons vertically */
+    gap: 15px;
+  }
+
+  .nav-btn {
+    width: 100%;
+    max-width: 100%;
+  }
 }

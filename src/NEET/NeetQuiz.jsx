@@ -36,43 +36,117 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
   const [isComplete, setIsComplete] = useState(isAlreadyComplete);
   const [showResultPopup, setShowResultPopup] = useState(false);
 
+
+  // useEffect(() => {
+  //   const allQuestions = test?.[0]?.questionsList || [];
+  //   let finalQuestionList = [];
+
+  //   if (isMock) {
+  //     finalQuestionList = allQuestions;
+  //   } else {
+  //     const shuffledQuestions = shuffleArray([...allQuestions]);
+  //     const MAX_QUESTIONS = 180;
+  //     finalQuestionList = shuffledQuestions.slice(0, MAX_QUESTIONS);
+  //   }
+
+  //   setQuestions(finalQuestionList);
+  //   setUserAnswers(Array(finalQuestionList.length).fill(""));
+  //   setSubmitted(false);
+  //   setCurrentQIndex(0);
+  //   setTimeRemaining(10800);
+
+  //   setHasStarted(false);
+  //   setShowConfirmation(false);
+  //   setIsComplete(false);
+  //   setShowResultPopup(false);
+
+  // }, [subtopicTitle, isMock]);
+
   useEffect(() => {
     const allQuestions = test?.[0]?.questionsList || [];
-
     let finalQuestionList = [];
 
+    // Logic to select questions
     if (isMock) {
-      // If it's a mock test, take data AS IS (it's already shuffled & counted in NEET.jsx)
       finalQuestionList = allQuestions;
     } else {
-      // Normal unit test: Shuffle and limit
       const shuffledQuestions = shuffleArray([...allQuestions]);
+      // Limit regular tests to 180 questions max just in case
       const MAX_QUESTIONS = 180;
       finalQuestionList = shuffledQuestions.slice(0, MAX_QUESTIONS);
     }
-
-    // --- New Shuffle and Slice Logic ---
-    // const shuffledQuestions = shuffleArray([...allQuestions]); // Shuffle a copy
-
-    // CHANGED: Set to 180 Questions for NEET Pattern
-    // const MAX_QUESTIONS = 180;
-
-    // const finalQuestionList = shuffledQuestions.slice(0, MAX_QUESTIONS);
-    // --- End of New Logic ---
 
     setQuestions(finalQuestionList);
     setUserAnswers(Array(finalQuestionList.length).fill(""));
     setSubmitted(false);
     setCurrentQIndex(0);
 
-    // CHANGED: Reset time to 180 minutes (10800 seconds)
-    setTimeRemaining(10800);
+    // === UPDATED TIMING LOGIC ===
+    if (isMock) {
+      // Full Mock Exams: Fixed 180 minutes (10800 seconds)
+      setTimeRemaining(10800);
+    } else {
+      // Unit/Topic Tests: 1 minute per question
+      // Example: 45 questions = 45 minutes * 60 seconds
+      setTimeRemaining(finalQuestionList.length * 60);
+    }
+    // ============================
 
     setHasStarted(false);
     setShowConfirmation(false);
     setIsComplete(false);
     setShowResultPopup(false);
-  }, [test, subtopicTitle, isMock]);
+
+  }, [subtopicTitle, isMock, test]); // Added 'test' to dependency array for safety
+
+  const parseTextWithFormulas = (texts) => {
+    if (!texts) return null;
+
+    // 1. Clean up the input string
+    let text = texts
+      .replace(/\\\\/g, "\\")
+      .replace(/<\s*br\s*\/?\s*>/gi, "<br/>") // Fix malformed breaks
+      .replace(/\r?\n/g, "<br/>");
+
+    // 2. Split by LaTeX delimiters ($$ first, then $)
+    const regex = /(\$\$[\s\S]*?\$\$|\$[^$]+?\$)/g;
+    const parts = text.split(regex);
+
+    return parts.map((part, index) => {
+      // Display Mode ($$)
+      if (part.startsWith("$$") && part.endsWith("$$")) {
+        const latex = part.slice(2, -2);
+        try {
+          const html = katex.renderToString(latex, {
+            throwOnError: false,
+            output: "html",
+            displayMode: true
+          });
+          return <div key={index} dangerouslySetInnerHTML={{ __html: html }} />;
+        } catch (err) {
+          return <span key={index} style={{ color: "red" }}>{latex}</span>;
+        }
+      }
+      // Inline Mode ($)
+      else if (part.startsWith("$") && part.endsWith("$")) {
+        const latex = part.slice(1, -1);
+        try {
+          const html = katex.renderToString(latex, {
+            throwOnError: false,
+            output: "html",
+            displayMode: false
+          });
+          return <span key={index} dangerouslySetInnerHTML={{ __html: html }} />;
+        } catch (err) {
+          return <span key={index} style={{ color: "red" }}>{latex}</span>;
+        }
+      }
+      // Regular Text
+      else {
+        return <span key={index}>{parse(part)}</span>;
+      }
+    });
+  };
 
   useEffect(() => {
     if (timeRemaining > 0 && !submitted && hasStarted) {
@@ -82,28 +156,6 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
       handleAutoSubmit();
     }
   }, [timeRemaining, submitted, hasStarted]);
-
-  const parseTextWithFormulas = (texts) => {
-    if (!texts) return;
-    const text = texts.replace(/\\\\/g, "\\");
-    const TEMP_DOLLAR = "__DOLLAR__";
-    const safeText = text.replace(/\\\$/g, TEMP_DOLLAR);
-    const parts = safeText.split(/(\$[^$]+\$)/g);
-
-    return parts.map((part, index) => {
-      if (part.startsWith("$") && part.endsWith("$")) {
-        const latex = part.slice(1, -1);
-        try {
-          const html = katex.renderToString(latex, { throwOnError: false, output: "html" });
-          return <span key={index}>{parse(html)}</span>;
-        } catch (err) {
-          return <span key={index} style={{ color: "red" }}>{latex}</span>;
-        }
-      } else {
-        return <span key={index}>{part.replaceAll(TEMP_DOLLAR, "$")}</span>;
-      }
-    });
-  };
 
   useEffect(() => {
     setIsComplete(isAlreadyComplete);
@@ -142,10 +194,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     const maxMarks = questions.length * 4; // Should be 720 if 180 questions
     const percentage = ((finalScore / maxMarks) * 100).toFixed(2);
 
-    // Logic: In real NEET, you don't need 100% to "pass", 
-    // but I kept your logic that marks it 'Complete' only on high performance.
-    // You might want to lower this threshold or remove the check entirely.
-    if (percentage === "100.00") {
+    if (parseFloat(percentage) >= 90) {
       console.log("🎯 Perfect score! Marking as complete...");
       setIsComplete(true);
       if (onMarkComplete) {
@@ -206,24 +255,34 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     return `${h > 0 ? h + ':' : ''}${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
+
+  // 🎨 Helper: Get motivational message & color based on percentage
+  const getResultFeedback = (percentage) => {
+    const p = parseFloat(percentage);
+    if (p === 100) return { message: "Excellent! You are a Champion! 🏆", color: "#4CAF50", emoji: "🌟" };
+    if (p >= 90) return { message: "Awesome! Almost There! 🚀", color: "#2196F3", emoji: "🔥" };
+    if (p >= 80) return { message: "Good Job! Push Harder! 💪", color: "#FF9800", emoji: "⚡" };
+    if (p >= 70) return { message: "Good Try! Work More! 🌱", color: "#FFC107", emoji: "📈" };
+    if (p >= 50) return { message: "Set a Goal! Work Hard! 🎯", color: "#FF5722", emoji: "📝" };
+    return { message: "Don't Give Up! Continue Learning! ⏳", color: "#F44336", emoji: "📚" };
+  };
+
+  const feedback = getResultFeedback(percentage);
+
   return (
     <div className="quiz-wrapper">
       <div className="quiz-container">
         <h2>{subtopicTitle}</h2>
 
-        <button
-          onClick={handleMarkComplete}
-          className={`complete-btn ${isComplete ? "completed" : ""}`}
-          disabled={isComplete}
-        >
-          {isComplete ? <>Completed <FaCheckCircle className="check-icon" /></> : "Mark as Complete"}
-        </button>
 
         {!hasStarted ? (
           <div className="start-screen">
             <p><strong>Total Questions:</strong> {questions.length}</p>
             <p><strong>Total Marks:</strong> {questions.length * 4}</p>
-            <p><strong>Time Limit:</strong> 180 minutes</p>
+            {/* <p><strong>Time Limit:</strong> 180 minutes</p> */}
+
+            <p><strong>Time Limit:</strong> {isMock ? "180" : questions.length} minutes</p>
+
             <p style={{ fontSize: "1rem", color: "#666", marginTop: "10px" }}>
               Pattern: +4 for Correct, -1 for Wrong, 0 for Unattempted.
             </p>
@@ -287,8 +346,21 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                         onChange={() => handleOptionChange(optText)}
                         disabled={submitted}
                       />
-                      <div className="option-content">
+                      {/* <div className="option-content">
                         {parseTextWithFormulas(optText)}
+                        {optImage && (
+                          <img
+                            src={optImage}
+                            alt={`Option ${num} Image`}
+                            className="quiz-option-image"
+                          />
+                        )}
+                      </div> */}
+                      <div className="option-content">
+                        <span className="option-text-inner">
+                          {parseTextWithFormulas(optText)}
+                        </span>
+
                         {optImage && (
                           <img
                             src={optImage}
@@ -303,6 +375,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
               </div>
 
               {/* Feedback */}
+
               {submitted && userAnswers[currentQIndex] !== "" && (
                 <p className={
                   `feedback-msg ${userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`]
@@ -310,8 +383,8 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                     : "incorrect"}`
                 }>
                   {userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`]
-                    ? "Correct! (+4 Marks)"
-                    : `Incorrect. (-1 Mark) Correct answer: ${currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`]}`}
+                    ? "Well Done! (+4) 🌟"
+                    : "Nice Try! Keep Rising! (-1) 💪"}
                 </p>
               )}
 
@@ -367,28 +440,65 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
         )}
       </div>
 
+
       {submitted && showResultPopup && (
         <div className="result-popup">
-          <div className="result-popup-content">
-            <h3>Quiz Result</h3>
-            <p style={{ fontSize: "1.2rem", fontWeight: "bold" }}>
-              Score: {finalScore} / {maxMarks}
-            </p>
-            <p>Percentage: {percentage}%</p>
+          <div className="result-popup-content modern-result">
 
-            {/* Display detailed breakdown */}
-            <div style={{ margin: "10px 0", fontSize: "0.9rem", color: "#555" }}>
-              <p>Correct: {questions.filter((q, i) => userAnswers[i] === q[`option${Number(q.correctIndex) + 1}`]).length} (+4 each)</p>
-              <p>Wrong: {questions.filter((q, i) => userAnswers[i] !== "" && userAnswers[i] !== q[`option${Number(q.correctIndex) + 1}`]).length} (-1 each)</p>
-              <p>Unattempted: {questions.filter((q, i) => userAnswers[i] === "").length} (0 marks)</p>
+            {/* Header with Emoji */}
+            <div className="result-header">
+              <span className="result-emoji">{feedback.emoji}</span>
+              <h3 style={{ color: feedback.color }}>{feedback.message}</h3>
             </div>
 
-            <button onClick={() => { setShowResultPopup(false); setCurrentQIndex(0); }} className="back-btn">
+            {/* Circular Progress Gauge */}
+            <div className="gauge-container">
+              <div
+                className="gauge-circle"
+                style={{ background: `conic-gradient(${feedback.color} ${percentage}%, #e0e0e0 0)` }}
+              >
+                <div className="gauge-inner">
+                  <span className="gauge-score">{finalScore}</span>
+                  <span className="gauge-total">/ {maxMarks}</span>
+                </div>
+              </div>
+              <p className="gauge-percentage" style={{ color: feedback.color }}>{percentage}% Score</p>
+
+              {/* ✅ ADDED: Unlock Status Message */}
+              {parseFloat(percentage) < 90 ? (
+                <p style={{ color: "#d32f2f", fontSize: "0.9rem", marginTop: "5px", fontWeight: "bold" }}>
+                  🔒 Score 90% to unlock the next lesson
+                </p>
+              ) : (
+                <p style={{ color: "#388e3c", fontSize: "0.9rem", marginTop: "5px", fontWeight: "bold" }}>
+                  🔓 Next Lesson Unlocked!
+                </p>
+              )}
+            </div>
+
+            {/* Motivating Stat Cards */}
+            <div className="stats-grid">
+              <div className="stat-card correct">
+                <span className="stat-value">{questions.filter((q, i) => userAnswers[i] === q[`option${Number(q.correctIndex) + 1}`]).length}</span>
+                <span className="stat-label">Correct</span>
+              </div>
+              <div className="stat-card wrong">
+                <span className="stat-value">{questions.filter((q, i) => userAnswers[i] !== "" && userAnswers[i] !== q[`option${Number(q.correctIndex) + 1}`]).length}</span>
+                <span className="stat-label">Learning</span> {/* Changed "Wrong" to "Learning" */}
+              </div>
+              <div className="stat-card skipped">
+                <span className="stat-value">{questions.filter((q, i) => userAnswers[i] === "").length}</span>
+                <span className="stat-label">Skipped</span>
+              </div>
+            </div>
+
+            <button onClick={() => { setShowResultPopup(false); setCurrentQIndex(0); }} className="review-btn" style={{ backgroundColor: feedback.color }}>
               Review Answers
             </button>
           </div>
         </div>
       )}
+
     </div>
   );
 };

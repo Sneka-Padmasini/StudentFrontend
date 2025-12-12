@@ -11,8 +11,7 @@ import { useUser } from "../components/UserContext";
 // Global debounce timer for saveProgressToServer calls
 let saveProgressTimer = null;
 
-
-// 🧩 Helper function to restore keys that contain dots
+// Helper function to restore keys that contain dots
 const restoreKeys = (obj) => {
   if (typeof obj !== "object" || obj === null) return obj;
   const restored = {};
@@ -23,10 +22,54 @@ const restoreKeys = (obj) => {
   return restored;
 };
 
+// Helper to create a flat list of ALL navigable items (Parents, Children, Tests)
+const getFlatList = (units) => {
+  let list = [];
+  units.forEach((unit, unitIndex) => {
 
+    // Recursive function to add topics and subtopics in order
+    const collectItems = (subs) => {
+      subs.forEach(sub => {
+        // 1. Add the topic/subtopic itself to the list
+        list.push({ type: 'lesson', data: sub, unitIndex });
+
+        // 2. If it has children, recursively add them AFTER the parent
+        if (sub.units && sub.units.length > 0) {
+          collectItems(sub.units);
+        }
+
+        // 3. Add any tests associated with this subtopic
+        if (sub.test && sub.test.length > 0) {
+          sub.test.forEach(t => {
+            list.push({
+              type: 'test',
+              data: { ...sub, unitName: `Assessment - ${sub.unitName}`, test: [t] },
+              unitIndex
+            });
+          });
+        }
+      });
+    };
+
+    if (unit.units) {
+      collectItems(unit.units);
+    }
+
+    // Add Topic Level Tests (Top level)
+    if (unit.test && unit.test.length > 0) {
+      unit.test.forEach(t => {
+        list.push({
+          type: 'test',
+          data: { ...unit, unitName: `Assessment - ${unit.unitName}`, test: [t] },
+          unitIndex
+        });
+      });
+    }
+  });
+  return list;
+};
 
 const saveProgressToServer = async (userId, completedSubtopics, setCompletedSubtopics, course, standard) => {
-  // Clear any pending debounced calls before running the actual save
   if (saveProgressTimer) clearTimeout(saveProgressTimer);
   saveProgressTimer = null;
 
@@ -56,7 +99,7 @@ const saveProgressToServer = async (userId, completedSubtopics, setCompletedSubt
         userId,
         completedSubtopics: safeData,
         course,
-        standard
+        standard,
       }),
     });
 
@@ -73,14 +116,12 @@ const saveProgressToServer = async (userId, completedSubtopics, setCompletedSubt
   }
 };
 
-
 const saveSubjectCompletionToServer = async (userId, subjectCompletionMap, completedSubtopics) => {
   if (!userId || userId === "guest") {
     console.warn("⚠️ Skipping subject sync — userId not ready");
     return;
   }
 
-  // ✅ FIX: Get course and standard to send to the backend
   const course = "NEET";
   const standard = localStorage.getItem("currentClass") || "";
 
@@ -89,7 +130,6 @@ const saveSubjectCompletionToServer = async (userId, subjectCompletionMap, compl
     return;
   }
 
-  // We need to sanitize subtopics before sending
   const sanitizeKeys = (obj) => {
     if (typeof obj !== "object" || obj === null) return obj;
     const sanitized = {};
@@ -109,9 +149,9 @@ const saveSubjectCompletionToServer = async (userId, subjectCompletionMap, compl
       body: JSON.stringify({
         userId,
         subjectCompletion: subjectCompletionMap,
-        completedSubtopics: safeSubtopics, // ✅ FIX: Send the actual subtopics
-        course,                           // ✅ FIX: Send course
-        standard                          // ✅ FIX: Send standard
+        completedSubtopics: safeSubtopics,
+        course,
+        standard,
       }),
     });
 
@@ -125,16 +165,12 @@ const saveSubjectCompletionToServer = async (userId, subjectCompletionMap, compl
   }
 };
 
-
-// const loadProgressFromServer = async (userId, setCompletedSubtopics) => {
 const loadProgressFromServer = async (userId, course, standard) => {
   try {
-    // const res = await fetch(`${API_BASE_URL}/api/progress/${userId}`);
     const res = await fetch(`${API_BASE_URL}/api/progress/${userId}?course=${course}&standard=${standard}`);
     const data = await res.json();
     console.log("🌐 Fetched backend progress data:", data);
 
-    // ✅ Convert __dot__ back to real dots
     const restoreKeys = (obj) => {
       if (typeof obj !== "object" || obj === null) return obj;
       const restored = {};
@@ -147,22 +183,16 @@ const loadProgressFromServer = async (userId, course, standard) => {
 
     if (data?.completedSubtopics) {
       const merged = restoreKeys(data.completedSubtopics);
-      // We only need to return the data here, the useEffect will handle merging with local
       console.log("📦 Restored backend progress:", merged);
       return merged;
     } else {
       return {};
     }
-
   } catch (err) {
     console.error("❌ Error loading progress:", err);
     return {};
   }
 };
-
-
-
-
 
 // Recursive component to render subtopics and their tests
 const SubtopicTree = ({
@@ -171,24 +201,22 @@ const SubtopicTree = ({
   selectedTitle,
   parentIndex,
   level = 1,
+  isTopicUnlocked // Receive the lock checker
 }) => {
   const [expandedSub, setExpandedSub] = useState(null);
 
   const handleSubClick = (sub, idx, e) => {
-    e.stopPropagation(); // 🧱 prevent bubbling (especially on nested lists)
-
+    e.stopPropagation();
     const hasChildren = (sub.units && sub.units.length > 0) || (sub.test && sub.test.length > 0);
 
+    // 1. ALWAYS load the description for this topic
+    onClick(sub, parentIndex);
+
+    // 2. If it's a folder, ALSO toggle expansion
     if (hasChildren) {
-      // If tapping the same one again, collapse
       setExpandedSub((prev) => (prev === idx ? null : idx));
-    } else {
-      // If it's a leaf (no children/tests), open explanation/test
-      onClick(sub, parentIndex);
     }
   };
-
-
 
   const handleTestClick = (test, idx, sub) => {
     const testSubtopic = {
@@ -201,44 +229,80 @@ const SubtopicTree = ({
 
   return (
     <ul className="subtopics-list">
-      {subtopics.map((sub, idx) => (
-        <li key={idx}>
-          <div
-            className={`subtopic-title ${selectedTitle === sub.unitName ? "selected" : ""
-              }`}
-            style={{ marginLeft: `${level * 20}px` }}
-            onClick={(e) => handleSubClick(sub, idx, e)}
-          >
-            ⮚ {sub.unitName}
-          </div>
+      {subtopics.map((sub, idx) => {
+        // Check if unlocked
+        const isUnlocked = isTopicUnlocked ? isTopicUnlocked(sub.unitName) : true;
 
-          {/* Show tests when expanded */}
-          {expandedSub === idx &&
-            sub.test &&
-            sub.test.length > 0 &&
-            sub.test.map((test, tIdx) => (
-              <div
-                key={tIdx}
-                className="subtopic-title test-title"
-                style={{ marginLeft: `${(level + 1) * 20}px` }}
-                onClick={() => handleTestClick(test, tIdx, sub)}
-              >
-                📝 {test.testName} - Assessment
-              </div>
-            ))}
+        return (
+          <li key={idx}>
+            <div
+              className={`subtopic-title ${selectedTitle === sub.unitName ? "selected" : ""}`}
+              style={{
+                marginLeft: `${level * 20}px`,
+                // Grey out if locked
+                opacity: isUnlocked ? 1 : 0.5,
+                cursor: isUnlocked ? 'pointer' : 'not-allowed',
+                pointerEvents: isUnlocked ? 'auto' : 'none'
+              }}
+              onClick={(e) => handleSubClick(sub, idx, e)}
+            >
+              {/* Arrow Logic */}
+              {((sub.units && sub.units.length > 0) || (sub.test && sub.test.length > 0)) ? (
+                <span>{expandedSub === idx ? "▼ " : "▶ "}</span>
+              ) : (
+                <span>⮚ </span>
+              )}
+              {/* Lock Icon */}
+              {!isUnlocked && <span style={{ marginRight: '5px' }}>🔒</span>}
 
-          {/* Recursive children */}
-          {expandedSub === idx && sub.units && (
-            <SubtopicTree
-              subtopics={sub.units}
-              onClick={onClick}
-              selectedTitle={selectedTitle}
-              parentIndex={parentIndex}
-              level={level + 1}
-            />
-          )}
-        </li>
-      ))}
+              {sub.unitName}
+            </div>
+
+            {/* Render Children (Only if expanded) */}
+            {expandedSub === idx && (
+              <>
+                {/* 1. Sub-units (Recursive) */}
+                {sub.units && (
+                  <SubtopicTree
+                    subtopics={sub.units}
+                    onClick={onClick}
+                    selectedTitle={selectedTitle}
+                    parentIndex={parentIndex}
+                    level={level + 1}
+                    isTopicUnlocked={isTopicUnlocked} // Pass lock check down
+                  />
+                )}
+
+                {/* 2. Tests */}
+                {sub.test &&
+                  sub.test.length > 0 &&
+                  sub.test.map((test, tIdx) => {
+                    // Check if test is unlocked
+                    const testName = `Assessment - ${sub.unitName}`;
+                    const isTestUnlocked = isTopicUnlocked ? isTopicUnlocked(testName) : true;
+
+                    return (
+                      <div
+                        key={tIdx}
+                        className="subtopic-title test-title"
+                        style={{
+                          marginLeft: `${(level + 1) * 20}px`,
+                          opacity: isTestUnlocked ? 1 : 0.5,
+                          cursor: isTestUnlocked ? 'pointer' : 'not-allowed',
+                          pointerEvents: isTestUnlocked ? 'auto' : 'none'
+                        }}
+                        onClick={() => handleTestClick(test, tIdx, sub)}
+                      >
+                        {!isTestUnlocked && <span>🔒 </span>}
+                        📝 {test.testName} - Assessment
+                      </div>
+                    )
+                  })}
+              </>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 };
@@ -258,27 +322,23 @@ const NeetLearn = () => {
         : null;
 
   const [userId, setUserId] = useState(null);
-
-
+  const DEV_MODE = false;
 
   useEffect(() => {
     let storedUserId = localStorage.getItem("userId");
     const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
 
-    // Derive from currentUser if not found directly
     if (!storedUserId && (storedUser?._id || storedUser?.userId)) {
       storedUserId = storedUser._id || storedUser.userId;
-      localStorage.setItem("userId", storedUserId); // ✅ persist for reloads
+      localStorage.setItem("userId", storedUserId);
     }
 
     if (storedUserId) {
-      console.log("✅ Restored userId from localStorage:", storedUserId);
       setUserId(storedUserId);
     } else {
       console.warn("⚠️ No valid userId found in localStorage or currentUser");
     }
   }, []);
-
 
   const [fetchedUnits, setFetchedUnits] = useState([]);
   const [expandedTopic, setExpandedTopic] = useState(null);
@@ -287,20 +347,15 @@ const NeetLearn = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [completedSubtopics, setCompletedSubtopics] = useState({});
   const [subjectCompletion, setSubjectCompletion] = useState({});
-
-  // 🌟 FIX: Add loading state
   const [isProgressLoading, setIsProgressLoading] = useState(true);
 
   useEffect(() => window.scrollTo(0, 0), []);
 
-
   useEffect(() => {
     if (!userId) {
-      console.warn("⚠️ Waiting for userId to load before fetching progress...");
       return;
     }
 
-    // --- Start Loading ---
     setIsProgressLoading(true);
 
     const course = "NEET";
@@ -321,30 +376,18 @@ const NeetLearn = () => {
     const restoredLocal = restoreKeys(savedProgress);
     setCompletedSubtopics(restoredLocal);
 
-    console.log("📦 Loaded local progress for", userId, course, standard, restoredLocal);
-
     loadProgressFromServer(userId, course, standard).then((backendData) => {
       if (!backendData) {
-        setIsProgressLoading(false); // If load failed, stop loading anyway
+        setIsProgressLoading(false);
         return;
       }
-      // The backendData is already restored by loadProgressFromServer
       const merged = { ...restoredLocal, ...backendData };
       setCompletedSubtopics(merged);
       localStorage.setItem(localKey, JSON.stringify(merged));
-      console.log("🌐 Synced merged progress for", userId, merged);
-
-      // 💡 Important: Force a re-render of topics to update progress bars 
-      // by toggling state that is used in rendering.
       setTimeout(() => setExpandedTopic((prev) => prev), 200);
-
-      // --- Stop Loading ---
-      setIsProgressLoading(false); // <--- STOP LOADING HERE
+      setIsProgressLoading(false);
     });
   }, [userId]);
-
-
-
 
   useEffect(() => {
     const handleResize = () => {
@@ -357,16 +400,11 @@ const NeetLearn = () => {
   }, []);
 
   useEffect(() => {
-    console.log("📈 Current completedSubtopics:", completedSubtopics);
-    console.log("📈 Current expandedTopic:", expandedTopic);
-    console.log("📈 Current selectedSubtopic:", selectedSubtopic);
-
     if (expandedTopic !== null && fetchedUnits[expandedTopic]) {
       const topic = fetchedUnits[expandedTopic];
       const progress = calculateProgress(topic);
-      console.log(`📊 Progress for ${topic.unitName}: ${progress}%`);
     }
-  }, [completedSubtopics, expandedTopic, selectedSubtopic, fetchedUnits]); // Added fetchedUnits dependency
+  }, [completedSubtopics, expandedTopic, selectedSubtopic, fetchedUnits]);
 
   useEffect(() => {
     const getAllSubjectDetails = () => {
@@ -374,11 +412,8 @@ const NeetLearn = () => {
       const stringStandard = localStorage.getItem("currentClass");
       const standard = String(stringStandard?.replace(/\D/g, ""));
 
-
-      // 🧭 Dynamically map the user's course type to the MongoDB folder
       const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-
-      let courseName = "professional"; // default
+      let courseName = "professional";
 
       if (currentUser?.coursetype) {
         const type = currentUser.coursetype.toLowerCase();
@@ -387,9 +422,6 @@ const NeetLearn = () => {
         else if (type.includes("school")) courseName = "local";
       }
 
-      console.log("📘 Fetching details for:", { courseName, subjectName, standard });
-
-
       fetch(
         `${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/${standard}`,
         {
@@ -397,21 +429,17 @@ const NeetLearn = () => {
           credentials: "include",
         }
       )
-
         .then(async (resp) => {
           if (!resp.ok) {
             const text = await resp.text();
-            console.error("❌ Server error:", text);
             throw new Error(text);
           }
           return resp.json();
         })
         .then((data) => {
-          console.log(`✅ ${subjectName} data fetched:`, data);
           setFetchedUnits(Array.isArray(data) ? data : []);
         })
         .catch((err) => {
-          console.error("❌ Error fetching subject details:", err);
           setFetchedUnits([]);
         });
     };
@@ -419,106 +447,105 @@ const NeetLearn = () => {
     getAllSubjectDetails();
   }, [subject]);
 
-
   const collectAllLessons = (subs) => {
     if (!Array.isArray(subs)) {
       return [];
     }
     let leaves = [];
-    subs.forEach(sub => {
-      // If it has 'units', it's a folder, so we go deeper
+    subs.forEach((sub) => {
       if (sub.units && sub.units.length > 0) {
         leaves = leaves.concat(collectAllLessons(sub.units));
-      }
-      // If it has NO 'units', it's a leaf lesson
-      else {
+      } else {
         leaves.push(sub);
       }
     });
     return leaves;
   };
 
-  // HELPER 2: Finds ALL tests, no matter how deep
   const collectAllTests = (topic) => {
     let tests = [];
-
-    // 1. Check for a test at the top level
     if (topic.test && topic.test.length > 0) {
-      // This test is named after the main topic
       tests.push({ testName: `Assessment - ${topic.unitName}` });
     }
-
-    // 2. Recursively check all units for nested tests
     if (Array.isArray(topic.units)) {
-      topic.units.forEach(sub => {
-        // If this sub-unit has a test
+      topic.units.forEach((sub) => {
         if (sub.test && sub.test.length > 0) {
-          // This test is named after the sub-unit (e.g., "1.System of Units...")
           tests.push({ testName: `Assessment - ${sub.unitName}` });
         }
-        // Recurse deeper to find tests inside sub-sub-folders
         tests = tests.concat(collectAllTests(sub));
       });
     }
     return tests;
   };
 
-
   const calculateProgress = (topic) => {
     if (!topic) return 0;
-
     const course = "NEET";
     const standard = localStorage.getItem("currentClass") || "";
     const subjectName = subject;
     const topicKey = `${course}_${standard}_${subjectName}_${topic.unitName}`;
     const topicProgress = completedSubtopics[topicKey] || {};
 
-    // 1. Get all leaf lessons and all tests
     const allLessons = collectAllLessons(topic.units);
     const allTests = collectAllTests(topic);
-
-    // 2. Calculate Total
     const totalCount = allLessons.length + allTests.length;
-    if (totalCount === 0) return 0; // Nothing to complete
+    if (totalCount === 0) return 0;
 
-    // 3. Calculate Completed
     let completedCount = 0;
-
-    // Count completed lessons
-    allLessons.forEach(lesson => {
-      if (topicProgress[lesson.unitName] === true) {
-        completedCount++;
-      }
+    allLessons.forEach((lesson) => {
+      if (topicProgress[lesson.unitName] === true) completedCount++;
+    });
+    allTests.forEach((test) => {
+      if (topicProgress[test.testName] === true) completedCount++;
     });
 
-    // Count completed tests
-    allTests.forEach(test => {
-      if (topicProgress[test.testName] === true) {
-        completedCount++;
-      }
-    });
-
-    // 4. Return the percentage
     const percent = Math.round((completedCount / totalCount) * 100);
     return percent > 100 ? 100 : percent;
   };
 
   const isTopicCompleted = (topic) => {
     const progress = calculateProgress(topic);
-    const completed = progress === 100;
-    // console.log(`🔓 Topic ${topic.unitName} completed: ${completed} (${progress}%)`);
-    return completed;
+    return progress === 100;
   };
 
-  // ADD THIS MISSING FUNCTION
-  const isTopicUnlocked = (index) => {
-    if (index === 0) return true; // Always unlock first topic
+  // ✅ 1. Logic to unlock Top-Level Lessons (e.g., Unit 1, Unit 2)
+  const isLessonUnlocked = (index) => {
+    if (DEV_MODE) return true; // 🔓 BYPASS: Always unlock in Dev Mode
+
+    if (index === 0) return true;
     const prevTopic = fetchedUnits[index - 1];
     return isTopicCompleted(prevTopic);
   };
 
+  // ✅ 2. Logic to unlock Inner Topics (e.g., 1.1, 1.2, Tests)
+  const isSubtopicUnlocked = (targetUnitName) => {
+    if (DEV_MODE) return true; // 🔓 BYPASS: Always unlock in Dev Mode
+
+    const flatList = getFlatList(fetchedUnits);
+    const currentIndex = flatList.findIndex(item => item.data.unitName === targetUnitName);
+
+    if (currentIndex <= 0) return true; // First subtopic always open
+
+    // Check if PREVIOUS subtopic is marked complete
+    const prevItem = flatList[currentIndex - 1];
+    const course = "NEET";
+    const standard = localStorage.getItem("currentClass") || "";
+    const subjectName = subject;
+
+    // Construct key to check completion in localStorage/State
+    const parentUnitName = fetchedUnits[prevItem.unitIndex].unitName;
+    const topicKey = `${course}_${standard}_${subjectName}_${parentUnitName}`;
+    const prevUnitName = prevItem.data.unitName;
+
+    return completedSubtopics[topicKey]?.[prevUnitName] === true;
+  };
+
   const toggleTopic = (index) => {
-    if (!isTopicUnlocked(index)) return;
+    // Check if the LESSON is unlocked before opening
+    if (!isLessonUnlocked(index)) {
+      alert("Please complete the previous lesson to unlock this one.");
+      return;
+    }
     setExpandedTopic((prev) => (prev === index ? null : index));
     setSelectedSubtopic(null);
   };
@@ -536,69 +563,39 @@ const NeetLearn = () => {
 
   const handleBackToSubjects = () => navigate("/Neet");
 
-  // 🚀 NEW HELPER FUNCTION
   const checkAndSaveSubjectCompletion = (userId, fetchedUnits, subject, course, standard, currentProgressData) => {
-    if (!fetchedUnits?.length || !userId) {
-      console.log("Skipping subject completion check (no units or user)");
-      return;
-    }
+    if (!fetchedUnits?.length || !userId) return;
 
-    // Use a slight delay to ensure 'currentProgressData' (the new state) is processed
     setTimeout(() => {
       const allCompleted = fetchedUnits.every((topic) => {
         const tKey = `${course}_${standard}_${subject}_${topic.unitName}`;
-
-        // Use the 'currentProgressData' map, which has the most current data
         const topicProgress = currentProgressData[tKey] || {};
-
         const allLessons = collectAllLessons(topic.units);
         const allTests = collectAllTests(topic);
-
         const totalCount = allLessons.length + allTests.length;
-        if (totalCount === 0) return true; // An empty topic is always "complete"
+        if (totalCount === 0) return true;
 
         let completedCount = 0;
-        allLessons.forEach(lesson => {
+        allLessons.forEach((lesson) => {
           if (topicProgress[lesson.unitName] === true) completedCount++;
         });
-        allTests.forEach(test => {
+        allTests.forEach((test) => {
           if (topicProgress[test.testName] === true) completedCount++;
         });
-
-        // console.log(`Checking topic ${topic.unitName}: ${completedCount}/${totalCount}`);
         return completedCount === totalCount;
       });
 
       if (allCompleted) {
-        console.log(`🏁 All topics completed for ${subject} (${course} ${standard})`);
-
-        // ✅ FIX: Read/write from the CORRECT course-specific localStorage key
         const localKey = `subjectCompletion_${course}_${standard}`;
-        // ✅ FIX: Default to an object {}, not an array []
         const existingCompletionData = JSON.parse(localStorage.getItem(localKey) || "{}");
-
         const subjectKey = `${course}_${standard}_${subject}`;
-
-        const updatedCompletionMap = {
-          ...existingCompletionData,
-          [subjectKey]: 100 // Mark the current subject as 100
-        };
-
-        // ✅ FIX: Save to the CORRECT course-specific localStorage key
+        const updatedCompletionMap = { ...existingCompletionData, [subjectKey]: 100 };
         localStorage.setItem(localKey, JSON.stringify(updatedCompletionMap));
-
-        // Send to server
-        // We pass 'currentProgressData' as the subtopics to ensure backend has latest
         saveSubjectCompletionToServer(userId, updatedCompletionMap, currentProgressData);
-
-        // Notify the NEET.jsx page
         window.dispatchEvent(new Event("storage"));
-      } else {
-        console.log(`⏳ Subject ${subject} not yet complete.`);
       }
-    }, 500); // 500ms delay
+    }, 500);
   };
-
 
   const markSubtopicComplete = () => {
     if (!selectedSubtopic || expandedTopic === null) return;
@@ -608,10 +605,8 @@ const NeetLearn = () => {
       const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
       finalUserId = storedUser?._id || storedUser?.userId;
       if (finalUserId) {
-        console.log("🔁 Using determined userId for save:", finalUserId);
         setUserId(finalUserId);
       } else {
-        console.warn("⚠️ Cannot save — userId missing completely");
         return;
       }
     }
@@ -623,21 +618,14 @@ const NeetLearn = () => {
     const subjectName = subject;
     const topicKey = `${course}_${standard}_${subjectName}_${topicTitle}`;
 
-    console.log("🔵 Marking complete:", { topicKey, subtopicTitle, userId: finalUserId });
+    let updatedProgressData;
 
-    let updatedProgressData; // 👈 To capture the new state
-
-    // --- 1️⃣ Assessment Completion Logic ---
     if (subtopicTitle.includes("Assessment")) {
-      console.log("🎯 This is a test - marking ONLY this test as completed");
-
       setCompletedSubtopics((prev) => {
         const topicProgress = prev[topicKey] || {};
         const updatedProgress = { ...topicProgress };
-        updatedProgress[subtopicTitle] = true; // Mark ONLY the test
-
+        updatedProgress[subtopicTitle] = true;
         const updated = { ...prev, [topicKey]: updatedProgress };
-
         localStorage.setItem(`completedSubtopics_${finalUserId}_${course}_${standard}`, JSON.stringify(updated));
 
         if (saveProgressTimer) clearTimeout(saveProgressTimer);
@@ -646,25 +634,20 @@ const NeetLearn = () => {
           saveProgressTimer = null;
         }, 500);
 
-        updatedProgressData = updated; // 👈 Capture the new state
+        updatedProgressData = updated;
         return updated;
       });
 
-      // ✅ CALL THE CHECKER FUNCTION
       if (updatedProgressData) {
         checkAndSaveSubjectCompletion(finalUserId, fetchedUnits, subject, course, standard, updatedProgressData);
       }
-    }
-
-    // --- 2️⃣ Normal Subtopic Logic ---
-    else {
+    } else {
       setCompletedSubtopics((prev) => {
         const topicProgress = prev[topicKey] || {};
         if (topicProgress[subtopicTitle]) {
-          updatedProgressData = prev; // No change, but still need to check
+          updatedProgressData = prev;
           return prev;
         }
-
         const updated = {
           ...prev,
           [topicKey]: {
@@ -672,16 +655,7 @@ const NeetLearn = () => {
             [subtopicTitle]: true,
           },
         };
-
-        localStorage.setItem(
-          `completedSubtopics_${finalUserId}_${course}_${standard}`,
-          JSON.stringify(updated)
-        );
-
-        // localStorage.setItem(
-        //   `${course}-completed-${finalUserId}-${standard}-${selectedSubtopic.unitName}`,
-        //   "true"
-        // );
+        localStorage.setItem(`completedSubtopics_${finalUserId}_${course}_${standard}`, JSON.stringify(updated));
 
         if (saveProgressTimer) clearTimeout(saveProgressTimer);
         saveProgressTimer = setTimeout(() => {
@@ -689,17 +663,15 @@ const NeetLearn = () => {
           saveProgressTimer = null;
         }, 500);
 
-        updatedProgressData = updated; // 👈 Capture the new state
+        updatedProgressData = updated;
         return updated;
       });
 
-      // ✅ CALL THE CHECKER FUNCTION
       if (updatedProgressData) {
         checkAndSaveSubjectCompletion(finalUserId, fetchedUnits, subject, course, standard, updatedProgressData);
       }
     }
   };
-
 
   const resetProgress = async (subjectName) => {
     try {
@@ -709,35 +681,22 @@ const NeetLearn = () => {
       const course = "NEET";
       const standard = localStorage.getItem("currentClass");
 
-      // 1️⃣ Backend DELETE
       const response = await fetch(
         `${API_BASE_URL}/api/progress/delete?userId=${finalUserId}&course=${course}&standard=${standard}&subject=${encodeURIComponent(subjectName)}`,
         { method: "DELETE" }
       );
 
       if (response.ok) {
-        console.log(`🗑️ Backend progress deleted for ${finalUserId} ${course} ${standard}`);
-
-        // 2️⃣ Local cleanup
         localStorage.removeItem(`completedSubtopics_${finalUserId}_${course}_${standard}`);
         localStorage.removeItem(`subjectCompletion_${course}_${standard}`);
-
-        // Remove individual subtopic flags
         Object.keys(localStorage).forEach((key) => {
           if (key.startsWith(`${course}-completed-${finalUserId}-${standard}-`)) {
             localStorage.removeItem(key);
           }
         });
-
-        // 3️⃣ Update React state
         setCompletedSubtopics({});
         setSubjectCompletion({});
-
-        // 4️⃣ Notify any listeners (like other components)
         window.dispatchEvent(new Event("storage"));
-        console.log(`🧹 Cleared ${course} ${standard} progress data`);
-      } else {
-        console.error("❌ Failed to delete progress from backend:", await response.text());
       }
     } catch (err) {
       console.error("⚠️ Reset progress error:", err);
@@ -745,23 +704,14 @@ const NeetLearn = () => {
   };
 
   if (isMockMode) {
-    const mockTestObject = [{
-      testName: "Full NEET Mock Test",
-      questionsList: mockData
-    }];
+    const mockTestObject = [
+      {
+        testName: "Full NEET Mock Test",
+        questionsList: mockData,
+      },
+    ];
 
     return (
-      // <div className="Neet-container">
-      //   <NeetQuiz
-      //     topicTitle="Full Syllabus"
-      //     subtopicTitle={`NEET Mock Test`}
-      //     test={mockTestObject}
-      //     onBack={() => navigate("/NEET")}
-      //     onMarkComplete={() => navigate("/NEET")}
-      //     isAlreadyComplete={false}
-      //     isMock={true} // Passing flag to Quiz
-      //   />
-      // </div>
       <div className="neet-mock-test-wrapper" style={{ marginTop: "60px" }}>
         <NeetQuiz
           topicTitle="Full Syllabus"
@@ -779,53 +729,66 @@ const NeetLearn = () => {
     );
   }
 
+  const handleNextLesson = () => {
+    markSubtopicComplete();
+    const flatList = getFlatList(fetchedUnits);
+    const currentIndex = flatList.findIndex((item) => item.data.unitName === selectedSubtopic.unitName);
+
+    if (currentIndex !== -1 && currentIndex < flatList.length - 1) {
+      const nextItem = flatList[currentIndex + 1];
+      setExpandedTopic(nextItem.unitIndex);
+      setSelectedSubtopic(nextItem.data);
+      window.scrollTo(0, 0);
+    } else {
+      alert("You have reached the end of this subject!");
+    }
+  };
+
+  const handlePreviousLesson = () => {
+    const flatList = getFlatList(fetchedUnits);
+    const currentIndex = flatList.findIndex((item) => item.data.unitName === selectedSubtopic.unitName);
+
+    if (currentIndex > 0) {
+      const prevItem = flatList[currentIndex - 1];
+      setExpandedTopic(prevItem.unitIndex);
+      setSelectedSubtopic(prevItem.data);
+      window.scrollTo(0, 0);
+    }
+  };
+
   return (
     <div className="Neet-container">
-
       {isMobile && (
-        <button
-          className="toggle-btn"
-          onClick={() => setShowTopics(!showTopics)}
-        >
+        <button className="toggle-btn" onClick={() => setShowTopics(!showTopics)}>
           <FaBars />
           <h2>{subject} Topics</h2>
         </button>
       )}
 
-      {/* 1. Show Loading State when fetching progress */}
       {showTopics && isProgressLoading && (
-        <div className="topics-list" style={{ padding: '20px', textAlign: 'center' }}>
+        <div className="topics-list" style={{ padding: "20px", textAlign: "center" }}>
           <h2>Loading Progress... Please wait. </h2>
         </div>
       )}
 
-      {/* 2. Render Topics List when loaded and shown */}
       {showTopics && !isProgressLoading && (
         <div className="topics-list">
           <ul>
             {fetchedUnits.map((topic, index) => (
               <li key={index}>
                 <div
-                  className={`topic-title ${expandedTopic === index ? "active" : ""
-                    } ${!isTopicUnlocked(index) ? "locked" : ""}`}
+                  className={`topic-title ${expandedTopic === index ? "active" : ""} ${!isLessonUnlocked(index) ? "locked" : ""
+                    }`}
+                  style={{
+                    opacity: isLessonUnlocked(index) ? 1 : 0.6,
+                    cursor: isLessonUnlocked(index) ? 'pointer' : 'not-allowed'
+                  }}
                   onClick={() => toggleTopic(index)}
                 >
-                  {/* Topic Header with expand icon aligned right */}
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span> {topic.unitName}</span>
-
-                    <span className="expand-icon">
-                      {expandedTopic === index ? "−" : "+"}
-                    </span>
+                    <span className="expand-icon">{expandedTopic === index ? "−" : "+"}</span>
                   </div>
-
-                  {/* Slim Progress Bar */}
                   <div className="progress-bar-wrapper">
                     <div className="progress-bar-bg">
                       <div
@@ -833,9 +796,7 @@ const NeetLearn = () => {
                         style={{ width: `${calculateProgress(topic)}%` }}
                       ></div>
                     </div>
-                    <div className="progress-info">
-                      {calculateProgress(topic)}%
-                    </div>
+                    <div className="progress-info">{calculateProgress(topic)}%</div>
                   </div>
                 </div>
 
@@ -845,10 +806,10 @@ const NeetLearn = () => {
                     onClick={handleSubtopicClick}
                     selectedTitle={selectedSubtopic?.unitName}
                     parentIndex={index}
+                    isTopicUnlocked={isSubtopicUnlocked} // 👈 Passes the subtopic locker
                   />
                 )}
 
-                {/* Topic-level tests */}
                 {expandedTopic === index && topic.test?.length > 0 && (
                   <ul className="subtopics-list">
                     {topic.test.map((test, tIdx) => {
@@ -857,14 +818,23 @@ const NeetLearn = () => {
                         unitName: `Assessment - ${topic.unitName}`,
                         test: [test],
                       };
+
+                      // Check if test is unlocked
+                      const testName = `Assessment - ${topic.unitName}`;
+                      const isTestUnlocked = isSubtopicUnlocked(testName);
+
                       return (
                         <li
                           key={tIdx}
                           className="subtopic-title test-title"
-                          onClick={() =>
-                            handleSubtopicClick(testSubtopic, index)
-                          }
+                          style={{
+                            opacity: isTestUnlocked ? 1 : 0.5,
+                            cursor: isTestUnlocked ? 'pointer' : 'not-allowed',
+                            pointerEvents: isTestUnlocked ? 'auto' : 'none'
+                          }}
+                          onClick={() => handleSubtopicClick(testSubtopic, index)}
                         >
+                          {!isTestUnlocked && <span>🔒 </span>}
                           📝 {test.testName} - Assessment
                         </li>
                       );
@@ -878,45 +848,44 @@ const NeetLearn = () => {
             <button className="back-subjects-btn" onClick={handleBackToSubjects}>
               Back to Subjects
             </button>
-            {/* <button className="back-subjects-btn" onClick={resetProgress}>
-              Reset Progress
-            </button> */}
             <button className="back-subjects-btn" onClick={() => resetProgress(subject)}>
               Reset Progress
             </button>
-
           </div>
         </div>
       )}
 
-      {/* Explanation / Quiz Section */}
       <div className="explanation-container">
         {selectedSubtopic ? (
-          (() => { // Use IIFE (Immediately Invoked Function Expression) to calculate and return
+          (() => {
             const course = "NEET";
             const standard = localStorage.getItem("currentClass") || "";
             const topicTitle = fetchedUnits[expandedTopic]?.unitName;
             const subtopicTitle = selectedSubtopic.unitName;
             const topicKey = `${course}_${standard}_${subject}_${topicTitle}`;
-
-            // This is the SINGLE SOURCE OF TRUTH
             const isAlreadyComplete = completedSubtopics[topicKey]?.[subtopicTitle] === true;
+            const currentTopicTitle = fetchedUnits[expandedTopic]?.unitName || "Topic";
 
-            if (selectedSubtopic.unitName.includes("Assessment")) {
+            if (
+              selectedSubtopic.unitName.includes("Assessment") ||
+              (selectedSubtopic.test &&
+                selectedSubtopic.test.length > 0 &&
+                selectedSubtopic.unitName.startsWith("Assessment"))
+            ) {
               return (
                 <NeetQuiz
-                  topicTitle={fetchedUnits[expandedTopic]?.unitName}
+                  topicTitle={currentTopicTitle}
                   subtopicTitle={selectedSubtopic.unitName}
                   test={selectedSubtopic.test || []}
                   onBack={handleBackToTopics}
                   onMarkComplete={markSubtopicComplete}
-                  isAlreadyComplete={isAlreadyComplete} // 👈 PASS PROP
+                  isAlreadyComplete={isAlreadyComplete}
                 />
               );
             } else {
               return (
                 <NeetExplanation
-                  topicTitle={fetchedUnits[expandedTopic]?.unitName}
+                  topicTitle={currentTopicTitle}
                   subtopicTitle={selectedSubtopic.unitName}
                   subject={subject}
                   explanation={selectedSubtopic.explanation || ""}
@@ -928,8 +897,10 @@ const NeetLearn = () => {
                     ""
                   }
                   onBack={handleBackToTopics}
+                  onNext={handleNextLesson}
+                  onPrevious={handlePreviousLesson}
                   onMarkComplete={markSubtopicComplete}
-                  isAlreadyComplete={isAlreadyComplete} // 👈 PASS PROP
+                  isAlreadyComplete={isAlreadyComplete}
                 />
               );
             }
