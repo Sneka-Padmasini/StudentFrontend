@@ -37,30 +37,13 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
   const [showResultPopup, setShowResultPopup] = useState(false);
 
 
-  // useEffect(() => {
-  //   const allQuestions = test?.[0]?.questionsList || [];
-  //   let finalQuestionList = [];
+  // ✅ SCROLL FIX: Ensure quiz starts at the top when title changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const container = document.querySelector('.explanation-container');
+    if (container) container.scrollTop = 0;
+  }, [subtopicTitle, hasStarted]);
 
-  //   if (isMock) {
-  //     finalQuestionList = allQuestions;
-  //   } else {
-  //     const shuffledQuestions = shuffleArray([...allQuestions]);
-  //     const MAX_QUESTIONS = 180;
-  //     finalQuestionList = shuffledQuestions.slice(0, MAX_QUESTIONS);
-  //   }
-
-  //   setQuestions(finalQuestionList);
-  //   setUserAnswers(Array(finalQuestionList.length).fill(""));
-  //   setSubmitted(false);
-  //   setCurrentQIndex(0);
-  //   setTimeRemaining(10800);
-
-  //   setHasStarted(false);
-  //   setShowConfirmation(false);
-  //   setIsComplete(false);
-  //   setShowResultPopup(false);
-
-  // }, [subtopicTitle, isMock]);
 
   useEffect(() => {
     const allQuestions = test?.[0]?.questionsList || [];
@@ -106,7 +89,8 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     let text = texts
       .replace(/\\\\/g, "\\")
       .replace(/<\s*br\s*\/?\s*>/gi, "<br/>") // Fix malformed breaks
-      .replace(/\r?\n/g, "<br/>");
+      .replace(/\r?\n/g, "<br/>")
+      .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
 
     // 2. Split by LaTeX delimiters ($$ first, then $)
     const regex = /(\$\$[\s\S]*?\$\$|\$[^$]+?\$)/g;
@@ -274,6 +258,19 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
       <div className="quiz-container">
         <h2>{subtopicTitle}</h2>
 
+        <button
+          onClick={handleMarkComplete}
+          className={`complete-btn ${isComplete ? "completed" : ""}`}
+          disabled={isComplete}
+        >
+          {isComplete ? (
+            <>
+              Completed <FaCheckCircle className="check-icon" />
+            </>
+          ) : (
+            "Mark as Complete"
+          )}
+        </button>
 
         {!hasStarted ? (
           <div className="start-screen">

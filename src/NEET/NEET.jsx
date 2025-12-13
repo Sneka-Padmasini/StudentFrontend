@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import PadmasiniChat from "../components/PadmasiniChat";
 import "./NEET.css";
@@ -15,25 +15,6 @@ const subjectList = [
   { name: "Zoology", image: zoologyImg, certified: false },
   { name: "Botany", image: botanyImg, certified: false },
 ];
-
-// 🔹 API helpers for saving & loading subject progress - UPDATED with course and standard
-// const saveSubjectCompletionToServer = async (userId, subjectCompletion, course, standard) => {
-//   try {
-//     await fetch(`${API_BASE_URL}/api/progress/save`, {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({
-//         userId,
-//         subjectCompletion,
-//         course, // Add course identifier
-//         standard // Add standard identifier
-//       }),
-//     });
-//   } catch (err) {
-//     console.error("❌ Error saving subject progress:", err);
-//   }
-// };
-
 
 const shuffleArray = (array) => {
   let currentIndex = array.length, randomIndex;
@@ -63,142 +44,79 @@ const extractQuestionsFromUnits = (units) => {
   return questions;
 };
 
-const loadSubjectCompletionFromServer = async (userId, setSubjectCompletion, course, standard) => {
+// Helper to fetch completion for BOTH 11th and 12th
+const loadSubjectCompletionFromServer = async (userId, setSubjectCompletion, course) => {
   try {
-    // Ensure standard is always a single string, not an array
-    const standardParam = Array.isArray(standard)
-      ? encodeURIComponent(standard.join(","))
-      : encodeURIComponent(standard);
+    const stds = ["11th", "12th"];
+    let combinedCompletion = {};
 
-    const res = await fetch(`${API_BASE_URL}/api/progress/${userId}?course=${encodeURIComponent(course)}&standard=${standardParam}`);
-    const data = await res.json();
+    // 1. Load from LocalStorage FIRST for immediate UI update
+    const local11 = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_11th`) || "{}");
+    const local12 = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_12th`) || "{}");
+    combinedCompletion = { ...local11, ...local12 };
 
-    if (data?.subjectCompletion) {
-      setSubjectCompletion(data.subjectCompletion);
-      localStorage.setItem(`subjectCompletion_${course}_${standardParam}`, JSON.stringify(data.subjectCompletion));
+    // 2. Fetch from API and Merge
+    for (const std of stds) {
+      const res = await fetch(`${API_BASE_URL}/api/progress/${userId}?course=${encodeURIComponent(course)}&standard=${std}`);
+      const data = await res.json();
+      if (data?.subjectCompletion) {
+        combinedCompletion = { ...combinedCompletion, ...data.subjectCompletion };
+      }
     }
+    setSubjectCompletion(combinedCompletion);
   } catch (err) {
     console.error("❌ Error loading subject progress:", err);
   }
 };
 
-
 const Subjects = () => {
   const navigate = useNavigate();
   const [standard, setStandard] = useState("");
-  const [selectedClass, setSelectedClass] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  // const [subjectCompletion, setSubjectCompletion] = useState(subjectList);
   const [subjectCompletion, setSubjectCompletion] = useState({});
   const learningPathRef = useRef(null);
-  const { login, logout } = useUser(); // Make sure logout is included
+  const { login, logout } = useUser();
   const [loadingMock, setLoadingMock] = useState(false);
 
-  // ✅ FIX: This useEffect ONLY sets up the standard and dates
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("currentUser"));
     if (storedUser) {
       let stdData = storedUser.standards;
-
       if ((!stdData || stdData.length === 0) && storedUser.coursetype) {
         if (storedUser.coursetype.includes("11")) stdData = ["11th"];
         else if (storedUser.coursetype.includes("12")) stdData = ["12th"];
       }
-
-      let currentClass = localStorage.getItem("currentClass");
-
-      if (typeof stdData === "string") {
-        setStandard(stdData);
-        if (!currentClass) {
-          localStorage.setItem("currentClass", stdData);
-          currentClass = stdData; // Update for this render
-        }
-      } else if (Array.isArray(stdData)) {
-        setStandard(stdData);
-        if (stdData.length === 1) {
-          if (!currentClass) {
-            localStorage.setItem("currentClass", stdData[0]);
-            currentClass = stdData[0]; // Update for this render
-          }
-        }
-      }
-
-      // Set the selectedClass based on what's in localStorage
-      if (currentClass) {
-        setSelectedClass(currentClass);
-      }
-
-      console.log("🧠 Detected Standards:", stdData);
-      console.log("📚 Initial Selected Class:", currentClass);
-
-      const formatDate = (dateStr) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        });
-      };
-
-      if (storedUser.startDate) setStartDate(formatDate(storedUser.startDate));
-      if (storedUser.endDate) setEndDate(formatDate(storedUser.endDate));
+      if (stdData) setStandard(stdData);
     }
-  }, []); // ✅ FIX: Run only ONCE on mount
+  }, []);
 
-
-  // ✅ FIX: NEW useEffect to load progress when user/standard/class changes
+  // Load Progress on Mount
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("currentUser"));
     const userId = storedUser?.id || storedUser?._id;
     const course = "NEET";
 
-    // Determine the standard to load (use selectedClass as the source of truth)
-    const currentStandard = selectedClass;
-
-    if (!currentStandard) {
-      console.log("📚 No class selected, clearing progress.");
-      setSubjectCompletion({}); // Clear progress if no class is selected
-      return; // Don't load anything
-    }
-
-    console.log("📚 Loading progress for standard:", currentStandard);
-
     if (userId) {
-      loadSubjectCompletionFromServer(userId, setSubjectCompletion, course, currentStandard);
+      loadSubjectCompletionFromServer(userId, setSubjectCompletion, course);
     } else {
       // Fallback for guest or if user ID not ready
-      const savedLocal = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_${currentStandard}`) || "{}");
-      setSubjectCompletion(savedLocal);
-      window.dispatchEvent(new Event("storage")); // force progress refresh
+      const local11 = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_11th`) || "{}");
+      const local12 = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_12th`) || "{}");
+      setSubjectCompletion({ ...local11, ...local12 });
     }
+  }, []);
 
-    // Run when selectedClass changes
-  }, [selectedClass]);
-
-
-  // 🔁 Listen for updates to localStorage (when user finishes a subject in NeetLearn)
+  // Listen for storage updates (Instant update when coming back from NeetLearn)
   useEffect(() => {
     const handleStorageChange = () => {
-      const course = "NEET";
-      const currentStandard = selectedClass || standard;
-
-      // ✅ FIX: Default to an OBJECT {}, not an array []
-      const updatedCompletion = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_${currentStandard}`) || "{}");
-
-      console.log("Storage change detected, updating subjectCompletion:", updatedCompletion);
-      setSubjectCompletion(updatedCompletion);
+      const storedUser = JSON.parse(localStorage.getItem("currentUser"));
+      const userId = storedUser?.id || storedUser?._id;
+      if (userId) {
+        loadSubjectCompletionFromServer(userId, setSubjectCompletion, "NEET");
+      }
     };
-
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
-  }, [selectedClass, standard]); // ✅ FIX: Add 'standard' to dependency array
-
-  const handleScrollToLearningPath = () => {
-    if (learningPathRef.current) {
-      learningPathRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  };
+  }, []);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/checkSession`, {
@@ -206,17 +124,13 @@ const Subjects = () => {
       credentials: 'include'
     }).then(resp => resp.json())
       .then(data => {
-        console.log(data)
         if (data.loggedIn === true) {
           login(data.user)
           localStorage.setItem('currentUser', JSON.stringify(data.user));
-          console.log(localStorage.getItem('currentUser'))
         }
         if (data.loggedIn === false) {
-          console.log('it came here before seeing user')
           const existingUser = localStorage.getItem('currentUser')
           if (existingUser) {
-            console.log('it came here and deleted the user')
             localStorage.clear();
             logout();
             navigate("/login");
@@ -225,144 +139,67 @@ const Subjects = () => {
       }).catch(console.error)
   }, [login, logout, navigate])
 
-
-
-
+  // ✅ FIX: Calculate Progress based on 8 parts (4 subjects * 2 standards)
   const calculateProgress = () => {
+    let completedCount = 0;
+    const course = "NEET";
 
-    const totalSubjects = normalizedSubjects.length;
-    if (totalSubjects === 0) return 0;
+    subjectList.forEach(sub => {
+      // Construct Keys
+      const key11 = `${course}_11th_${sub.name}`;
+      const key12 = `${course}_12th_${sub.name}`;
 
-    const completedSubjects = normalizedSubjects.filter((s) => s.certified).length;
+      // Check 11th
+      const val11 = subjectCompletion?.[key11];
+      if (val11 === 100 || val11 === true || val11 === "completed") {
+        completedCount++;
+      }
 
-    return (completedSubjects / totalSubjects) * 100;
+      // Check 12th
+      const val12 = subjectCompletion?.[key12];
+      if (val12 === 100 || val12 === true || val12 === "completed") {
+        completedCount++;
+      }
+    });
+
+    // Total possible completions = 4 subjects * 2 standards = 8
+    const totalMilestones = subjectList.length * 2;
+    return (completedCount / totalMilestones) * 100;
   };
 
-
-  // ✅ Improved normalization using exact keys
+  // ✅ Normalize subjects to check if BOTH 11th & 12th are done for certification badge
   const normalizedSubjects = subjectList.map((sub) => {
     const course = "NEET";
-    // Get the standard that is *currently* selected
-    const currentStandard = selectedClass || (Array.isArray(standard) ? "" : standard);
+    const key11 = `${course}_11th_${sub.name}`;
+    const key12 = `${course}_12th_${sub.name}`;
 
-    // Build the exact key to look for, e.g., "NEET_11th_Physics"
-    const subjectKey = `${course}_${currentStandard}_${sub.name}`;
-
-    // Get the value (0 or 100) from the state
-    const progressValue = subjectCompletion?.[subjectKey];
+    const is11Completed = subjectCompletion?.[key11] === 100 || subjectCompletion?.[key11] === true || subjectCompletion?.[key11] === "completed";
+    const is12Completed = subjectCompletion?.[key12] === 100 || subjectCompletion?.[key12] === true || subjectCompletion?.[key12] === "completed";
 
     return {
-      ...sub, // This keeps the name: "Physics", image: ...
-      certified:
-        progressValue === 100 ||
-        progressValue === true ||
-        progressValue === "completed",
+      ...sub,
+      certified: is11Completed && is12Completed, // Badge only if BOTH are done
     };
   });
 
   const progressPercentage = calculateProgress();
   const safeProgress = isNaN(progressPercentage) ? 0 : progressPercentage;
 
-
-  const handleClassChange = (e) => {
-    const selected = e.target.value;
-    setSelectedClass(selected);
-    localStorage.setItem("currentClass", selected);
+  const handleScrollToLearningPath = () => {
+    if (learningPathRef.current) {
+      learningPathRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
-
-  // const handleStartMockTest = async () => {
-  //   if (!selectedClass) {
-  //     alert("Please select a Class (11th or 12th) first.");
-  //     return;
-  //   }
-
-  //   setLoadingMock(true);
-  //   const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-  //   let courseName = "professional";
-  //   if (currentUser?.coursetype && currentUser.coursetype.toLowerCase().includes("school")) {
-  //     courseName = "local";
-  //   }
-
-  //   const stdNumber = selectedClass.replace(/\D/g, ""); // "11th" -> "11"
-
-  //   // NEET Pattern: 45 Physics, 45 Chemistry, 45 Botany, 45 Zoology
-  //   const subjectConfig = [
-  //     { name: "Physics", count: 45 },
-  //     { name: "Chemistry", count: 45 },
-  //     { name: "Botany", count: 45 },
-  //     { name: "Zoology", count: 45 }
-  //   ];
-
-  //   let finalExamQuestions = [];
-
-  //   try {
-  //     const fetchPromises = subjectConfig.map(sub =>
-  //       fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${sub.name}/${stdNumber}`, { credentials: "include" })
-  //         .then(res => res.json())
-  //         .then(data => ({ name: sub.name, count: sub.count, data: Array.isArray(data) ? data : [] }))
-  //     );
-
-  //     const results = await Promise.all(fetchPromises);
-
-  //     results.forEach(result => {
-  //       const allQuestions = extractQuestionsFromUnits(result.data);
-  //       const shuffled = shuffleArray([...allQuestions]);
-  //       const selected = shuffled.slice(0, result.count);
-  //       finalExamQuestions = [...finalExamQuestions, ...selected];
-  //     });
-
-  //     // Shuffle the final mix of 180 questions
-  //     const mixedQuestions = shuffleArray(finalExamQuestions);
-
-  //     if (mixedQuestions.length === 0) {
-  //       alert("No questions found. Please try another class.");
-  //       setLoadingMock(false);
-  //       return;
-  //     }
-
-  //     navigate("/NeetLearn", {
-  //       state: {
-  //         isMock: true,
-  //         mockData: mixedQuestions,
-  //         subject: "Full Mock Test",
-  //         selectedClass: selectedClass
-  //       },
-  //     });
-
-  //   } catch (error) {
-  //     console.error("Mock Test Generation Error:", error);
-  //     alert("Failed to generate test. Check connection.");
-  //   } finally {
-  //     setLoadingMock(false);
-  //   }
-  // };
-
-  // ✅ CHANGE 3: Update Test Logic to handle "Both"
   const handleStartMockTest = async () => {
-    if (!selectedClass) {
-      alert("Please select a Class first.");
-      return;
-    }
-
     setLoadingMock(true);
     const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-
-    // Check if user is school or professional
     let courseName = "professional";
     if (currentUser?.coursetype && currentUser.coursetype.toLowerCase().includes("school")) {
       courseName = "local";
     }
 
-    // 🟢 Logic: If "Both", fetch from [11, 12]. If single class, fetch from just that one.
-    let standardsToFetch = [];
-    if (selectedClass === "Both") {
-      standardsToFetch = ["11", "12"];
-    } else {
-      standardsToFetch = [selectedClass.replace(/\D/g, "")]; // "11th" -> "11"
-    }
-
-    // NEET Pattern: 45 questions per subject
+    const standardsToFetch = ["11", "12"];
     const subjectConfig = [
       { name: "Physics", count: 45 },
       { name: "Chemistry", count: 45 },
@@ -373,41 +210,30 @@ const Subjects = () => {
     let finalExamQuestions = [];
 
     try {
-      // Fetch questions for every subject
       const subjectPromises = subjectConfig.map(async (sub) => {
         let subjectPool = [];
-
-        // For this subject, fetch from ALL required standards (11, 12, or both)
         const stdPromises = standardsToFetch.map(stdNum =>
           fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${sub.name}/${stdNum}`, { credentials: "include" })
             .then(res => res.json())
             .then(data => (Array.isArray(data) ? data : []))
         );
-
         const stdResults = await Promise.all(stdPromises);
-
-        // Combine questions from 11th and 12th into one big pool for this subject
         stdResults.forEach(data => {
           subjectPool = [...subjectPool, ...extractQuestionsFromUnits(data)];
         });
-
-        // Shuffle the pool and pick exactly 45 questions
         const shuffledPool = shuffleArray([...subjectPool]);
         return shuffledPool.slice(0, sub.count);
       });
 
       const results = await Promise.all(subjectPromises);
-
-      // Combine all subjects (Phys + Chem + Bot + Zoo)
       results.forEach(questions => {
         finalExamQuestions = [...finalExamQuestions, ...questions];
       });
 
-      // Final shuffle of the 180 questions
       const mixedQuestions = shuffleArray(finalExamQuestions);
 
       if (mixedQuestions.length === 0) {
-        alert("No questions found. Please try another class.");
+        alert("No questions found.");
         setLoadingMock(false);
         return;
       }
@@ -416,8 +242,8 @@ const Subjects = () => {
         state: {
           isMock: true,
           mockData: mixedQuestions,
-          subject: selectedClass === "Both" ? "Cumulative Mock (11th + 12th)" : `Full Mock Test (${selectedClass})`,
-          selectedClass: selectedClass
+          subject: "Full Cumulative Mock Test",
+          selectedClass: "Both"
         },
       });
 
@@ -433,57 +259,18 @@ const Subjects = () => {
     <div className="subjects-page">
       <aside className="sidebar">
         <h2>NEET</h2>
-
-        {standard && (
-          <p>
-            <strong>Standard:</strong>{" "}
-            {Array.isArray(standard) ? (
-              <select value={selectedClass} onChange={handleClassChange}>
-                <option value="">Select Class</option>
-                {standard.map((std, idx) => (
-                  <option key={idx} value={std}>
-                    {std === "11th" ? "Class 11" : std === "12th" ? "Class 12" : std}
-                  </option>
-                ))}
-
-                {/* ✅ CHANGE 1: Add the Cumulative Option */}
-                {Array.isArray(standard) && standard.includes("11th") && standard.includes("12th") && (
-                  <option value="Both">Cumulative (Class 11 & 12)</option>
-                )}
-
-              </select>
-            ) : (
-              <span>
-                {standard === "11th"
-                  ? "Class 11"
-                  : standard === "12th"
-                    ? "Class 12"
-                    : standard}
-              </span>
-            )}
-          </p>
-        )}
-
+        <p><strong>Course:</strong> Full Syllabus (11th & 12th)</p>
         <span className="badge certified">Certified</span>
         <span className="badge limited">Limited Access Only</span>
-
-
-        {/* Batch dates */}
-        {/* {startDate && endDate && (
-          <div className="cohort-details">
-            <h4>Your Batch</h4>
-            <p><strong>Start Date:</strong> {startDate}</p>
-            <p><strong>End Date:</strong> {endDate}</p>
-          </div>
-        )} */}
       </aside>
 
-      {/* <main className="content">
+      <main className="content">
         <section className="progress-section">
           <h3>My Completion Progress</h3>
           <div className="progress-header">
             <div className="progress-info">
-              <p>{normalizedSubjects.filter((s) => s.certified).length} of {normalizedSubjects.length} subjects completed</p>
+              {/* Show how many full subjects (11+12) are certified */}
+              <p>{normalizedSubjects.filter((s) => s.certified).length} of {normalizedSubjects.length} subjects fully completed</p>
 
               <div className="progress-bar-container">
                 <div
@@ -508,7 +295,7 @@ const Subjects = () => {
               <p className="subtext">
                 {progressPercentage === 100
                   ? "You've completed all subjects!"
-                  : "Complete all mandatory subjects to earn your certificate"}
+                  : "Complete 11th & 12th for all subjects to earn your certificate"}
               </p>
             </div>
 
@@ -521,9 +308,9 @@ const Subjects = () => {
               </button>
             </div>
           </div>
-        </section> */}
+        </section>
 
-      {/* <section className="learning-path" ref={learningPathRef}>
+        <section className="learning-path" ref={learningPathRef}>
           <h3>Learning Path</h3>
           <div className="timeline">
             {normalizedSubjects.map((subject, index) => (
@@ -535,142 +322,35 @@ const Subjects = () => {
                     <div className="neet-subject-info">
                       <span className="course-number">Course {index + 1}</span>
                       <h4 className="subject-title">{subject.name}</h4>
+                      {/* Certified Badge only shows if BOTH 11 and 12 are complete */}
                       {subject.certified && <span className="certified-badge">Certified</span>}
                     </div>
                     <button
                       className="continue-btn"
                       onClick={() => {
-                        console.log(localStorage.getItem("currentUser"))
-                        if (!standard) {
-                          console.log("jiii")
-                          alert("please select a standard")
-                          return
-                        }
-                        if (Array.isArray(standard) && !selectedClass) {
-                          alert("Please select a class before proceeding");
-                          return;
-                        }
                         navigate("/NeetLearn", {
                           state: {
                             subject: subject.name,
-                            selectedClass: Array.isArray(standard) ? selectedClass : standard,
+                            selectedClass: "Both",
                           },
                         })
-                      }
-                      }
-                      disabled={standard === "both" && !selectedClass}
+                      }}
                     >
-                      {subject.certified ? "Review" : "Learn More"}
+                      {subject.certified ? "Review" : "Start Learning"}
                     </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        </section> */}
-
-
-      <main className="content">
-        {/* ✅ CHANGE 1: Hide Progress Section if 'Both' is selected */}
-        {selectedClass !== "Both" && (
-          <section className="progress-section">
-            <h3>My Completion Progress</h3>
-            <div className="progress-header">
-              <div className="progress-info">
-                <p>{normalizedSubjects.filter((s) => s.certified).length} of {normalizedSubjects.length} subjects completed</p>
-
-                <div className="progress-bar-container">
-                  <div
-                    className="progress-bar"
-                    style={{
-                      width: `${safeProgress}%`,
-                      backgroundColor:
-                        safeProgress === 100
-                          ? "#4CAF50"
-                          : safeProgress > 50
-                            ? "#FFEB3B"
-                            : "#B0BEC5",
-                    }}
-                    title={`Completed: ${Math.round(safeProgress)}%`}
-                  >
-                    <div className="progress-filled">
-                      <span className="progress-percentage">{Math.round(safeProgress)}%</span>
-                    </div>
-                  </div>
-                </div>
-
-                <p className="subtext">
-                  {progressPercentage === 100
-                    ? "You've completed all subjects!"
-                    : "Complete all mandatory subjects to earn your certificate"}
-                </p>
-              </div>
-
-              <div className="certificate-box">
-                <button
-                  className={`certificate-btn ${progressPercentage === 100 ? "btn-completed" : "btn-continue"}`}
-                  onClick={handleScrollToLearningPath}
-                >
-                  {progressPercentage === 100 ? "Download Certificate" : "Continue Learning"}
-                </button>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* ✅ CHANGE 2: Hide Subject Cards if 'Both' is selected */}
-        {selectedClass !== "Both" && (
-          <section className="learning-path" ref={learningPathRef}>
-            <h3>Learning Path</h3>
-            <div className="timeline">
-              {normalizedSubjects.map((subject, index) => (
-                <div key={subject.name} className="timeline-item">
-                  <div className="timeline-dot"></div>
-                  <div className="timeline-content">
-                    <div className={`subject-card subject-card-${index}`}>
-                      <img src={subject.image} alt={subject.name} className="subject-thumbnail" />
-                      <div className="neet-subject-info">
-                        <span className="course-number">Course {index + 1}</span>
-                        <h4 className="subject-title">{subject.name}</h4>
-                        {subject.certified && <span className="certified-badge">Certified</span>}
-                      </div>
-                      <button
-                        className="continue-btn"
-                        onClick={() => {
-                          if (!standard) {
-                            alert("please select a standard");
-                            return;
-                          }
-                          if (Array.isArray(standard) && !selectedClass) {
-                            alert("Please select a class before proceeding");
-                            return;
-                          }
-                          navigate("/NeetLearn", {
-                            state: {
-                              subject: subject.name,
-                              selectedClass: Array.isArray(standard) ? selectedClass : standard,
-                            },
-                          });
-                        }}
-                        disabled={standard === "both" && !selectedClass}
-                      >
-                        {subject.certified ? "Review" : "Learn More"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        </section>
 
         <section className="mock-test-section" style={{ marginTop: "30px", marginBottom: "50px", padding: "25px", backgroundColor: "#fff", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.08)", borderLeft: "5px solid #006400" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "20px" }}>
-
             <div className="mock-text-content">
               <h3 style={{ margin: "0 0 8px 0", color: "#2c3e50", fontSize: "1.5rem" }}>Full Syllabus Mock Test</h3>
               <p style={{ margin: "0 0 10px 0", color: "#555" }}>
-                Take a comprehensive exam combining Physics, Chemistry, Botany, and Zoology.
+                Take a comprehensive exam combining Physics, Chemistry, Botany, and Zoology from Class 11 and 12.
               </p>
               <div style={{ display: "flex", gap: "15px", fontSize: "0.9rem", color: "#666", fontWeight: "500" }}>
                 <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>⏱️ 180 Mins</span>
@@ -678,38 +358,24 @@ const Subjects = () => {
                 <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>🏆 720 Marks</span>
               </div>
             </div>
-
             <button
               onClick={handleStartMockTest}
               disabled={loadingMock}
               style={{
-                backgroundColor: loadingMock ? "#9ca3af" : "#006400", /* Padmasini Green */
+                backgroundColor: loadingMock ? "#9ca3af" : "#006400",
                 color: "white",
                 padding: "12px 28px",
                 border: "none",
                 borderRadius: "8px",
-                fontSize: "1rem",
                 fontWeight: "bold",
                 cursor: loadingMock ? "not-allowed" : "pointer",
                 boxShadow: "0 4px 6px rgba(0, 100, 0, 0.2)",
-                transition: "transform 0.2s, background-color 0.2s",
-                minWidth: "200px"
               }}
-              onMouseOver={(e) => !loadingMock && (e.target.style.transform = "translateY(-2px)")}
-              onMouseOut={(e) => !loadingMock && (e.target.style.transform = "translateY(0)")}
             >
-              {loadingMock ? "Preparing Test..." : "Start Full Mock Test"}
+              {loadingMock ? "Preparing..." : "Start Full Mock Test"}
             </button>
           </div>
-
-          {/* Helper text for validation */}
-          {!selectedClass && (
-            <p style={{ marginTop: "15px", color: "#d32f2f", fontSize: "0.9rem", fontStyle: "italic" }}>
-              * Please select a Standard (Class 11 or 12) from the sidebar to unlock the test.
-            </p>
-          )}
         </section>
-
       </main>
 
       <PadmasiniChat subjectName="NEET" />

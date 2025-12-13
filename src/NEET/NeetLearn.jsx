@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaBars } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./NeetLearn.css";
@@ -26,25 +26,21 @@ const restoreKeys = (obj) => {
 const getFlatList = (units) => {
   let list = [];
   units.forEach((unit, unitIndex) => {
+    const std = unit.std; // Capture std (11th or 12th)
 
-    // Recursive function to add topics and subtopics in order
     const collectItems = (subs) => {
       subs.forEach(sub => {
-        // 1. Add the topic/subtopic itself to the list
-        list.push({ type: 'lesson', data: sub, unitIndex });
-
-        // 2. If it has children, recursively add them AFTER the parent
+        list.push({ type: 'lesson', data: sub, unitIndex, std });
         if (sub.units && sub.units.length > 0) {
           collectItems(sub.units);
         }
-
-        // 3. Add any tests associated with this subtopic
         if (sub.test && sub.test.length > 0) {
           sub.test.forEach(t => {
             list.push({
               type: 'test',
               data: { ...sub, unitName: `Assessment - ${sub.unitName}`, test: [t] },
-              unitIndex
+              unitIndex,
+              std
             });
           });
         }
@@ -55,13 +51,13 @@ const getFlatList = (units) => {
       collectItems(unit.units);
     }
 
-    // Add Topic Level Tests (Top level)
     if (unit.test && unit.test.length > 0) {
       unit.test.forEach(t => {
         list.push({
           type: 'test',
           data: { ...unit, unitName: `Assessment - ${unit.unitName}`, test: [t] },
-          unitIndex
+          unitIndex,
+          std
         });
       });
     }
@@ -73,10 +69,7 @@ const saveProgressToServer = async (userId, completedSubtopics, setCompletedSubt
   if (saveProgressTimer) clearTimeout(saveProgressTimer);
   saveProgressTimer = null;
 
-  if (!userId || userId === "guest") {
-    console.warn("⚠️ Skipping save — no valid userId");
-    return;
-  }
+  if (!userId || userId === "guest") return;
 
   const sanitizeKeys = (obj) => {
     if (typeof obj !== "object" || obj === null) return obj;
@@ -89,10 +82,9 @@ const saveProgressToServer = async (userId, completedSubtopics, setCompletedSubt
   };
 
   const safeData = sanitizeKeys(completedSubtopics);
-  console.log("🚀 Sending progress to backend:", safeData);
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/progress/save`, {
+    await fetch(`${API_BASE_URL}/api/progress/save`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -102,166 +94,84 @@ const saveProgressToServer = async (userId, completedSubtopics, setCompletedSubt
         standard,
       }),
     });
-
-    const text = await res.text();
-    console.log("🧾 Backend response text:", text);
-
-    if (!res.ok) {
-      console.error("❌ Backend rejected progress save:", text);
-    } else {
-      console.log("✅ Progress saved to backend successfully!");
-    }
   } catch (err) {
     console.error("❌ Error saving progress:", err);
   }
 };
 
-const saveSubjectCompletionToServer = async (userId, subjectCompletionMap, completedSubtopics) => {
-  if (!userId || userId === "guest") {
-    console.warn("⚠️ Skipping subject sync — userId not ready");
-    return;
-  }
-
-  const course = "NEET";
-  const standard = localStorage.getItem("currentClass") || "";
-
-  if (!standard) {
-    console.error("❌ Cannot save subject completion, standard is missing from localStorage");
-    return;
-  }
-
-  const sanitizeKeys = (obj) => {
-    if (typeof obj !== "object" || obj === null) return obj;
-    const sanitized = {};
-    for (const [key, value] of Object.entries(obj)) {
-      const safeKey = key.replace(/\./g, "__dot__");
-      sanitized[safeKey] = sanitizeKeys(value);
-    }
-    return sanitized;
-  };
-
-  const safeSubtopics = sanitizeKeys(completedSubtopics);
-
+const saveSubjectCompletionToServer = async (userId, subjectCompletionMap, course, standard) => {
+  if (!userId || userId === "guest") return;
   try {
-    const response = await fetch(`${API_BASE_URL}/api/progress/save`, {
+    await fetch(`${API_BASE_URL}/api/progress/save`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         userId,
         subjectCompletion: subjectCompletionMap,
-        completedSubtopics: safeSubtopics,
         course,
         standard,
       }),
     });
-
-    if (!response.ok) {
-      console.error("❌ Backend rejected subject completion sync:", await response.text());
-    } else {
-      console.log("✅ Subject completion synced successfully for", userId);
-    }
-  } catch (err) {
-    console.error("❌ Error syncing subject completion:", err);
-  }
+  } catch (err) { console.error(err); }
 };
 
 const loadProgressFromServer = async (userId, course, standard) => {
   try {
     const res = await fetch(`${API_BASE_URL}/api/progress/${userId}?course=${course}&standard=${standard}`);
     const data = await res.json();
-    console.log("🌐 Fetched backend progress data:", data);
-
-    const restoreKeys = (obj) => {
-      if (typeof obj !== "object" || obj === null) return obj;
-      const restored = {};
-      for (const [key, value] of Object.entries(obj)) {
-        const realKey = key.replace(/__dot__/g, ".");
-        restored[realKey] = restoreKeys(value);
-      }
-      return restored;
-    };
-
     if (data?.completedSubtopics) {
-      const merged = restoreKeys(data.completedSubtopics);
-      console.log("📦 Restored backend progress:", merged);
-      return merged;
-    } else {
-      return {};
+      return restoreKeys(data.completedSubtopics);
     }
+    return {};
   } catch (err) {
-    console.error("❌ Error loading progress:", err);
     return {};
   }
 };
 
-// Recursive component to render subtopics and their tests
-const SubtopicTree = ({
-  subtopics,
-  onClick,
-  selectedTitle,
-  parentIndex,
-  level = 1,
-  isTopicUnlocked // Receive the lock checker
-}) => {
+const SubtopicTree = ({ subtopics, onClick, selectedTitle, parentIndex, level = 1, isTopicUnlocked }) => {
   const [expandedSub, setExpandedSub] = useState(null);
 
   const handleSubClick = (sub, idx, e) => {
     e.stopPropagation();
-    const hasChildren = (sub.units && sub.units.length > 0) || (sub.test && sub.test.length > 0);
-
-    // 1. ALWAYS load the description for this topic
-    onClick(sub, parentIndex);
-
-    // 2. If it's a folder, ALSO toggle expansion
-    if (hasChildren) {
-      setExpandedSub((prev) => (prev === idx ? null : idx));
+    const isUnlocked = isTopicUnlocked ? isTopicUnlocked(sub.unitName) : true;
+    if (isUnlocked) {
+      onClick(sub, parentIndex);
+      const hasChildren = (sub.units && sub.units.length > 0) || (sub.test && sub.test.length > 0);
+      if (hasChildren) {
+        setExpandedSub((prev) => (prev === idx ? null : idx));
+      }
     }
   };
 
   const handleTestClick = (test, idx, sub) => {
-    const testSubtopic = {
-      ...sub,
-      unitName: `Assessment - ${sub.unitName}`,
-      test: [test],
-    };
+    const testSubtopic = { ...sub, unitName: `Assessment - ${sub.unitName}`, test: [test] };
     onClick(testSubtopic, parentIndex);
   };
 
   return (
     <ul className="subtopics-list">
       {subtopics.map((sub, idx) => {
-        // Check if unlocked
         const isUnlocked = isTopicUnlocked ? isTopicUnlocked(sub.unitName) : true;
-
         return (
           <li key={idx}>
             <div
               className={`subtopic-title ${selectedTitle === sub.unitName ? "selected" : ""}`}
               style={{
                 marginLeft: `${level * 20}px`,
-                // Grey out if locked
                 opacity: isUnlocked ? 1 : 0.5,
-                cursor: isUnlocked ? 'pointer' : 'not-allowed',
-                pointerEvents: isUnlocked ? 'auto' : 'none'
+                cursor: isUnlocked ? 'pointer' : 'not-allowed'
               }}
               onClick={(e) => handleSubClick(sub, idx, e)}
             >
-              {/* Arrow Logic */}
               {((sub.units && sub.units.length > 0) || (sub.test && sub.test.length > 0)) ? (
                 <span>{expandedSub === idx ? "▼ " : "▶ "}</span>
-              ) : (
-                <span>⮚ </span>
-              )}
-              {/* Lock Icon */}
+              ) : (<span>⮚ </span>)}
               {!isUnlocked && <span style={{ marginRight: '5px' }}>🔒</span>}
-
               {sub.unitName}
             </div>
 
-            {/* Render Children (Only if expanded) */}
             {expandedSub === idx && (
               <>
-                {/* 1. Sub-units (Recursive) */}
                 {sub.units && (
                   <SubtopicTree
                     subtopics={sub.units}
@@ -269,35 +179,28 @@ const SubtopicTree = ({
                     selectedTitle={selectedTitle}
                     parentIndex={parentIndex}
                     level={level + 1}
-                    isTopicUnlocked={isTopicUnlocked} // Pass lock check down
+                    isTopicUnlocked={isTopicUnlocked}
                   />
                 )}
-
-                {/* 2. Tests */}
-                {sub.test &&
-                  sub.test.length > 0 &&
-                  sub.test.map((test, tIdx) => {
-                    // Check if test is unlocked
-                    const testName = `Assessment - ${sub.unitName}`;
-                    const isTestUnlocked = isTopicUnlocked ? isTopicUnlocked(testName) : true;
-
-                    return (
-                      <div
-                        key={tIdx}
-                        className="subtopic-title test-title"
-                        style={{
-                          marginLeft: `${(level + 1) * 20}px`,
-                          opacity: isTestUnlocked ? 1 : 0.5,
-                          cursor: isTestUnlocked ? 'pointer' : 'not-allowed',
-                          pointerEvents: isTestUnlocked ? 'auto' : 'none'
-                        }}
-                        onClick={() => handleTestClick(test, tIdx, sub)}
-                      >
-                        {!isTestUnlocked && <span>🔒 </span>}
-                        📝 {test.testName} - Assessment
-                      </div>
-                    )
-                  })}
+                {sub.test && sub.test.length > 0 && sub.test.map((test, tIdx) => {
+                  const testName = `Assessment - ${sub.unitName}`;
+                  const isTestUnlocked = isTopicUnlocked ? isTopicUnlocked(testName) : true;
+                  return (
+                    <div
+                      key={tIdx}
+                      className="subtopic-title test-title"
+                      style={{
+                        marginLeft: `${(level + 1) * 20}px`,
+                        opacity: isTestUnlocked ? 1 : 0.5,
+                        cursor: isTestUnlocked ? 'pointer' : 'not-allowed'
+                      }}
+                      onClick={() => isTestUnlocked && handleTestClick(test, tIdx, sub)}
+                    >
+                      {!isTestUnlocked && <span>🔒 </span>}
+                      📝 {test.testName} - Assessment
+                    </div>
+                  )
+                })}
               </>
             )}
           </li>
@@ -313,32 +216,9 @@ const NeetLearn = () => {
   const isMockMode = location.state?.isMock || false;
   const mockData = location.state?.mockData || [];
   const subject = location.state?.subject || "Physics";
-  const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-  const selectedStandard =
-    currentUser.selectedStandard === "11th"
-      ? 11
-      : currentUser.selectedStandard === "12th"
-        ? 12
-        : null;
 
   const [userId, setUserId] = useState(null);
   const DEV_MODE = false;
-
-  useEffect(() => {
-    let storedUserId = localStorage.getItem("userId");
-    const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-
-    if (!storedUserId && (storedUser?._id || storedUser?.userId)) {
-      storedUserId = storedUser._id || storedUser.userId;
-      localStorage.setItem("userId", storedUserId);
-    }
-
-    if (storedUserId) {
-      setUserId(storedUserId);
-    } else {
-      console.warn("⚠️ No valid userId found in localStorage or currentUser");
-    }
-  }, []);
 
   const [fetchedUnits, setFetchedUnits] = useState([]);
   const [expandedTopic, setExpandedTopic] = useState(null);
@@ -346,45 +226,84 @@ const NeetLearn = () => {
   const [showTopics, setShowTopics] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [completedSubtopics, setCompletedSubtopics] = useState({});
-  const [subjectCompletion, setSubjectCompletion] = useState({});
   const [isProgressLoading, setIsProgressLoading] = useState(true);
 
-  useEffect(() => window.scrollTo(0, 0), []);
+  // Reference for the scrolling container
+  const contentRef = useRef(null);
 
   useEffect(() => {
-    if (!userId) {
-      return;
+    let storedUserId = localStorage.getItem("userId");
+    const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    if (!storedUserId && (storedUser?._id || storedUser?.userId)) {
+      storedUserId = storedUser._id || storedUser.userId;
+      localStorage.setItem("userId", storedUserId);
     }
+    setUserId(storedUserId);
+  }, []);
 
-    setIsProgressLoading(true);
+  // ✅ STRONG SCROLL FIX
+  useEffect(() => {
+    const scrollToTop = () => {
+      // 1. Scroll the window (Standard)
+      window.scrollTo(0, 0);
 
-    const course = "NEET";
-    const standard = localStorage.getItem("currentClass");
-    const localKey = `completedSubtopics_${userId}_${course}_${standard}`;
-    const savedProgress = JSON.parse(localStorage.getItem(localKey) || "{}");
-
-    const restoreKeys = (obj) => {
-      if (typeof obj !== "object" || obj === null) return obj;
-      const restored = {};
-      for (const [key, value] of Object.entries(obj)) {
-        const cleanKey = key.replace(/__dot__/g, ".");
-        restored[cleanKey] = restoreKeys(value);
+      // 2. Scroll the React Ref (If attached)
+      if (contentRef.current) {
+        contentRef.current.scrollTop = 0;
       }
-      return restored;
+
+      // 3. Fallback: Manually find the div by class name (Most reliable for specific layouts)
+      const container = document.querySelector(".explanation-container");
+      if (container) {
+        container.scrollTop = 0;
+      }
     };
 
-    const restoredLocal = restoreKeys(savedProgress);
-    setCompletedSubtopics(restoredLocal);
+    // Run immediately
+    scrollToTop();
 
-    loadProgressFromServer(userId, course, standard).then((backendData) => {
-      if (!backendData) {
-        setIsProgressLoading(false);
-        return;
+    // Run again after a tiny delay to account for rendering time
+    const timer = setTimeout(scrollToTop, 50);
+
+    return () => clearTimeout(timer);
+  }, [selectedSubtopic, subject]); // Runs whenever the topic changes
+
+  useEffect(() => {
+    const getAllSubjectDetails = async () => {
+      const subjectName = subject;
+      const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      let courseName = "professional";
+      if (currentUser?.coursetype && currentUser.coursetype.toLowerCase().includes("school")) {
+        courseName = "local";
       }
-      const merged = { ...restoredLocal, ...backendData };
+
+      try {
+        const res11 = await fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/11`, { credentials: "include" });
+        const data11 = await res11.json();
+        const units11 = Array.isArray(data11) ? data11.map(u => ({ ...u, std: "11th" })) : [];
+
+        const res12 = await fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/12`, { credentials: "include" });
+        const data12 = await res12.json();
+        const units12 = Array.isArray(data12) ? data12.map(u => ({ ...u, std: "12th" })) : [];
+
+        setFetchedUnits([...units11, ...units12]);
+      } catch (err) {
+        setFetchedUnits([]);
+      }
+    };
+    getAllSubjectDetails();
+  }, [subject]);
+
+  useEffect(() => {
+    if (!userId) return;
+    setIsProgressLoading(true);
+    const course = "NEET";
+    Promise.all([
+      loadProgressFromServer(userId, course, "11th"),
+      loadProgressFromServer(userId, course, "12th")
+    ]).then(([prog11, prog12]) => {
+      const merged = { ...prog11, ...prog12 };
       setCompletedSubtopics(merged);
-      localStorage.setItem(localKey, JSON.stringify(merged));
-      setTimeout(() => setExpandedTopic((prev) => prev), 200);
       setIsProgressLoading(false);
     });
   }, [userId]);
@@ -399,79 +318,22 @@ const NeetLearn = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    if (expandedTopic !== null && fetchedUnits[expandedTopic]) {
-      const topic = fetchedUnits[expandedTopic];
-      const progress = calculateProgress(topic);
-    }
-  }, [completedSubtopics, expandedTopic, selectedSubtopic, fetchedUnits]);
-
-  useEffect(() => {
-    const getAllSubjectDetails = () => {
-      const subjectName = subject;
-      const stringStandard = localStorage.getItem("currentClass");
-      const standard = String(stringStandard?.replace(/\D/g, ""));
-
-      const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-      let courseName = "professional";
-
-      if (currentUser?.coursetype) {
-        const type = currentUser.coursetype.toLowerCase();
-        if (type.includes("neet")) courseName = "professional";
-        else if (type.includes("jee")) courseName = "professional";
-        else if (type.includes("school")) courseName = "local";
-      }
-
-      fetch(
-        `${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/${standard}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      )
-        .then(async (resp) => {
-          if (!resp.ok) {
-            const text = await resp.text();
-            throw new Error(text);
-          }
-          return resp.json();
-        })
-        .then((data) => {
-          setFetchedUnits(Array.isArray(data) ? data : []);
-        })
-        .catch((err) => {
-          setFetchedUnits([]);
-        });
-    };
-
-    getAllSubjectDetails();
-  }, [subject]);
-
   const collectAllLessons = (subs) => {
-    if (!Array.isArray(subs)) {
-      return [];
-    }
+    if (!Array.isArray(subs)) return [];
     let leaves = [];
     subs.forEach((sub) => {
-      if (sub.units && sub.units.length > 0) {
-        leaves = leaves.concat(collectAllLessons(sub.units));
-      } else {
-        leaves.push(sub);
-      }
+      if (sub.units && sub.units.length > 0) leaves = leaves.concat(collectAllLessons(sub.units));
+      else leaves.push(sub);
     });
     return leaves;
   };
 
   const collectAllTests = (topic) => {
     let tests = [];
-    if (topic.test && topic.test.length > 0) {
-      tests.push({ testName: `Assessment - ${topic.unitName}` });
-    }
+    if (topic.test && topic.test.length > 0) tests.push({ testName: `Assessment - ${topic.unitName}` });
     if (Array.isArray(topic.units)) {
       topic.units.forEach((sub) => {
-        if (sub.test && sub.test.length > 0) {
-          tests.push({ testName: `Assessment - ${sub.unitName}` });
-        }
+        if (sub.test && sub.test.length > 0) tests.push({ testName: `Assessment - ${sub.unitName}` });
         tests = tests.concat(collectAllTests(sub));
       });
     }
@@ -481,7 +343,7 @@ const NeetLearn = () => {
   const calculateProgress = (topic) => {
     if (!topic) return 0;
     const course = "NEET";
-    const standard = localStorage.getItem("currentClass") || "";
+    const standard = topic.std || "11th";
     const subjectName = subject;
     const topicKey = `${course}_${standard}_${subjectName}_${topic.unitName}`;
     const topicProgress = completedSubtopics[topicKey] || {};
@@ -492,47 +354,32 @@ const NeetLearn = () => {
     if (totalCount === 0) return 0;
 
     let completedCount = 0;
-    allLessons.forEach((lesson) => {
-      if (topicProgress[lesson.unitName] === true) completedCount++;
-    });
-    allTests.forEach((test) => {
-      if (topicProgress[test.testName] === true) completedCount++;
-    });
+    allLessons.forEach((lesson) => { if (topicProgress[lesson.unitName] === true) completedCount++; });
+    allTests.forEach((test) => { if (topicProgress[test.testName] === true) completedCount++; });
 
     const percent = Math.round((completedCount / totalCount) * 100);
     return percent > 100 ? 100 : percent;
   };
 
-  const isTopicCompleted = (topic) => {
-    const progress = calculateProgress(topic);
-    return progress === 100;
-  };
+  const isTopicCompleted = (topic) => calculateProgress(topic) === 100;
 
-  // ✅ 1. Logic to unlock Top-Level Lessons (e.g., Unit 1, Unit 2)
   const isLessonUnlocked = (index) => {
-    if (DEV_MODE) return true; // 🔓 BYPASS: Always unlock in Dev Mode
-
+    if (DEV_MODE) return true;
     if (index === 0) return true;
     const prevTopic = fetchedUnits[index - 1];
     return isTopicCompleted(prevTopic);
   };
 
-  // ✅ 2. Logic to unlock Inner Topics (e.g., 1.1, 1.2, Tests)
   const isSubtopicUnlocked = (targetUnitName) => {
-    if (DEV_MODE) return true; // 🔓 BYPASS: Always unlock in Dev Mode
-
+    if (DEV_MODE) return true;
     const flatList = getFlatList(fetchedUnits);
     const currentIndex = flatList.findIndex(item => item.data.unitName === targetUnitName);
+    if (currentIndex <= 0) return true;
 
-    if (currentIndex <= 0) return true; // First subtopic always open
-
-    // Check if PREVIOUS subtopic is marked complete
     const prevItem = flatList[currentIndex - 1];
     const course = "NEET";
-    const standard = localStorage.getItem("currentClass") || "";
+    const standard = prevItem.std;
     const subjectName = subject;
-
-    // Construct key to check completion in localStorage/State
     const parentUnitName = fetchedUnits[prevItem.unitIndex].unitName;
     const topicKey = `${course}_${standard}_${subjectName}_${parentUnitName}`;
     const prevUnitName = prevItem.data.unitName;
@@ -541,7 +388,6 @@ const NeetLearn = () => {
   };
 
   const toggleTopic = (index) => {
-    // Check if the LESSON is unlocked before opening
     if (!isLessonUnlocked(index)) {
       alert("Please complete the previous lesson to unlock this one.");
       return;
@@ -556,189 +402,107 @@ const NeetLearn = () => {
     setExpandedTopic(index);
   };
 
-  const handleBackToTopics = () => {
-    setSelectedSubtopic(null);
-    if (isMobile) setShowTopics(true);
-  };
+  const checkAndSaveSubjectCompletion = (userId, topicObj, currentProgressData) => {
+    if (!userId) return;
+    const course = "NEET";
+    const standard = topicObj.std;
 
-  const handleBackToSubjects = () => navigate("/Neet");
+    const unitsForThisStd = fetchedUnits.filter(u => u.std === standard);
 
-  const checkAndSaveSubjectCompletion = (userId, fetchedUnits, subject, course, standard, currentProgressData) => {
-    if (!fetchedUnits?.length || !userId) return;
+    const allCompleted = unitsForThisStd.every((topic) => {
+      const tKey = `${course}_${standard}_${subject}_${topic.unitName}`;
+      const topicProgress = currentProgressData[tKey] || {};
 
-    setTimeout(() => {
-      const allCompleted = fetchedUnits.every((topic) => {
-        const tKey = `${course}_${standard}_${subject}_${topic.unitName}`;
-        const topicProgress = currentProgressData[tKey] || {};
-        const allLessons = collectAllLessons(topic.units);
-        const allTests = collectAllTests(topic);
-        const totalCount = allLessons.length + allTests.length;
-        if (totalCount === 0) return true;
+      const allLessons = collectAllLessons(topic.units);
+      const allTests = collectAllTests(topic);
+      const totalCount = allLessons.length + allTests.length;
+      if (totalCount === 0) return true;
 
-        let completedCount = 0;
-        allLessons.forEach((lesson) => {
-          if (topicProgress[lesson.unitName] === true) completedCount++;
-        });
-        allTests.forEach((test) => {
-          if (topicProgress[test.testName] === true) completedCount++;
-        });
-        return completedCount === totalCount;
-      });
+      let completedCount = 0;
+      allLessons.forEach(l => { if (topicProgress[l.unitName] === true) completedCount++; });
+      allTests.forEach(t => { if (topicProgress[t.testName] === true) completedCount++; });
 
-      if (allCompleted) {
-        const localKey = `subjectCompletion_${course}_${standard}`;
-        const existingCompletionData = JSON.parse(localStorage.getItem(localKey) || "{}");
-        const subjectKey = `${course}_${standard}_${subject}`;
-        const updatedCompletionMap = { ...existingCompletionData, [subjectKey]: 100 };
-        localStorage.setItem(localKey, JSON.stringify(updatedCompletionMap));
-        saveSubjectCompletionToServer(userId, updatedCompletionMap, currentProgressData);
-        window.dispatchEvent(new Event("storage"));
-      }
-    }, 500);
+      return completedCount === totalCount;
+    });
+
+    if (allCompleted) {
+      const subjectKey = `${course}_${standard}_${subject}`;
+      const completionMap = { [subjectKey]: 100 };
+      saveSubjectCompletionToServer(userId, completionMap, course, standard);
+
+      const localKey = `subjectCompletion_${course}_${standard}`;
+      const existingData = JSON.parse(localStorage.getItem(localKey) || "{}");
+      const updatedData = { ...existingData, ...completionMap };
+      localStorage.setItem(localKey, JSON.stringify(updatedData));
+      window.dispatchEvent(new Event("storage"));
+    }
   };
 
   const markSubtopicComplete = () => {
     if (!selectedSubtopic || expandedTopic === null) return;
-
-    let finalUserId = userId;
-    if (!finalUserId) {
-      const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-      finalUserId = storedUser?._id || storedUser?.userId;
-      if (finalUserId) {
-        setUserId(finalUserId);
-      } else {
-        return;
-      }
-    }
-
-    const topicTitle = fetchedUnits[expandedTopic].unitName;
-    const subtopicTitle = selectedSubtopic.unitName;
+    const topicObj = fetchedUnits[expandedTopic];
+    const standard = topicObj.std;
     const course = "NEET";
-    const standard = localStorage.getItem("currentClass") || "";
-    const subjectName = subject;
-    const topicKey = `${course}_${standard}_${subjectName}_${topicTitle}`;
+    const topicTitle = topicObj.unitName;
+    const subtopicTitle = selectedSubtopic.unitName;
+    const topicKey = `${course}_${standard}_${subject}_${topicTitle}`;
 
     let updatedProgressData;
 
-    if (subtopicTitle.includes("Assessment")) {
-      setCompletedSubtopics((prev) => {
-        const topicProgress = prev[topicKey] || {};
-        const updatedProgress = { ...topicProgress };
-        updatedProgress[subtopicTitle] = true;
-        const updated = { ...prev, [topicKey]: updatedProgress };
-        localStorage.setItem(`completedSubtopics_${finalUserId}_${course}_${standard}`, JSON.stringify(updated));
+    setCompletedSubtopics((prev) => {
+      const topicProgress = prev[topicKey] || {};
+      const updated = {
+        ...prev,
+        [topicKey]: { ...topicProgress, [subtopicTitle]: true }
+      };
+      saveProgressToServer(userId, updated, setCompletedSubtopics, course, standard);
+      updatedProgressData = updated;
+      return updated;
+    });
 
-        if (saveProgressTimer) clearTimeout(saveProgressTimer);
-        saveProgressTimer = setTimeout(() => {
-          saveProgressToServer(finalUserId, updated, setCompletedSubtopics, course, standard);
-          saveProgressTimer = null;
-        }, 500);
-
-        updatedProgressData = updated;
-        return updated;
-      });
-
-      if (updatedProgressData) {
-        checkAndSaveSubjectCompletion(finalUserId, fetchedUnits, subject, course, standard, updatedProgressData);
-      }
-    } else {
-      setCompletedSubtopics((prev) => {
-        const topicProgress = prev[topicKey] || {};
-        if (topicProgress[subtopicTitle]) {
-          updatedProgressData = prev;
-          return prev;
-        }
-        const updated = {
-          ...prev,
-          [topicKey]: {
-            ...topicProgress,
-            [subtopicTitle]: true,
-          },
-        };
-        localStorage.setItem(`completedSubtopics_${finalUserId}_${course}_${standard}`, JSON.stringify(updated));
-
-        if (saveProgressTimer) clearTimeout(saveProgressTimer);
-        saveProgressTimer = setTimeout(() => {
-          saveProgressToServer(finalUserId, updated, setCompletedSubtopics, course, standard);
-          saveProgressTimer = null;
-        }, 500);
-
-        updatedProgressData = updated;
-        return updated;
-      });
-
-      if (updatedProgressData) {
-        checkAndSaveSubjectCompletion(finalUserId, fetchedUnits, subject, course, standard, updatedProgressData);
-      }
-    }
+    if (updatedProgressData) checkAndSaveSubjectCompletion(userId, topicObj, updatedProgressData);
   };
 
   const resetProgress = async (subjectName) => {
+    if (!window.confirm(`Are you sure you want to reset ALL progress for ${subjectName}? This cannot be undone.`)) {
+      return;
+    }
     try {
       const storedUser = JSON.parse(localStorage.getItem("currentUser"));
       if (!storedUser?._id) return;
       const finalUserId = storedUser._id;
       const course = "NEET";
-      const standard = localStorage.getItem("currentClass");
+      const standardsToReset = ["11th", "12th"];
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/progress/delete?userId=${finalUserId}&course=${course}&standard=${standard}&subject=${encodeURIComponent(subjectName)}`,
-        { method: "DELETE" }
-      );
-
-      if (response.ok) {
-        localStorage.removeItem(`completedSubtopics_${finalUserId}_${course}_${standard}`);
-        localStorage.removeItem(`subjectCompletion_${course}_${standard}`);
-        Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith(`${course}-completed-${finalUserId}-${standard}-`)) {
-            localStorage.removeItem(key);
-          }
-        });
-        setCompletedSubtopics({});
-        setSubjectCompletion({});
-        window.dispatchEvent(new Event("storage"));
+      for (const std of standardsToReset) {
+        await fetch(
+          `${API_BASE_URL}/api/progress/delete?userId=${finalUserId}&course=${course}&standard=${std}&subject=${encodeURIComponent(subjectName)}`,
+          { method: "DELETE" }
+        );
+        localStorage.removeItem(`completedSubtopics_${finalUserId}_${course}_${std}`);
+        localStorage.removeItem(`subjectCompletion_${course}_${std}`);
       }
+      setCompletedSubtopics({});
+      window.dispatchEvent(new Event("storage"));
+      alert(`Progress for ${subjectName} has been reset.`);
+      window.location.reload();
     } catch (err) {
       console.error("⚠️ Reset progress error:", err);
     }
   };
 
-  if (isMockMode) {
-    const mockTestObject = [
-      {
-        testName: "Full NEET Mock Test",
-        questionsList: mockData,
-      },
-    ];
-
-    return (
-      <div className="neet-mock-test-wrapper" style={{ marginTop: "60px" }}>
-        <NeetQuiz
-          topicTitle="Full Syllabus"
-          subtopicTitle={`NEET Mock Test - ${mockData.length} Questions`}
-          test={mockTestObject}
-          onBack={() => navigate("/Neet")}
-          onMarkComplete={() => {
-            alert("Mock Test Completed!");
-            navigate("/Neet");
-          }}
-          isAlreadyComplete={false}
-          isMock={true}
-        />
-      </div>
-    );
-  }
-
   const handleNextLesson = () => {
     markSubtopicComplete();
     const flatList = getFlatList(fetchedUnits);
-    const currentIndex = flatList.findIndex((item) => item.data.unitName === selectedSubtopic.unitName);
+    const currentIndex = flatList.findIndex((item) =>
+      item.data.unitName === selectedSubtopic.unitName &&
+      item.unitIndex === expandedTopic
+    );
 
     if (currentIndex !== -1 && currentIndex < flatList.length - 1) {
       const nextItem = flatList[currentIndex + 1];
       setExpandedTopic(nextItem.unitIndex);
       setSelectedSubtopic(nextItem.data);
-      window.scrollTo(0, 0);
     } else {
       alert("You have reached the end of this subject!");
     }
@@ -746,138 +510,148 @@ const NeetLearn = () => {
 
   const handlePreviousLesson = () => {
     const flatList = getFlatList(fetchedUnits);
-    const currentIndex = flatList.findIndex((item) => item.data.unitName === selectedSubtopic.unitName);
+    const currentIndex = flatList.findIndex((item) =>
+      item.data.unitName === selectedSubtopic.unitName &&
+      item.unitIndex === expandedTopic
+    );
 
     if (currentIndex > 0) {
       const prevItem = flatList[currentIndex - 1];
       setExpandedTopic(prevItem.unitIndex);
       setSelectedSubtopic(prevItem.data);
-      window.scrollTo(0, 0);
     }
   };
+
+  if (isMockMode) {
+    const mockTestObject = [{ testName: "Full NEET Mock Test", questionsList: mockData }];
+    return (
+      <div className="neet-mock-test-wrapper" style={{ marginTop: "60px" }}>
+        <NeetQuiz
+          topicTitle="Full Syllabus"
+          subtopicTitle={`NEET Mock Test - ${mockData.length} Questions`}
+          test={mockTestObject}
+          onBack={() => navigate("/Neet")}
+          onMarkComplete={() => { alert("Mock Test Completed!"); navigate("/Neet"); }}
+          isAlreadyComplete={false}
+          isMock={true}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="Neet-container">
       {isMobile && (
         <button className="toggle-btn" onClick={() => setShowTopics(!showTopics)}>
-          <FaBars />
-          <h2>{subject} Topics</h2>
+          <FaBars /> <h2>{subject} Topics</h2>
         </button>
       )}
 
-      {showTopics && isProgressLoading && (
-        <div className="topics-list" style={{ padding: "20px", textAlign: "center" }}>
-          <h2>Loading Progress... Please wait. </h2>
-        </div>
-      )}
+      {showTopics && (
+        <div className={`topics-list ${!showTopics ? "hidden-mobile" : ""}`}>
+          {isProgressLoading ? <p>Loading...</p> :
+            <ul>
+              {fetchedUnits.map((topic, index) => {
+                const showHeader = index === 0 || topic.std !== fetchedUnits[index - 1].std;
 
-      {showTopics && !isProgressLoading && (
-        <div className="topics-list">
-          <ul>
-            {fetchedUnits.map((topic, index) => (
-              <li key={index}>
-                <div
-                  className={`topic-title ${expandedTopic === index ? "active" : ""} ${!isLessonUnlocked(index) ? "locked" : ""
-                    }`}
-                  style={{
-                    opacity: isLessonUnlocked(index) ? 1 : 0.6,
-                    cursor: isLessonUnlocked(index) ? 'pointer' : 'not-allowed'
-                  }}
-                  onClick={() => toggleTopic(index)}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span> {topic.unitName}</span>
-                    <span className="expand-icon">{expandedTopic === index ? "−" : "+"}</span>
-                  </div>
-                  <div className="progress-bar-wrapper">
-                    <div className="progress-bar-bg">
+                return (
+                  <React.Fragment key={index}>
+                    {showHeader && (
+                      <li className="std-header-li" style={{
+                        padding: "10px 15px",
+                        backgroundColor: "#e8f5e9",
+                        color: "#006400",
+                        fontWeight: "bold",
+                        borderBottom: "2px solid #006400",
+                        marginTop: index !== 0 ? "20px" : "0"
+                      }}>
+                        {topic.std === "11th" ? "Class 11" : "Class 12"}
+                      </li>
+                    )}
+
+                    <li>
                       <div
-                        className="progress-bar-fill"
-                        style={{ width: `${calculateProgress(topic)}%` }}
-                      ></div>
-                    </div>
-                    <div className="progress-info">{calculateProgress(topic)}%</div>
-                  </div>
-                </div>
+                        className={`topic-title ${expandedTopic === index ? "active" : ""} ${!isLessonUnlocked(index) ? "locked" : ""}`}
+                        style={{ opacity: isLessonUnlocked(index) ? 1 : 0.6, cursor: isLessonUnlocked(index) ? 'pointer' : 'not-allowed' }}
+                        onClick={() => toggleTopic(index)}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span> {topic.unitName}</span>
+                          <span className="expand-icon">{expandedTopic === index ? "−" : "+"}</span>
+                        </div>
+                        <div className="progress-bar-wrapper">
+                          <div className="progress-bar-bg">
+                            <div className="progress-bar-fill" style={{ width: `${calculateProgress(topic)}%` }}></div>
+                          </div>
+                          <div className="progress-info">{calculateProgress(topic)}%</div>
+                        </div>
+                      </div>
 
-                {expandedTopic === index && topic.units && (
-                  <SubtopicTree
-                    subtopics={topic.units}
-                    onClick={handleSubtopicClick}
-                    selectedTitle={selectedSubtopic?.unitName}
-                    parentIndex={index}
-                    isTopicUnlocked={isSubtopicUnlocked} // 👈 Passes the subtopic locker
-                  />
-                )}
-
-                {expandedTopic === index && topic.test?.length > 0 && (
-                  <ul className="subtopics-list">
-                    {topic.test.map((test, tIdx) => {
-                      const testSubtopic = {
-                        ...topic,
-                        unitName: `Assessment - ${topic.unitName}`,
-                        test: [test],
-                      };
-
-                      // Check if test is unlocked
-                      const testName = `Assessment - ${topic.unitName}`;
-                      const isTestUnlocked = isSubtopicUnlocked(testName);
-
-                      return (
-                        <li
-                          key={tIdx}
-                          className="subtopic-title test-title"
-                          style={{
-                            opacity: isTestUnlocked ? 1 : 0.5,
-                            cursor: isTestUnlocked ? 'pointer' : 'not-allowed',
-                            pointerEvents: isTestUnlocked ? 'auto' : 'none'
-                          }}
-                          onClick={() => handleSubtopicClick(testSubtopic, index)}
-                        >
-                          {!isTestUnlocked && <span>🔒 </span>}
-                          📝 {test.testName} - Assessment
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
+                      {expandedTopic === index && (
+                        <>
+                          {topic.units && (
+                            <SubtopicTree
+                              subtopics={topic.units}
+                              onClick={(sub) => { setSelectedSubtopic(sub); if (isMobile) setShowTopics(false); }}
+                              selectedTitle={selectedSubtopic?.unitName}
+                              parentIndex={index}
+                              isTopicUnlocked={isSubtopicUnlocked}
+                            />
+                          )}
+                          {topic.test && topic.test.length > 0 && (
+                            <ul className="subtopics-list">
+                              {topic.test.map((test, tIdx) => {
+                                const testSubtopic = { ...topic, unitName: `Assessment - ${topic.unitName}`, test: [test] };
+                                const testName = `Assessment - ${topic.unitName}`;
+                                const isTestUnlocked = isSubtopicUnlocked(testName);
+                                return (
+                                  <li key={tIdx}
+                                    className="subtopic-title test-title"
+                                    style={{ opacity: isTestUnlocked ? 1 : 0.5, cursor: isTestUnlocked ? 'pointer' : 'not-allowed', pointerEvents: isTestUnlocked ? 'auto' : 'none' }}
+                                    onClick={() => { setSelectedSubtopic(testSubtopic); if (isMobile) setShowTopics(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                                  >
+                                    {!isTestUnlocked && <span>🔒 </span>}
+                                    📝 {test.testName} - Assessment
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </>
+                      )}
+                    </li>
+                  </React.Fragment>
+                );
+              })}
+            </ul>
+          }
           <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
-            <button className="back-subjects-btn" onClick={handleBackToSubjects}>
-              Back to Subjects
-            </button>
-            <button className="back-subjects-btn" onClick={() => resetProgress(subject)}>
-              Reset Progress
-            </button>
+            <button className="back-subjects-btn" onClick={() => navigate("/Neet")}>Back to Subjects</button>
+            <button className="back-subjects-btn" onClick={() => resetProgress(subject)}>Study Again</button>
           </div>
         </div>
       )}
 
-      <div className="explanation-container">
+      {/* ✅ ADDED REF to explanation container */}
+      <div className="explanation-container" ref={contentRef}>
         {selectedSubtopic ? (
           (() => {
-            const course = "NEET";
-            const standard = localStorage.getItem("currentClass") || "";
             const topicTitle = fetchedUnits[expandedTopic]?.unitName;
-            const subtopicTitle = selectedSubtopic.unitName;
-            const topicKey = `${course}_${standard}_${subject}_${topicTitle}`;
-            const isAlreadyComplete = completedSubtopics[topicKey]?.[subtopicTitle] === true;
-            const currentTopicTitle = fetchedUnits[expandedTopic]?.unitName || "Topic";
+            const standard = fetchedUnits[expandedTopic]?.std;
+            const topicKey = `NEET_${standard}_${subject}_${topicTitle}`;
+            const isAlreadyComplete = completedSubtopics[topicKey]?.[selectedSubtopic.unitName] === true;
 
-            if (
-              selectedSubtopic.unitName.includes("Assessment") ||
-              (selectedSubtopic.test &&
-                selectedSubtopic.test.length > 0 &&
-                selectedSubtopic.unitName.startsWith("Assessment"))
-            ) {
+            // ✅ CRITICAL FIX: Add KEY prop here to force complete re-render when topic changes
+            const componentKey = selectedSubtopic.unitName || "default-key";
+
+            if (selectedSubtopic.unitName.includes("Assessment") || (selectedSubtopic.test && selectedSubtopic.test.length > 0 && selectedSubtopic.unitName.startsWith("Assessment"))) {
               return (
                 <NeetQuiz
-                  topicTitle={currentTopicTitle}
+                  key={componentKey} // Forces new instance = Scroll Reset
+                  topicTitle={topicTitle}
                   subtopicTitle={selectedSubtopic.unitName}
                   test={selectedSubtopic.test || []}
-                  onBack={handleBackToTopics}
+                  onBack={() => setShowTopics(true)}
                   onMarkComplete={markSubtopicComplete}
                   isAlreadyComplete={isAlreadyComplete}
                 />
@@ -885,18 +659,13 @@ const NeetLearn = () => {
             } else {
               return (
                 <NeetExplanation
-                  topicTitle={currentTopicTitle}
+                  key={componentKey} // Forces new instance = Scroll Reset
+                  topicTitle={topicTitle}
                   subtopicTitle={selectedSubtopic.unitName}
-                  subject={subject}
                   explanation={selectedSubtopic.explanation || ""}
                   imageUrls={selectedSubtopic.imageUrls || []}
-                  videoUrl={
-                    selectedSubtopic?.videoUrl ||
-                    selectedSubtopic?.video_url ||
-                    selectedSubtopic?.aiVideoUrl ||
-                    ""
-                  }
-                  onBack={handleBackToTopics}
+                  videoUrl={selectedSubtopic?.videoUrl || selectedSubtopic?.video_url || selectedSubtopic?.aiVideoUrl || ""}
+                  onBack={() => setShowTopics(true)}
                   onNext={handleNextLesson}
                   onPrevious={handlePreviousLesson}
                   onMarkComplete={markSubtopicComplete}
@@ -907,10 +676,8 @@ const NeetLearn = () => {
           })()
         ) : (
           <div className="no-explanation">
-            <h2>
-              Welcome to {subject} - Std {selectedStandard}
-            </h2>
-            <p>Select a topic and subtopic to begin your learning journey.</p>
+            <h2>Welcome to {subject}</h2>
+            <p>Select a topic from the list (Class 11 or 12) to begin.</p>
           </div>
         )}
       </div>

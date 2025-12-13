@@ -22,16 +22,23 @@ const NeetExplanation = ({
   const [voice, setVoice] = useState(null);
   const [rate, setRate] = useState(1);
   const [highlightedRange, setHighlightedRange] = useState({ start: 0, end: 0 });
-  // const [isComplete, setIsComplete] = useState(false);
   const [isComplete, setIsComplete] = useState(isAlreadyComplete);
 
   const synth = window.speechSynthesis;
   const utteranceRef = useRef(null);
   const voicesLoadedRef = useRef(false);
 
+  // ✅ SCROLL FIX: Force scroll to top on mount
   useEffect(() => {
+    // Scroll window
     window.scrollTo(0, 0);
-  }, []);
+
+    // Scroll the container div
+    const container = document.querySelector('.explanation-container');
+    if (container) {
+      container.scrollTop = 0;
+    }
+  }, [subtopicTitle]); // Trigger whenever title changes
 
   // Load and set voice
   useEffect(() => {
@@ -114,148 +121,84 @@ const NeetExplanation = ({
     if (onBack) onBack();
   };
 
-
   useEffect(() => {
     setIsComplete(isAlreadyComplete);
-  }, [isAlreadyComplete, subtopicTitle]); // Syncs when the prop or subtopic changes
+  }, [isAlreadyComplete, subtopicTitle]);
 
   const handleMarkComplete = () => {
     setIsComplete(true);
     if (onMarkComplete) onMarkComplete();
   };
 
-  // const parseTextWithFormulas = (texts) => {
-  //   if (!texts) return null;
-
-  //   // Keep proper newlines and lists formatting
-  //   let text = texts
-  //     .replace(/\\\\/g, "\\") // cleanup slashes
-  //     .replace(/\r?\n/g, "<br/>"); // handle newlines from admin textareas
-
-  //   // Handle $...$ LaTeX formulas
-  //   const TEMP_DOLLAR = "__DOLLAR__";
-  //   const safeText = text.replace(/\\\$/g, TEMP_DOLLAR);
-  //   const parts = safeText.split(/(\$[^$]+\$)/g);
-
-  //   const renderedParts = parts.map((part, index) => {
-  //     if (part.startsWith("$") && part.endsWith("$")) {
-  //       const latex = part.slice(1, -1);
-  //       try {
-  //         const html = katex.renderToString(latex, { throwOnError: false, output: "html" });
-  //         return `<span>${html}</span>`;
-  //       } catch (err) {
-  //         return `<span style="color:red">${latex}</span>`;
-  //       }
-  //     } else {
-  //       return part.replaceAll(TEMP_DOLLAR, "$");
-  //     }
-  //   });
-
-  //   // Join everything and parse as HTML (so <ul>, <li>, <b>, <br> all work)
-  //   const combinedHTML = renderedParts.join("");
-  //   return parse(combinedHTML);
-  // };
-
   const parseTextWithFormulas = (texts) => {
     if (!texts) return null;
 
-    // 1. Clean up the input string
+    // 1. Clean up input & ✅ FIX 1: Handle Bold Text (**text**)
     let text = texts
       .replace(/\\\\/g, "\\")
       .replace(/\t/g, "    ")
       .replace(/<\s*br\s*\/?\s*>/gi, "<br/>")
-      .replace(/\r?\n/g, "<br/>");
+      .replace(/\r?\n/g, "<br/>")
+      .replace(/p<d<f\./gi, "") // Remove PDF artifacts
+      .replace(/<d<f\./gi, "")
+      .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>"); // 🟢 Converts **Bold** to <b>Bold</b>
 
     const regex = /(\$\$[\s\S]*?\$\$|\$[^$]+?\$)/g;
-
     const parts = text.split(regex);
 
     const renderedParts = parts.map((part, index) => {
-      // Check for Display Mode ($$ equation $$)
       if (part.startsWith("$$") && part.endsWith("$$")) {
-        const latex = part.slice(2, -2); // Remove the $$
+        const latex = part.slice(2, -2);
         try {
-          const html = katex.renderToString(latex, {
-            throwOnError: false,
-            output: "html",
-            displayMode: true // This makes it centered and big
-          });
+          const html = katex.renderToString(latex, { throwOnError: false, output: "html", displayMode: true });
           return `<div key="${index}" class="latex-block">${html}</div>`;
-        } catch (err) {
-          return `<span style="color:red">${latex}</span>`;
-        }
+        } catch (err) { return `<span style="color:red">${latex}</span>`; }
       }
-      // Check for Inline Mode ($ equation $)
       else if (part.startsWith("$") && part.endsWith("$")) {
-        const latex = part.slice(1, -1); // Remove the $
+        const latex = part.slice(1, -1);
         try {
-          const html = katex.renderToString(latex, {
-            throwOnError: false,
-            output: "html",
-            displayMode: false // This keeps it inside the text line
-          });
+          const html = katex.renderToString(latex, { throwOnError: false, output: "html", displayMode: false });
           return `<span key="${index}">${html}</span>`;
-        } catch (err) {
-          return `<span style="color:red">${latex}</span>`;
-        }
+        } catch (err) { return `<span style="color:red">${latex}</span>`; }
       }
-      // Regular text
       else {
         return part;
       }
     });
 
-    // Join and parse HTML
     const combinedHTML = renderedParts.join("");
-    return parse(combinedHTML);
+    try {
+      return parse(combinedHTML);
+    } catch (error) {
+      console.error("HTML Parsing Failed", texts);
+      return <span>{text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span>;
+    }
   };
+
+  // ✅ FIX 2: Logic to determine if "No explanation available" should be shown
+  const hasMedia = (imageUrls && imageUrls.length > 0) || (videoUrl && typeof videoUrl === 'string' && videoUrl.trim() !== "" && videoUrl !== "null");
+  const hasExplanation = explanation && explanation.trim().length > 0;
 
   return (
     <div className="explanation-container">
       <div className="explanation-content">
         <h2>{subtopicTitle}</h2>
 
-
-        {/* Explanation text with voice controls */}
         <div className="explanation-text-with-controls">
-          <div className="explanation-text">
-            {parseTextWithFormulas(explanation || "No explanation available")}
-          </div>
-          {/* {!isIntroIframe && (
-                  <div className="voice-controls-container">
-                    <button className="voice-play-button" onClick={handleTogglePlayPause}>
-                      {isSpeaking ? <FaPause /> : <FaPlay />}
-                    </button>
-                    <div className="speed-control">
-                      <input
-                        type="range"
-                        id="rate"
-                        min="0.5"
-                        max="2"
-                        step="0.1"
-                        value={rate}
-                        onChange={(e) => setRate(parseFloat(e.target.value))}
-                      />
-                      <label htmlFor="rate" className="speed-label">{rate.toFixed(1)}x</label>
-                    </div>
-                  </div>
-                )} */}
 
-
-
-          {/* Audio File Playback (temporarily disabled) */}
-          {/* <div className="subject-info">
-
-                {audioFileId && audioFileId.length > 0 && (
-                  <div className="audio-files">
-                    {audioFileId.map((id, index) => (
-                      <div key={index} style={{ marginBottom: "8px" }}>
-                        <audio controls src={id}></audio>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div> */}
+          {/* Only show text div if there is text */}
+          {hasExplanation ? (
+            <div className="explanation-text">
+              {parseTextWithFormulas(explanation)}
+            </div>
+          ) : (
+            /* Only show placeholder if NO text AND NO media */
+            !hasMedia && (
+              <div className="explanation-text" style={{ fontStyle: "italic", color: "#666" }}>
+                No explanation available.
+              </div>
+            )
+          )}
 
           {/* Display all images */}
           {imageUrls && imageUrls.length > 0 && (
@@ -275,25 +218,12 @@ const NeetExplanation = ({
               ))}
             </div>
           )}
-
         </div>
 
-
-
-        {/* ✅ AI Generated Video - placed between content and back button */}
-        {/* {videoUrl && (
-          <div className="ai-video-container">
-            <h5>AI Generated Video</h5>
-            <video width="100%" controls>
-              <source src={videoUrl} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-          </div>
-        )} */}
+        {/* AI Generated Video */}
         {videoUrl && typeof videoUrl === 'string' && videoUrl.trim() !== "" && videoUrl !== "null" && (
           <div className="ai-video-container">
             <h5>AI Generated Video</h5>
-            {/* Key ensures video reloads if URL changes */}
             <video key={videoUrl} width="100%" controls>
               <source src={videoUrl} type="video/mp4" />
               Your browser does not support the video tag.
@@ -301,7 +231,6 @@ const NeetExplanation = ({
           </div>
         )}
 
-        {/* ✅ Navigation Buttons (Previous / Next) */}
         <div className="nav-container">
           <button onClick={onPrevious} className="nav-btn prev-btn">
             <FaArrowLeft /> Previous
