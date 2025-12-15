@@ -166,6 +166,7 @@
     padding: 10px;
     margin-top: 80px;
     width: 100%;
+    position: relative;
   }
 
   .Neet-container .topics-list {
@@ -202,10 +203,12 @@
 }
 
 /* Right-side explanation/quiz section */
+
 /* .Neet-container .explanation-container {
   flex: 1;
-  padding: 0 20px 50px 20px;
-  min-height: calc(100vh - 100px);
+  height: calc(100vh - 60px);
+  min-height: unset;
+  padding: 0 20px;
   margin-top: 0px;
   overflow-y: auto;
   background: none;
@@ -215,25 +218,18 @@
   font-size: 15px;
   line-height: 1.6;
 } */
+/* NeetLearn.css */
+
 .Neet-container .explanation-container {
   flex: 1;
-
-  /* ✅ Match Left Side Height Exactly */
-  height: calc(100vh - 60px);
+  height: calc(100vh - 80px);
   min-height: unset;
-
-  /* Remove extra bottom padding so the card touches the bottom of the scroll area */
-  padding: 0 20px;
-
+  padding: 0;
   margin-top: 0px;
-  overflow-y: auto;
-
-  background: none;
+  overflow: hidden;
+  background: transparent;
   border: none;
   box-shadow: none;
-  color: #333;
-  font-size: 15px;
-  line-height: 1.6;
 }
 
 /* Headings */
@@ -403,5 +399,105 @@
   .Neet-container .subtopic-title {
     padding: 10px;
     font-size: 15px;
+  }
+}
+
+
+/* Replace the previous .toggle-btn styles with these new ones */
+.toggle-btn {
+  background: #ffffff;
+  color: #006400;
+  border: 1px solid #c8e6c9;
+  padding: 15px 6px;
+  /* Taller and narrower for vertical tab */
+  border-radius: 0 8px 8px 0;
+  /* Rounded corners on right side only */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  width: fit-content;
+  transition: all 0.3s ease;
+  z-index: 100;
+  box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1);
+  /* Shadow on the right */
+}
+
+/* Desktop Specific: Vertical Orientation & Positioning */
+@media (min-width: 769px) {
+  .toggle-btn {
+    flex-direction: column-reverse;
+    /* Icon on top, text below */
+    border-left: none;
+    /* No border on the edge touching the content */
+  }
+
+  .toggle-btn svg {
+    transform: rotate(-90deg);
+    /* Rotate icon to point right */
+  }
+
+  /* Rotate text vertically */
+  .toggle-btn span,
+  .toggle-btn h2 {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    /* Flip to read from bottom-up */
+    white-space: nowrap;
+    margin: 0;
+  }
+
+  .Neet-container {
+    position: relative;
+    /* Needed for absolute positioning of button */
+  }
+
+  .toggle-btn {
+    position: absolute;
+    top: 50%;
+    /* Center vertically */
+    left: 0;
+    /* Stick to the left edge */
+    transform: translateY(-50%);
+    /* Adjust for exact center */
+  }
+
+  .toggle-btn:hover {
+    transform: translateY(-50%) translateX(3px);
+    /* Slide out slightly on hover */
+  }
+
+  /* Remove the margin we added previously */
+  .topics-list {
+    margin-top: 0;
+  }
+}
+
+/* Mobile Specific: Reset to horizontal button */
+@media (max-width: 768px) {
+  .toggle-btn {
+    width: 100%;
+    flex-direction: row;
+    justify-content: center;
+    position: static;
+    margin-bottom: 15px;
+    background: #006400;
+    /* Solid green for mobile */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    box-shadow: none;
+  }
+
+  /* Reset rotations for mobile */
+  .toggle-btn svg,
+  .toggle-btn span,
+  .toggle-btn h2 {
+    transform: none;
+    writing-mode: horizontal-tb;
   }
 }

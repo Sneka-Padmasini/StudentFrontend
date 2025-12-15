@@ -282,6 +282,10 @@ body {
 
   .nav-links.active {
     display: flex;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding-bottom: 30px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .nav-links li,
@@ -318,6 +322,24 @@ body {
   .navbar.scrolled .dropdown-toggle {
     color: #0a5a0a;
   }
+
+  .simple-dropdown {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 10px 0 !important;
+    margin-top: 10px;
+  }
+
+  /* Adjust inner items for mobile spacing */
+  .simple-dropdown li {
+    padding: 4px 0;
+    font-size: 16px;
+  }
+
 }
 
 .user-photo {
@@ -466,7 +488,6 @@ body {
 /* Make sure the parent dropdown is relative */
 .nav-links li.dropdown {
   position: relative;
-  /* anchor dropdown to parent toggle */
 }
 
 .simple-dropdown {
@@ -479,12 +500,11 @@ body {
   border: 1px solid #cde9cd;
   border-radius: 10px;
   padding: 20px 28px !important;
-  /* ✅ force inner space all around */
   min-width: 270px;
   max-width: 300px;
   box-sizing: border-box;
-  max-height: 450px;
-  overflow-y: auto;
+  max-height: none !important;
+  overflow-y: visible !important;
   z-index: 2000;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
   animation: dropdownFadeIn 0.25s ease forwards;
@@ -494,13 +514,11 @@ body {
 
 .simple-dropdown li {
   padding: 6px 0;
-  /* even vertical rhythm */
 }
 
 .simple-dropdown li strong {
   display: inline-block;
   width: 70px;
-  /* align labels (Name, Email, Mobile) neatly */
 }
 
 
@@ -508,24 +526,13 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  /* small spacing between Name and Email */
 }
 
 .simple-dropdown .detail-item,
 .simple-dropdown .action-item {
   margin-top: 8px;
-  /* slightly bigger space between items */
 }
 
-
-/* Optional: hide scrollbar */
-.simple-dropdown::-webkit-scrollbar {
-  display: none;
-}
-
-.simple-dropdown {
-  scrollbar-width: none;
-}
 
 
 /* ---------------------- User Photo Styling ---------------------- */
@@ -538,7 +545,6 @@ body {
   display: block;
   margin-right: 10px;
   background-color: #eaf9ea;
-  /* optional fallback color */
   box-shadow: 0 0 6px rgba(0, 100, 0, 0.15);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }

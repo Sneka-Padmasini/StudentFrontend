@@ -208,6 +208,37 @@
     background-color: var(--padmasini-green);
 }
 
+/* src/Pages/PricingPage.css */
+
+/* Add this new class for the strikethrough effect */
+.original-price {
+    text-decoration: line-through;
+    color: #999;
+    /* Grey color to show it's inactive */
+    font-size: 1rem;
+    /* Smaller than the main price */
+    margin-bottom: -5px;
+    /* Pull it closer to the main price */
+    font-weight: 500;
+}
+
+/* Update price-amount slightly to align well with the strikethrough above it */
+.price-amount {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--padmasini-green);
+    line-height: 1.2;
+}
+
+/* Ensure the text descriptions stay aligned */
+.price-term {
+    font-size: 0.9em;
+    color: #666;
+    flex-grow: 1;
+    margin-left: 15px;
+    /* Added a bit more space */
+    text-align: left;
+}
 
 /* Media Queries for Responsiveness (Retained/Refined) */
 @media (max-width: 900px) {

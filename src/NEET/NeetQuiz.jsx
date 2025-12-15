@@ -241,14 +241,55 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
 
 
   // 🎨 Helper: Get motivational message & color based on percentage
+  // const getResultFeedback = (percentage) => {
+  //   const p = parseFloat(percentage);
+  //   if (p === 100) return { message: "Excellent! You are a Champion! 🏆", color: "#4CAF50", emoji: "🌟" };
+  //   if (p >= 90) return { message: "Awesome! Almost There! 🚀", color: "#2196F3", emoji: "🔥" };
+  //   if (p >= 80) return { message: "Good Job! Push Harder! 💪", color: "#FF9800", emoji: "⚡" };
+  //   if (p >= 70) return { message: "Good Try! Work More! 🌱", color: "#FFC107", emoji: "📈" };
+  //   if (p >= 50) return { message: "Set a Goal! Work Hard! 🎯", color: "#FF5722", emoji: "📝" };
+  //   return { message: "Don't Give Up! Continue Learning! ⏳", color: "#F44336", emoji: "📚" };
+  // };
+
+  // 🎨 Helper: Get motivational message & color based on percentage from env file 
   const getResultFeedback = (percentage) => {
     const p = parseFloat(percentage);
-    if (p === 100) return { message: "Excellent! You are a Champion! 🏆", color: "#4CAF50", emoji: "🌟" };
-    if (p >= 90) return { message: "Awesome! Almost There! 🚀", color: "#2196F3", emoji: "🔥" };
-    if (p >= 80) return { message: "Good Job! Push Harder! 💪", color: "#FF9800", emoji: "⚡" };
-    if (p >= 70) return { message: "Good Try! Work More! 🌱", color: "#FFC107", emoji: "📈" };
-    if (p >= 50) return { message: "Set a Goal! Work Hard! 🎯", color: "#FF5722", emoji: "📝" };
-    return { message: "Don't Give Up! Continue Learning! ⏳", color: "#F44336", emoji: "📚" };
+
+    if (p === 100) return {
+      message: import.meta.env.VITE_FEEDBACK_MSG_100 || "Excellent! You are a Champion! 🏆",
+      color: "#4CAF50",
+      emoji: "🌟"
+    };
+
+    if (p >= 90) return {
+      message: import.meta.env.VITE_FEEDBACK_MSG_90 || "Awesome! Almost There! 🚀",
+      color: "#2196F3",
+      emoji: "🔥"
+    };
+
+    if (p >= 80) return {
+      message: import.meta.env.VITE_FEEDBACK_MSG_80 || "Good Job! Push Harder! 💪",
+      color: "#FF9800",
+      emoji: "⚡"
+    };
+
+    if (p >= 70) return {
+      message: import.meta.env.VITE_FEEDBACK_MSG_70 || "Good Try! Work More! 🌱",
+      color: "#FFC107",
+      emoji: "📈"
+    };
+
+    if (p >= 50) return {
+      message: import.meta.env.VITE_FEEDBACK_MSG_50 || "Set a Goal! Work Hard! 🎯",
+      color: "#FF5722",
+      emoji: "📝"
+    };
+
+    return {
+      message: import.meta.env.VITE_FEEDBACK_MSG_FAIL || "Don't Give Up! Continue Learning! ⏳",
+      color: "#F44336",
+      emoji: "📚"
+    };
   };
 
   const feedback = getResultFeedback(percentage);

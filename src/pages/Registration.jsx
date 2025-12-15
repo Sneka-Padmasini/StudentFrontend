@@ -45,8 +45,8 @@ const RegistrationFlow = () => {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [dob, setDob] = useState("");
   const [gender, setGender] = useState("");
-  const [selectedCourses, setSelectedCourses] = useState([]);
-  const [selectedStandards, setSelectedStandards] = useState([]);
+  const [selectedCourses, setSelectedCourses] = useState(["NEET"]);
+  const [selectedStandards, setSelectedStandards] = useState(["11th", "12th"]);
 
   // Dropdowns
   const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
@@ -171,7 +171,8 @@ const RegistrationFlow = () => {
     return newEndDate.toISOString().split("T")[0];
   }
 
-  const getPlanPrice = (plan) => (plan === 'monthly' ? 1000 : plan === 'yearly' ? 10000 : 0);
+  // const getPlanPrice = (plan) => (plan === 'monthly' ? 1000 : plan === 'yearly' ? 10000 : 0);
+  const getPlanPrice = (plan) => (plan === 'monthly' ? 3000 : plan === 'yearly' ? 33000 : 0);
 
   const storeLocal = () => {
     localStorage.setItem("registeredUser", JSON.stringify({ firstname, lastname, email, mobile, password, confirmPassword }));
@@ -564,7 +565,7 @@ const RegistrationFlow = () => {
                   <div className="form-actions">
                     <div className="checkbox-container">
                       <input type="checkbox" id="agree" required />
-                      <label htmlFor="agree">I agree to <Link to="/terms" onClick={storeLocal}>Terms</Link></label>
+                      <label htmlFor="agree">I agree to <Link to="/terms" onClick={storeLocal}>terms & conditions</Link></label>
                     </div>
                     <button type="submit">Next</button>
                     <p className="login-text">Already have an account? <Link to="/login">Login</Link></p>
@@ -664,7 +665,8 @@ const RegistrationFlow = () => {
             <div className="payment-section">
               <h2>{isUpgrade ? "Upgrade Plan" : `Pay for ${selectedPlan} Plan`}</h2>
               <p className="plan-summary">
-                Selected Plan: {selectedPlan} ({selectedPlan === 'monthly' ? '₹1000' : '₹10000'})
+                {/* Selected Plan: {selectedPlan} ({selectedPlan === 'monthly' ? '₹1000' : '₹10000'}) */}
+                Selected Plan: {selectedPlan} ({selectedPlan === 'monthly' ? '₹3000' : '₹33000'})
               </p>
 
               <div className="payment-selection">

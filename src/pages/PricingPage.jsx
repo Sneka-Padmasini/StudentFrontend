@@ -89,30 +89,44 @@ const PricingPage = () => {
                 </div>
 
                 {/* Plan 2: Paid Plans */}
+                {/* ... inside PricingPage.jsx ... */}
+
+                {/* Plan 2: Paid Plans */}
                 <div className="pricing-card">
                     <h3>Full Access Plan 🚀</h3>
                     <div className="price-options">
 
                         {/* MONTHLY BUTTON */}
                         <div className="plan-option">
-                            <span className="price-amount">₹1000</span>
-                            <span className="price-term">/month</span>
+                            {/* Updated Price Layout */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                <span className="original-price">₹5000</span>
+                                <span className="price-amount">₹3000</span>
+                            </div>
+
+                            <span className="price-term">/month (Save ₹2000!)</span>
+
                             <button
                                 className="select-plan-btn small-btn primary-btn"
                                 onClick={() => handlePlanSelection('monthly')}
-                                // ✅ ENABLED ALWAYS (Unless on Yearly)
                                 disabled={currentUser && currentUser.plan === 'yearly'}
                                 style={currentUser && currentUser.plan === 'yearly' ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                             >
-                                {/* Change text based on status */}
                                 {currentUser && currentUser.plan === 'monthly' ? "Extend +1 Month" : "Go Monthly"}
                             </button>
                         </div>
 
                         {/* YEARLY BUTTON */}
                         <div className="plan-option">
-                            <span className="price-amount">₹10000</span>
-                            <span className="price-term">/year (Save ₹2000!)</span>
+                            {/* Updated Price Layout */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                <span className="original-price">₹55000</span>
+                                <span className="price-amount">₹33,000</span>
+                            </div>
+
+                            {/* Updated Savings Text */}
+                            <span className="price-term">/year (Save ₹22,000!)</span>
+
                             <button
                                 className="select-plan-btn small-btn primary-btn"
                                 onClick={() => handlePlanSelection('yearly')}

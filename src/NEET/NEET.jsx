@@ -336,7 +336,7 @@ const Subjects = () => {
                         })
                       }}
                     >
-                      {subject.certified ? "Review" : "Start Learning"}
+                      {subject.certified ? "Study Again" : "Start Learning"}
                     </button>
                   </div>
                 </div>

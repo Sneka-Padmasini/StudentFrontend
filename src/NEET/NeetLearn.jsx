@@ -541,11 +541,14 @@ const NeetLearn = () => {
 
   return (
     <div className="Neet-container">
-      {isMobile && (
+      {/* {isMobile && (
         <button className="toggle-btn" onClick={() => setShowTopics(!showTopics)}>
           <FaBars /> <h2>{subject} Topics</h2>
         </button>
-      )}
+      )} */}
+      <button className="toggle-btn" onClick={() => setShowTopics(!showTopics)}>
+        <FaBars /> {isMobile ? <h2>{subject} Topics</h2> : <span>Topics</span>}
+      </button>
 
       {showTopics && (
         <div className={`topics-list ${!showTopics ? "hidden-mobile" : ""}`}>

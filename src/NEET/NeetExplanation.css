@@ -1,24 +1,54 @@
 /* Main Container */
-.explanation-container {
-  max-width: 900px;
-  /* margin: 20px auto; */
-  margin: 0 auto 20px auto;
-  padding: 20px;
-  border-radius: 15px;
-  /* margin-top: -10px; */
-  font-family: 'Arial', sans-serif;
-  color: #333;
 
+.explanation-container {
+  padding: 0;
+  margin: 0;
+}
+
+.explanation-wrapper-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 2. Create the Scroll Area for Text/Images */
+.explanation-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  padding-bottom: 80px;
+}
+
+.explanation-content {
+  background-color: transparent;
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 10px 20px;
+}
+
+/* 3. Style the Fixed Footer */
+.explanation-footer {
+  flex-shrink: 0;
+  background-color: #fff;
+  padding: 15px 20px;
+  border-top: 1px solid #e0e0e0;
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+  z-index: 10;
 }
 
 /* Title Styling */
 .explanation-content h2 {
-  font-size: 28px;
-  color: #05630e;
-  margin-bottom: 15px;
+  /* font-family: 'Georgia', serif; */
+  font-size: 2.4rem;
+  color: #006400;
   text-align: center;
-  margin-bottom: 10px;
-  background-color: transparent;
+  margin-bottom: 30px;
+  margin-top: 10px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 20px;
 }
 
 /* Text Content */
@@ -28,8 +58,6 @@
   margin-bottom: 20px;
   text-align: justify;
 }
-
-
 
 
 .audio-files {
@@ -97,7 +125,8 @@
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  width: 240px;
+  width: 100%;
+  margin-top: 0;
 }
 
 .back-btn:hover {
@@ -109,17 +138,34 @@
   color: white;
 }
 
-/* === FIX FOR VOICE CONTROLS === */
+/* == FIX FOR VOICE CONTROLS == */
 
 .explanation-text {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  line-height: 1.6;
+  /* font-family: 'Georgia', 'Times New Roman', serif; */
+  font-size: 1.15rem;
+  line-height: 1.8;
+  color: #2c2c2c;
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+.explanation-text p {
+  margin-bottom: 24px;
 }
 
 .explanation-text-with-controls {
   position: relative;
   width: 100%;
+}
+
+.explanation-text h3,
+.explanation-text h4,
+.explanation-text b,
+.explanation-text strong {
+  color: #1a1a1a;
+  margin-top: 30px;
+  margin-bottom: 15px;
+  display: block;
 }
 
 .voice-controls-container {
@@ -238,6 +284,9 @@
 
   .explanation-content {
     background-color: transparent;
+    max-width: 850px;
+    margin: 0 auto;
+    width: 100%;
   }
 
   .explanation-content h2 {
@@ -334,9 +383,7 @@
   /* Video Container */
   .video-container {
     width: 90%;
-    /* Reduced width */
     max-width: 600px;
-    /* Maximum width */
     margin: 20px auto;
     border-radius: 8px;
     overflow: hidden;
@@ -404,7 +451,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 40px 0 20px 0;
+  margin: 0 0 10px 0;
   gap: 15px;
   width: 100%;
 }
@@ -422,16 +469,13 @@
   cursor: pointer;
   transition: all 0.3s ease;
   flex: 1;
-  /* Makes buttons equal width */
   max-width: 48%;
-  /* Prevents buttons from touching */
 }
 
 /* Previous Button - Theme Matched (Green Outline) */
 .prev-btn {
   background-color: white;
   color: #0c8905;
-  /* Matches your theme green */
   border: 2px solid #0c8905;
 }
 
