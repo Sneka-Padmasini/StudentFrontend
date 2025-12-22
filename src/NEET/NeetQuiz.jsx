@@ -35,6 +35,8 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
   const [hasStarted, setHasStarted] = useState(false);
   const [isComplete, setIsComplete] = useState(isAlreadyComplete);
   const [showResultPopup, setShowResultPopup] = useState(false);
+  const [isTrackerOpen, setIsTrackerOpen] = useState(true);
+
 
 
   // ✅ SCROLL FIX: Ensure quiz starts at the top when title changes
@@ -45,15 +47,71 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
   }, [subtopicTitle, hasStarted]);
 
 
+  // useEffect(() => {
+  //   const allQuestions = test?.[0]?.questionsList || [];
+  //   let finalQuestionList = [];
+
+  //   if (isMock) {
+  //     finalQuestionList = allQuestions;
+  //   } else {
+  //     const shuffledQuestions = shuffleArray([...allQuestions]);
+  //     const MAX_QUESTIONS = 180;
+  //     finalQuestionList = shuffledQuestions.slice(0, MAX_QUESTIONS);
+  //   }
+
+  //   setQuestions(finalQuestionList);
+  //   setUserAnswers(Array(finalQuestionList.length).fill(""));
+  //   setSubmitted(false);
+  //   setCurrentQIndex(0);
+
+  //   if (isMock) {
+  //     setTimeRemaining(10800);
+  //   } else {
+
+  //     setTimeRemaining(finalQuestionList.length * 60);
+  //   }
+
+  //   setHasStarted(false);
+  //   setShowConfirmation(false);
+  //   setIsComplete(false);
+  //   setShowResultPopup(false);
+
+  // }, [subtopicTitle, isMock, test]); 
+
   useEffect(() => {
-    const allQuestions = test?.[0]?.questionsList || [];
+    const rawQuestions = test?.[0]?.questionsList || [];
+    let filteredQuestions = rawQuestions;
+
+    // 1. ✅ GET USER STANDARDS FROM LOCAL STORAGE
+    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    // Support both 'selectedStandard' (from registration) and 'standards' (from DB)
+    const userStandards = currentUser.selectedStandard || currentUser.standards || [];
+
+    // 2. ✅ APPLY FILTERING LOGIC (If user is not 'Both')
+    const has11th = userStandards.includes("11th");
+    const has12th = userStandards.includes("12th");
+
+    // Only filter if we have specific data. If user has BOTH or NEITHER, show all.
+    if (has11th && !has12th) {
+      // User is ONLY 11th -> Keep only Class 11 questions
+      filteredQuestions = rawQuestions.filter(q =>
+        q.class === "11" || q.std === "11" || q.class === 11 || q.std === 11
+      );
+    } else if (!has11th && has12th) {
+      // User is ONLY 12th -> Keep only Class 12 questions
+      filteredQuestions = rawQuestions.filter(q =>
+        q.class === "12" || q.std === "12" || q.class === 12 || q.std === 12
+      );
+    }
+    // If (has11th && has12th), we keep 'filteredQuestions' as 'rawQuestions' (Show All)
+
     let finalQuestionList = [];
 
     // Logic to select questions
     if (isMock) {
-      finalQuestionList = allQuestions;
+      finalQuestionList = filteredQuestions;
     } else {
-      const shuffledQuestions = shuffleArray([...allQuestions]);
+      const shuffledQuestions = shuffleArray([...filteredQuestions]);
       // Limit regular tests to 180 questions max just in case
       const MAX_QUESTIONS = 180;
       finalQuestionList = shuffledQuestions.slice(0, MAX_QUESTIONS);
@@ -70,7 +128,6 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
       setTimeRemaining(10800);
     } else {
       // Unit/Topic Tests: 1 minute per question
-      // Example: 45 questions = 45 minutes * 60 seconds
       setTimeRemaining(finalQuestionList.length * 60);
     }
     // ============================
@@ -80,7 +137,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     setIsComplete(false);
     setShowResultPopup(false);
 
-  }, [subtopicTitle, isMock, test]); // Added 'test' to dependency array for safety
+  }, [subtopicTitle, isMock, test]);
 
   const parseTextWithFormulas = (texts) => {
     if (!texts) return null;
@@ -241,65 +298,73 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
 
 
   // 🎨 Helper: Get motivational message & color based on percentage
-  // const getResultFeedback = (percentage) => {
-  //   const p = parseFloat(percentage);
-  //   if (p === 100) return { message: "Excellent! You are a Champion! 🏆", color: "#4CAF50", emoji: "🌟" };
-  //   if (p >= 90) return { message: "Awesome! Almost There! 🚀", color: "#2196F3", emoji: "🔥" };
-  //   if (p >= 80) return { message: "Good Job! Push Harder! 💪", color: "#FF9800", emoji: "⚡" };
-  //   if (p >= 70) return { message: "Good Try! Work More! 🌱", color: "#FFC107", emoji: "📈" };
-  //   if (p >= 50) return { message: "Set a Goal! Work Hard! 🎯", color: "#FF5722", emoji: "📝" };
-  //   return { message: "Don't Give Up! Continue Learning! ⏳", color: "#F44336", emoji: "📚" };
-  // };
-
-  // 🎨 Helper: Get motivational message & color based on percentage from env file 
   const getResultFeedback = (percentage) => {
     const p = parseFloat(percentage);
-
-    if (p === 100) return {
-      message: import.meta.env.VITE_FEEDBACK_MSG_100 || "Excellent! You are a Champion! 🏆",
-      color: "#4CAF50",
-      emoji: "🌟"
-    };
-
-    if (p >= 90) return {
-      message: import.meta.env.VITE_FEEDBACK_MSG_90 || "Awesome! Almost There! 🚀",
-      color: "#2196F3",
-      emoji: "🔥"
-    };
-
-    if (p >= 80) return {
-      message: import.meta.env.VITE_FEEDBACK_MSG_80 || "Good Job! Push Harder! 💪",
-      color: "#FF9800",
-      emoji: "⚡"
-    };
-
-    if (p >= 70) return {
-      message: import.meta.env.VITE_FEEDBACK_MSG_70 || "Good Try! Work More! 🌱",
-      color: "#FFC107",
-      emoji: "📈"
-    };
-
-    if (p >= 50) return {
-      message: import.meta.env.VITE_FEEDBACK_MSG_50 || "Set a Goal! Work Hard! 🎯",
-      color: "#FF5722",
-      emoji: "📝"
-    };
-
-    return {
-      message: import.meta.env.VITE_FEEDBACK_MSG_FAIL || "Don't Give Up! Continue Learning! ⏳",
-      color: "#F44336",
-      emoji: "📚"
-    };
+    if (p === 100) return { message: "Excellent! You are a Champion! 🏆", color: "#4CAF50", emoji: "🌟" };
+    if (p >= 90) return { message: "Awesome! Almost There! 🚀", color: "#2196F3", emoji: "🔥" };
+    if (p >= 80) return { message: "Good Job! Push Harder! 💪", color: "#FF9800", emoji: "⚡" };
+    if (p >= 70) return { message: "Good Try! Work More! 🌱", color: "#FFC107", emoji: "📈" };
+    if (p >= 50) return { message: "Set a Goal! Work Hard! 🎯", color: "#FF5722", emoji: "📝" };
+    return { message: "Don't Give Up! Continue Learning! ⏳", color: "#F44336", emoji: "📚" };
   };
 
+  // 🎨 Helper: Get motivational message & color based on percentage from env file 
+  // const getResultFeedback = (percentage) => {
+  //   const p = parseFloat(percentage);
+
+  //   if (p === 100) return {
+  //     message: import.meta.env.VITE_FEEDBACK_MSG_100 || "Excellent! You are a Champion! 🏆",
+  //     color: "#4CAF50",
+  //     emoji: "🌟"
+  //   };
+
+  //   if (p >= 90) return {
+  //     message: import.meta.env.VITE_FEEDBACK_MSG_90 || "Awesome! Almost There! 🚀",
+  //     color: "#2196F3",
+  //     emoji: "🔥"
+  //   };
+
+  //   if (p >= 80) return {
+  //     message: import.meta.env.VITE_FEEDBACK_MSG_80 || "Good Job! Push Harder! 💪",
+  //     color: "#FF9800",
+  //     emoji: "⚡"
+  //   };
+
+  //   if (p >= 70) return {
+  //     message: import.meta.env.VITE_FEEDBACK_MSG_70 || "Good Try! Work More! 🌱",
+  //     color: "#FFC107",
+  //     emoji: "📈"
+  //   };
+
+  //   if (p >= 50) return {
+  //     message: import.meta.env.VITE_FEEDBACK_MSG_50 || "Set a Goal! Work Hard! 🎯",
+  //     color: "#FF5722",
+  //     emoji: "📝"
+  //   };
+
+  //   return {
+  //     message: import.meta.env.VITE_FEEDBACK_MSG_FAIL || "Don't Give Up! Continue Learning! ⏳",
+  //     color: "#F44336",
+  //     emoji: "📚"
+  //   };
+  // };
+
   const feedback = getResultFeedback(percentage);
+
+
+
+
 
   return (
     <div className="quiz-wrapper">
       <div className="quiz-container">
+
+        {/* 1. Header (Always visible in Green Box) */}
         <h2>{subtopicTitle}</h2>
 
-        <button
+        {/* For Developer testing */}
+
+        {/* <button
           onClick={handleMarkComplete}
           className={`complete-btn ${isComplete ? "completed" : ""}`}
           disabled={isComplete}
@@ -311,16 +376,16 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
           ) : (
             "Mark as Complete"
           )}
-        </button>
+        </button> */}
+
+
 
         {!hasStarted ? (
+          // --- START SCREEN ---
           <div className="start-screen">
             <p><strong>Total Questions:</strong> {questions.length}</p>
             <p><strong>Total Marks:</strong> {questions.length * 4}</p>
-            {/* <p><strong>Time Limit:</strong> 180 minutes</p> */}
-
             <p><strong>Time Limit:</strong> {isMock ? "180" : questions.length} minutes</p>
-
             <p style={{ fontSize: "1rem", color: "#666", marginTop: "10px" }}>
               Pattern: +4 for Correct, -1 for Wrong, 0 for Unattempted.
             </p>
@@ -329,148 +394,182 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
           </div>
         ) : (
           <>
+            {/* --- ACTIVE QUIZ UI --- */}
+
+            {/* 2. Timer Bar */}
             <div className="timer">
               <p>Time Remaining: {formatTime(timeRemaining)}</p>
             </div>
 
-            <div className="quiz-question">
-              <div className="question-text">
-                {parseTextWithFormulas(`${currentQIndex + 1}. ${currentQuestion.question}`)}
+            {/* 3. Main Layout (Split View: Tracker + Content) */}
+            <div className="quiz-main-layout">
 
-                {currentQuestion.questionImages?.map((url, idx) => (
-                  <img
-                    key={idx}
-                    src={url}
-                    alt={`Question ${currentQIndex + 1} Image ${idx + 1}`}
-                    className="quiz-question-image"
-                  />
-                ))}
+              {/* A. Tracker Toggle Button */}
+              <button
+                className="tracker-toggle-btn"
+                onClick={() => setIsTrackerOpen(prev => !prev)}
+                title={isTrackerOpen ? "Close Tracker" : "Open Tracker"}
+              >
+                {isTrackerOpen ? "⟨⟨" : "⟩⟩"}
+              </button>
 
-                {currentQuestion.tableData?.length > 0 && (
-                  <table style={{ width: "100%", borderCollapse: "collapse", margin: "15px 0", border: "1px solid #ccc" }}>
-                    <tbody>
-                      {currentQuestion.tableData.map((row, rIdx) => (
-                        <tr key={rIdx}>
-                          {row.map((cell, cIdx) => (
-                            <td key={cIdx} style={{ border: "1px solid #ccc", padding: "8px", textAlign: "left" }}>{cell}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+              {/* B. Tracker Sidebar (Left) */}
+              {isTrackerOpen && (
+                <div className="tracker-panel">
+                  <div className="tracker-header">Question Navigator</div>
 
-              {/* Options with images */}
-              <div className="options-group">
-                {[1, 2, 3, 4].map((num) => {
-                  const optText = currentQuestion[`option${num}`];
-                  const optImage = currentQuestion[`option${num}Image`];
-                  const correctAnswer = currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`];
-                  const isSelected = userAnswers[currentQIndex] === optText;
-                  const isCorrect = submitted && optText === correctAnswer;
-                  const isIncorrect = submitted && isSelected && optText !== correctAnswer;
-
-                  return (
-                    <label
-                      key={num}
-                      className={`option-label ${isCorrect ? "correct" : ""} ${isIncorrect ? "incorrect" : ""}`}
-                    >
-                      <input
-                        type="radio"
-                        name={`question-${currentQIndex}`}
-                        value={optText}
-                        checked={isSelected}
-                        onChange={() => handleOptionChange(optText)}
-                        disabled={submitted}
-                      />
-                      {/* <div className="option-content">
-                        {parseTextWithFormulas(optText)}
-                        {optImage && (
-                          <img
-                            src={optImage}
-                            alt={`Option ${num} Image`}
-                            className="quiz-option-image"
-                          />
-                        )}
-                      </div> */}
-                      <div className="option-content">
-                        <span className="option-text-inner">
-                          {parseTextWithFormulas(optText)}
-                        </span>
-
-                        {optImage && (
-                          <img
-                            src={optImage}
-                            alt={`Option ${num} Image`}
-                            className="quiz-option-image"
-                          />
-                        )}
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
-
-              {/* Feedback */}
-
-              {submitted && userAnswers[currentQIndex] !== "" && (
-                <p className={
-                  `feedback-msg ${userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`]
-                    ? "correct"
-                    : "incorrect"}`
-                }>
-                  {userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`]
-                    ? "Well Done! (+4) 🌟"
-                    : "Nice Try! Keep Rising! (-1) 💪"}
-                </p>
-              )}
-
-              {/* Solution explanation & images */}
-              {submitted && (
-                // 1. Check if we have Explanation Text OR Valid Images before rendering the div
-                (currentQuestion.explanation ||
-                  (currentQuestion.solutionImages && currentQuestion.solutionImages.some(url => url !== "NO_SOLUTION_IMAGE")))
-              ) && (
-                  <div className="solution-explanation">
-                    {currentQuestion.explanation && (
-                      <p><strong>Explanation:</strong> {parseTextWithFormulas(currentQuestion.explanation)}</p>
-                    )}
-
-                    {currentQuestion.solutionImages?.map((url, idx) =>
-                      url !== "NO_SOLUTION_IMAGE" && (
-                        <img
-                          key={idx}
-                          src={url}
-                          alt={`Solution ${idx + 1}`}
-                          style={{ maxWidth: "100%", borderRadius: "8px", marginBottom: "10px", display: "block" }}
-                        />
-                      )
-                    )}
+                  <div className="tracker-legend">
+                    <span><i className="dot answered"></i> Answered</span>
+                    <span><i className="dot skipped"></i> Skipped</span>
+                    <span><i className="dot current"></i> Current</span>
                   </div>
-                )}
 
-              {/* Navigation */}
-              <div className="navigation-buttons">
-                <button onClick={handlePrevious} disabled={currentQIndex === 0} className="nav-btn">Previous</button>
-                {currentQIndex < questions.length - 1 ? (
-                  <button onClick={handleNext} className="nav-btn">Next</button>
-                ) : !submitted ? (
-                  <button onClick={() => setShowConfirmation(true)} className="submit-btn">Submit</button>
-                ) : null}
-              </div>
+                  <div className="tracker-grid">
+                    {questions.map((_, index) => {
+                      const isAnswered = userAnswers[index] !== "";
+                      const isCurrent = index === currentQIndex;
+                      let status = "skipped";
+                      if (isAnswered) status = "answered";
+                      if (isCurrent) status += " current";
 
-              {showConfirmation && (
-                <div className="confirmation-popup">
-                  <p>Are you sure you want to submit your answers?</p>
-                  <button onClick={handleSubmit} className="confirm-btn">Yes</button>
-                  <button onClick={() => setShowConfirmation(false)} className="cancel-btn">No</button>
+                      return (
+                        <button
+                          key={index}
+                          className={`tracker-dot ${status}`}
+                          onClick={() => setCurrentQIndex(index)}
+                        >
+                          {index + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
-            </div>
+
+              {/* C. Right Side Content (Question + Nav) */}
+              <div className="quiz-content">
+
+                {/* Scrollable Question Area */}
+                <div className="quiz-question-scroll">
+                  {/* Wrapper ensures content respects parent width */}
+                  <div className="quiz-question-wrapper">
+
+                    <div className="question-text">
+                      <span style={{ marginRight: '10px', fontWeight: 'bold' }}>Q.{currentQIndex + 1}</span>
+                      {parseTextWithFormulas(currentQuestion.question)}
+
+                      {currentQuestion.questionImages?.map((url, idx) => (
+                        <img key={idx} src={url} alt={`Question ${currentQIndex + 1} Image ${idx + 1}`} className="quiz-question-image" />
+                      ))}
+
+                      {currentQuestion.tableData?.length > 0 && (
+                        <table style={{ width: "100%", borderCollapse: "collapse", margin: "15px 0", border: "1px solid #ccc", background: 'white' }}>
+                          <tbody>
+                            {currentQuestion.tableData.map((row, rIdx) => (
+                              <tr key={rIdx}>
+                                {row.map((cell, cIdx) => (
+                                  <td key={cIdx} style={{ border: "1px solid #ccc", padding: "8px", textAlign: "left" }}>{cell}</td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+
+                    {/* Options */}
+                    <div className="options-group">
+                      {[1, 2, 3, 4].map((num) => {
+                        const optText = currentQuestion[`option${num}`];
+                        const optImage = currentQuestion[`option${num}Image`];
+                        const correctAnswer = currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`];
+                        const isSelected = userAnswers[currentQIndex] === optText;
+                        const isCorrect = submitted && optText === correctAnswer;
+                        const isIncorrect = submitted && isSelected && optText !== correctAnswer;
+
+                        return (
+                          <label
+                            key={num}
+                            className={`option-label ${isSelected ? "selected-opt" : ""} ${isCorrect ? "correct" : ""} ${isIncorrect ? "incorrect" : ""}`}
+                          >
+                            <input
+                              type="radio"
+                              name={`q-${currentQIndex}`}
+                              value={optText}
+                              checked={isSelected}
+                              onChange={() => handleOptionChange(optText)}
+                              disabled={submitted}
+                            />
+                            <div className="option-content">
+                              <span className="option-text-inner">{parseTextWithFormulas(optText)}</span>
+                              {optImage && <img src={optImage} alt={`Option ${num}`} className="quiz-option-image" />}
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+
+                    {/* Feedback Message (Correct/Wrong) */}
+                    {submitted && userAnswers[currentQIndex] !== "" && (
+                      <p className={`feedback-msg ${userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`] ? "correct" : "incorrect"}`}>
+                        {userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`] ? "Well Done! (+4) 🌟" : "Nice Try! Keep Rising! (-1) 💪"}
+                      </p>
+                    )}
+
+                    {/* --- RESTORED EXPLANATION LOGIC --- */}
+                    {submitted && (
+                      (currentQuestion.explanation ||
+                        (currentQuestion.solutionImages && currentQuestion.solutionImages.some(url => url !== "NO_SOLUTION_IMAGE")))
+                    ) && (
+                        <div className="solution-explanation">
+                          {currentQuestion.explanation && (
+                            <p><strong>Explanation:</strong> {parseTextWithFormulas(currentQuestion.explanation)}</p>
+                          )}
+
+                          {currentQuestion.solutionImages?.map((url, idx) =>
+                            url !== "NO_SOLUTION_IMAGE" && (
+                              <img
+                                key={idx}
+                                src={url}
+                                alt={`Solution ${idx + 1}`}
+                                style={{ maxWidth: "100%", borderRadius: "8px", marginBottom: "10px", display: "block" }}
+                              />
+                            )
+                          )}
+                        </div>
+                      )}
+                    {/* --- END RESTORED LOGIC --- */}
+
+                  </div>
+                </div>
+
+                {/* Footer Buttons (Fixed at bottom right panel) */}
+                <div className="quiz-question-footer">
+                  <div className="navigation-buttons">
+                    <button onClick={handlePrevious} disabled={currentQIndex === 0} className="nav-btn">Previous</button>
+
+                    {currentQIndex < questions.length - 1 ? (
+                      <button onClick={handleNext} className="nav-btn">Next</button>
+                    ) : !submitted ? (
+                      <button onClick={() => setShowConfirmation(true)} className="submit-btn">Submit</button>
+                    ) : null}
+                  </div>
+
+                  {showConfirmation && (
+                    <div className="confirmation-popup">
+                      <p>Are you sure you want to submit your answers?</p>
+                      <button onClick={handleSubmit} className="confirm-btn">Yes</button>
+                      <button onClick={() => setShowConfirmation(false)} className="cancel-btn">No</button>
+                    </div>
+                  )}
+                </div>
+
+              </div> {/* End quiz-content */}
+            </div> {/* End quiz-main-layout */}
           </>
         )}
 
+        {/* Back Button (Only after review) */}
         {submitted && !showResultPopup && (
           <div className="after-review-back">
             <button onClick={onBack} className="back-btn">Back to Topics</button>
@@ -478,23 +577,17 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
         )}
       </div>
 
-
+      {/* Result Popup Overlay */}
       {submitted && showResultPopup && (
         <div className="result-popup">
           <div className="result-popup-content modern-result">
-
-            {/* Header with Emoji */}
             <div className="result-header">
               <span className="result-emoji">{feedback.emoji}</span>
               <h3 style={{ color: feedback.color }}>{feedback.message}</h3>
             </div>
 
-            {/* Circular Progress Gauge */}
             <div className="gauge-container">
-              <div
-                className="gauge-circle"
-                style={{ background: `conic-gradient(${feedback.color} ${percentage}%, #e0e0e0 0)` }}
-              >
+              <div className="gauge-circle" style={{ background: `conic-gradient(${feedback.color} ${percentage}%, #e0e0e0 0)` }}>
                 <div className="gauge-inner">
                   <span className="gauge-score">{finalScore}</span>
                   <span className="gauge-total">/ {maxMarks}</span>
@@ -502,7 +595,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
               </div>
               <p className="gauge-percentage" style={{ color: feedback.color }}>{percentage}% Score</p>
 
-              {/* ✅ ADDED: Unlock Status Message */}
+              {/* Unlock Logic Display */}
               {parseFloat(percentage) < 90 ? (
                 <p style={{ color: "#d32f2f", fontSize: "0.9rem", marginTop: "5px", fontWeight: "bold" }}>
                   🔒 Score 90% to unlock the next lesson
@@ -514,7 +607,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
               )}
             </div>
 
-            {/* Motivating Stat Cards */}
+            {/* Stats Grid */}
             <div className="stats-grid">
               <div className="stat-card correct">
                 <span className="stat-value">{questions.filter((q, i) => userAnswers[i] === q[`option${Number(q.correctIndex) + 1}`]).length}</span>
@@ -522,7 +615,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
               </div>
               <div className="stat-card wrong">
                 <span className="stat-value">{questions.filter((q, i) => userAnswers[i] !== "" && userAnswers[i] !== q[`option${Number(q.correctIndex) + 1}`]).length}</span>
-                <span className="stat-label">Learning</span> {/* Changed "Wrong" to "Learning" */}
+                <span className="stat-label">Learning</span>
               </div>
               <div className="stat-card skipped">
                 <span className="stat-value">{questions.filter((q, i) => userAnswers[i] === "").length}</span>
@@ -536,9 +629,10 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
           </div>
         </div>
       )}
-
     </div>
   );
 };
+
+// end 
 
 export default NeetQuiz;

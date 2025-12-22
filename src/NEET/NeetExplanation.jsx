@@ -187,6 +187,18 @@ const NeetExplanation = ({
         <div className="explanation-content">
           <h2>{subtopicTitle}</h2>
 
+          {/* ... existing video logic ... */}
+          {videoUrl && typeof videoUrl === 'string' && videoUrl.trim() !== "" && videoUrl !== "null" && (
+            <div className="ai-video-container">
+              {/* ... video code ... */}
+              <h5>AI Generated Video</h5>
+              <video key={videoUrl} controls>
+                <source src={videoUrl} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          )}
+
           <div className="explanation-text-with-controls">
             {/* ... existing text/image logic ... */}
             {hasExplanation ? (
@@ -205,23 +217,14 @@ const NeetExplanation = ({
               <div className="explanation-images">
                 {/* ... existing image map ... */}
                 {imageUrls.map((url, index) => (
-                  <img key={index} src={url} alt={`Unit Image ${index + 1}`} style={{ maxWidth: "100%", margin: "10px 0", borderRadius: "10px", display: "block" }} />
+                  // <img key={index} src={url} alt={`Unit Image ${index + 1}`} style={{ maxWidth: "100%", margin: "10px 0", borderRadius: "10px", display: "block" }} />
+                  <img key={index} src={url} alt={`Unit Image ${index + 1}`} className="explanation-img-item" />
                 ))}
               </div>
             )}
           </div>
 
-          {/* ... existing video logic ... */}
-          {videoUrl && typeof videoUrl === 'string' && videoUrl.trim() !== "" && videoUrl !== "null" && (
-            <div className="ai-video-container">
-              {/* ... video code ... */}
-              <h5>AI Generated Video</h5>
-              <video key={videoUrl} width="100%" controls>
-                <source src={videoUrl} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          )}
+
         </div>
       </div>
       {/* END OF SCROLL AREA */}

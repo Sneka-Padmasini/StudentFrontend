@@ -135,10 +135,21 @@ const SubtopicTree = ({ subtopics, onClick, selectedTitle, parentIndex, level = 
     e.stopPropagation();
     const isUnlocked = isTopicUnlocked ? isTopicUnlocked(sub.unitName) : true;
     if (isUnlocked) {
-      onClick(sub, parentIndex);
+      // onClick(sub, parentIndex);
+      // const hasChildren = (sub.units && sub.units.length > 0) || (sub.test && sub.test.length > 0);
+      // if (hasChildren) {
+      //   setExpandedSub((prev) => (prev === idx ? null : idx));
+      // }
       const hasChildren = (sub.units && sub.units.length > 0) || (sub.test && sub.test.length > 0);
+
       if (hasChildren) {
+        // 1. Expand the dropdown
         setExpandedSub((prev) => (prev === idx ? null : idx));
+        // 2. Load the content, BUT pass 'true' to indicate "Keep Menu Open"
+        onClick(sub, parentIndex, true);
+      } else {
+        // 1. Load Content AND pass 'false' (or undefined) to allow Menu to Close
+        onClick(sub, parentIndex, false);
       }
     }
   };
@@ -268,29 +279,85 @@ const NeetLearn = () => {
     return () => clearTimeout(timer);
   }, [selectedSubtopic, subject]); // Runs whenever the topic changes
 
+  // useEffect(() => {
+  //   const getAllSubjectDetails = async () => {
+  //     const subjectName = subject;
+  //     const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+  //     let courseName = "professional";
+  //     if (currentUser?.coursetype && currentUser.coursetype.toLowerCase().includes("school")) {
+  //       courseName = "local";
+  //     }
+
+  //     try {
+  //       const res11 = await fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/11`, { credentials: "include" });
+  //       const data11 = await res11.json();
+  //       const units11 = Array.isArray(data11) ? data11.map(u => ({ ...u, std: "11th" })) : [];
+
+  //       const res12 = await fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/12`, { credentials: "include" });
+  //       const data12 = await res12.json();
+  //       const units12 = Array.isArray(data12) ? data12.map(u => ({ ...u, std: "12th" })) : [];
+
+  //       setFetchedUnits([...units11, ...units12]);
+  //     } catch (err) {
+  //       setFetchedUnits([]);
+  //     }
+  //   };
+  //   getAllSubjectDetails();
+  // }, [subject]);
+
   useEffect(() => {
     const getAllSubjectDetails = async () => {
       const subjectName = subject;
       const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+
       let courseName = "professional";
       if (currentUser?.coursetype && currentUser.coursetype.toLowerCase().includes("school")) {
         courseName = "local";
       }
 
-      try {
-        const res11 = await fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/11`, { credentials: "include" });
-        const data11 = await res11.json();
-        const units11 = Array.isArray(data11) ? data11.map(u => ({ ...u, std: "11th" })) : [];
+      // ✅ FIX: Determine which standards to show based on User Profile
+      let allowedStds = ["11th", "12th"]; // Default to Both if unknown
 
-        const res12 = await fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/12`, { credentials: "include" });
-        const data12 = await res12.json();
-        const units12 = Array.isArray(data12) ? data12.map(u => ({ ...u, std: "12th" })) : [];
-
-        setFetchedUnits([...units11, ...units12]);
-      } catch (err) {
-        setFetchedUnits([]);
+      // Check different possible property names from your backend/storage
+      if (currentUser.standards && currentUser.standards.length > 0) {
+        allowedStds = currentUser.standards;
+      } else if (currentUser.selectedStandard && currentUser.selectedStandard.length > 0) {
+        allowedStds = currentUser.selectedStandard;
+      } else if (currentUser.coursetype) {
+        // Fallback: Infer from course type string if array is missing
+        if (currentUser.coursetype.includes("11")) allowedStds = ["11th"];
+        else if (currentUser.coursetype.includes("12")) allowedStds = ["12th"];
       }
+
+      let combinedUnits = [];
+
+      // 1. Fetch Class 11 ONLY if user has '11th' in their standards
+      if (allowedStds.includes("11th")) {
+        try {
+          const res11 = await fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/11`, { credentials: "include" });
+          const data11 = await res11.json();
+          const units11 = Array.isArray(data11) ? data11.map(u => ({ ...u, std: "11th" })) : [];
+          combinedUnits = [...combinedUnits, ...units11];
+        } catch (err) {
+          console.error("Error fetching 11th:", err);
+        }
+      }
+
+      // 2. Fetch Class 12 ONLY if user has '12th' in their standards
+      if (allowedStds.includes("12th")) {
+        try {
+          const res12 = await fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/12`, { credentials: "include" });
+          const data12 = await res12.json();
+          const units12 = Array.isArray(data12) ? data12.map(u => ({ ...u, std: "12th" })) : [];
+          combinedUnits = [...combinedUnits, ...units12];
+        } catch (err) {
+          console.error("Error fetching 12th:", err);
+        }
+      }
+
+      setFetchedUnits(combinedUnits);
     };
+
     getAllSubjectDetails();
   }, [subject]);
 
@@ -522,30 +589,57 @@ const NeetLearn = () => {
     }
   };
 
-  if (isMockMode) {
-    const mockTestObject = [{ testName: "Full NEET Mock Test", questionsList: mockData }];
+  const isUnitQuizActive = selectedSubtopic && (
+    selectedSubtopic.unitName.includes("Assessment") ||
+    (selectedSubtopic.test && selectedSubtopic.test.length > 0 && selectedSubtopic.unitName.startsWith("Assessment"))
+  );
+
+  // 2. If EITHER Mock Mode OR Unit Quiz is active, render the FULL SCREEN View
+  if (isMockMode || isUnitQuizActive) {
+    let quizProps = {};
+
+    if (isMockMode) {
+      // Configuration for MOCK Test
+      quizProps = {
+        topicTitle: "Full Syllabus",
+        subtopicTitle: `NEET Mock Test - ${mockData.length} Questions`,
+        test: [{ testName: "Full NEET Mock Test", questionsList: mockData }],
+        onBack: () => navigate("/Neet"),
+        onMarkComplete: () => { alert("Mock Test Completed!"); navigate("/Neet"); },
+        isAlreadyComplete: false,
+        isMock: true
+      };
+    } else {
+      // Configuration for UNIT/TOPIC Test
+      const topicTitle = fetchedUnits[expandedTopic]?.unitName;
+      const standard = fetchedUnits[expandedTopic]?.std;
+      const topicKey = `NEET_${standard}_${subject}_${topicTitle}`;
+      const isAlreadyComplete = completedSubtopics[topicKey]?.[selectedSubtopic.unitName] === true;
+
+      quizProps = {
+        key: selectedSubtopic.unitName, // Important to reset state on new test
+        topicTitle: topicTitle,
+        subtopicTitle: selectedSubtopic.unitName,
+        test: selectedSubtopic.test || [],
+        // On Back: Clear selection to return to sidebar view
+        onBack: () => { setShowTopics(true); setSelectedSubtopic(null); },
+        onMarkComplete: markSubtopicComplete,
+        isAlreadyComplete: isAlreadyComplete,
+        isMock: false
+      };
+    }
+
+    // Render BOTH in the same full-screen wrapper
     return (
       <div className="neet-mock-test-wrapper" style={{ marginTop: "60px" }}>
-        <NeetQuiz
-          topicTitle="Full Syllabus"
-          subtopicTitle={`NEET Mock Test - ${mockData.length} Questions`}
-          test={mockTestObject}
-          onBack={() => navigate("/Neet")}
-          onMarkComplete={() => { alert("Mock Test Completed!"); navigate("/Neet"); }}
-          isAlreadyComplete={false}
-          isMock={true}
-        />
+        <NeetQuiz {...quizProps} />
       </div>
     );
   }
 
   return (
     <div className="Neet-container">
-      {/* {isMobile && (
-        <button className="toggle-btn" onClick={() => setShowTopics(!showTopics)}>
-          <FaBars /> <h2>{subject} Topics</h2>
-        </button>
-      )} */}
+
       <button className="toggle-btn" onClick={() => setShowTopics(!showTopics)}>
         <FaBars /> {isMobile ? <h2>{subject} Topics</h2> : <span>Topics</span>}
       </button>
@@ -595,7 +689,11 @@ const NeetLearn = () => {
                           {topic.units && (
                             <SubtopicTree
                               subtopics={topic.units}
-                              onClick={(sub) => { setSelectedSubtopic(sub); if (isMobile) setShowTopics(false); }}
+                              // onClick={(sub) => { setSelectedSubtopic(sub); if (isMobile) setShowTopics(false); }}
+                              onClick={(sub, idx, keepMenuOpen) => {
+                                setSelectedSubtopic(sub);
+                                if (isMobile && !keepMenuOpen) setShowTopics(false);
+                              }}
                               selectedTitle={selectedSubtopic?.unitName}
                               parentIndex={index}
                               isTopicUnlocked={isSubtopicUnlocked}
@@ -637,6 +735,7 @@ const NeetLearn = () => {
 
       {/* ✅ ADDED REF to explanation container */}
       <div className="explanation-container" ref={contentRef}>
+
         {selectedSubtopic ? (
           (() => {
             const topicTitle = fetchedUnits[expandedTopic]?.unitName;
@@ -647,40 +746,26 @@ const NeetLearn = () => {
             // ✅ CRITICAL FIX: Add KEY prop here to force complete re-render when topic changes
             const componentKey = selectedSubtopic.unitName || "default-key";
 
-            if (selectedSubtopic.unitName.includes("Assessment") || (selectedSubtopic.test && selectedSubtopic.test.length > 0 && selectedSubtopic.unitName.startsWith("Assessment"))) {
-              return (
-                <NeetQuiz
-                  key={componentKey} // Forces new instance = Scroll Reset
-                  topicTitle={topicTitle}
-                  subtopicTitle={selectedSubtopic.unitName}
-                  test={selectedSubtopic.test || []}
-                  onBack={() => setShowTopics(true)}
-                  onMarkComplete={markSubtopicComplete}
-                  isAlreadyComplete={isAlreadyComplete}
-                />
-              );
-            } else {
-              return (
-                <NeetExplanation
-                  key={componentKey} // Forces new instance = Scroll Reset
-                  topicTitle={topicTitle}
-                  subtopicTitle={selectedSubtopic.unitName}
-                  explanation={selectedSubtopic.explanation || ""}
-                  imageUrls={selectedSubtopic.imageUrls || []}
-                  videoUrl={selectedSubtopic?.videoUrl || selectedSubtopic?.video_url || selectedSubtopic?.aiVideoUrl || ""}
-                  onBack={() => setShowTopics(true)}
-                  onNext={handleNextLesson}
-                  onPrevious={handlePreviousLesson}
-                  onMarkComplete={markSubtopicComplete}
-                  isAlreadyComplete={isAlreadyComplete}
-                />
-              );
-            }
+            return (
+              <NeetExplanation
+                key={componentKey}
+                topicTitle={topicTitle}
+                subtopicTitle={selectedSubtopic.unitName}
+                explanation={selectedSubtopic.explanation || ""}
+                imageUrls={selectedSubtopic.imageUrls || []}
+                videoUrl={selectedSubtopic?.videoUrl || selectedSubtopic?.video_url || selectedSubtopic?.aiVideoUrl || ""}
+                onBack={() => setShowTopics(true)}
+                onNext={handleNextLesson}
+                onPrevious={handlePreviousLesson}
+                onMarkComplete={markSubtopicComplete}
+                isAlreadyComplete={isAlreadyComplete}
+              />
+            );
           })()
         ) : (
           <div className="no-explanation">
             <h2>Welcome to {subject}</h2>
-            <p>Select a topic from the list (Class 11 or 12) to begin.</p>
+            <p>Select topic from the list to begin.</p>
           </div>
         )}
       </div>

@@ -101,6 +101,15 @@ const RegistrationFlow = () => {
           setPassword(useMe.password || "");
           setConfirmPassword(useMe.confirmPassword || "");
           setMobile(useMe.mobile || "");
+
+          // This ensures if they selected only '11th', it stays '11th'
+          if (useMe.selectedStandard && Array.isArray(useMe.selectedStandard) && useMe.selectedStandard.length > 0) {
+            setSelectedStandards(useMe.selectedStandard);
+          }
+          if (useMe.selectedCourses && Array.isArray(useMe.selectedCourses) && useMe.selectedCourses.length > 0) {
+            setSelectedCourses(useMe.selectedCourses);
+          }
+
         } catch (err) {
           console.error('Invalid JSON', err);
         }

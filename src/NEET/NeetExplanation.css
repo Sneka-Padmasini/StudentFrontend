@@ -158,14 +158,20 @@
   width: 100%;
 }
 
+/* Keep headings as blocks with margins */
 .explanation-text h3,
-.explanation-text h4,
-.explanation-text b,
-.explanation-text strong {
+.explanation-text h4 {
   color: #1a1a1a;
   margin-top: 30px;
   margin-bottom: 15px;
   display: block;
+}
+
+.explanation-text b,
+.explanation-text strong {
+  color: #1a1a1a;
+  font-weight: bold;
+  display: inline;
 }
 
 .voice-controls-container {
@@ -263,12 +269,24 @@
 }
 
 /* 3. Styling for images embedded INSIDE the text (Explanation) */
-.explanation-text img {
+/* .explanation-text img {
   display: block;
   margin: 20px auto;
   max-width: 100%;
   height: auto;
   border-radius: 8px;
+} */
+.explanation-text img,
+.explanation-img-item {
+  width: auto;
+  height: auto;
+  max-width: min(100%, 500px);
+  max-height: 400px;
+  object-fit: contain;
+  display: block;
+  margin: 20px auto !important;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* MOBILE VIEW STYLES */
@@ -436,14 +454,17 @@
 }
 
 .ai-video-container {
-  margin: 20px 0;
+  margin: 20px auto;
   text-align: center;
+  width: 100%;
+  max-width: 500px;
 }
 
 .ai-video-container video {
-  max-width: 100%;
+  width: 100%;
   height: auto;
   border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* --- New Navigation Layout --- */

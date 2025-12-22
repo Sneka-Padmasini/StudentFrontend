@@ -391,14 +391,14 @@ const Home = () => {
       </a> */}
 
       {/* 24/7 AI Bot Label */}
-      {/* <div className="ai-status-label" onClick={toggleChat}>
+      <div className="ai-status-label" onClick={toggleChat}>
         <span className="ai-icon">🤖</span>
-        <span className="ai-text">I'm online 24/7</span>
+        <span className="ai-text">I'm Cheeku</span>
       </div>
       {isChatOpen && (
         <div className="chat-window">
           <div className="chat-header">
-            <h3>AI Bot</h3>
+            <h3>Cheeku</h3>
             <button onClick={toggleChat} className="close-chat-btn">X</button>
           </div>
           <div className="chat-body">
@@ -423,7 +423,7 @@ const Home = () => {
             <button onClick={handleSendMessage}>Send</button>
           </div>
         </div>
-      )} */}
+      )}
 
     </div>
   );

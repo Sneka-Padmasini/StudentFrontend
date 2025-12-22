@@ -71,23 +71,52 @@ const loadSubjectCompletionFromServer = async (userId, setSubjectCompletion, cou
 
 const Subjects = () => {
   const navigate = useNavigate();
-  const [standard, setStandard] = useState("");
+  // const [standard, setStandard] = useState("");
+  const [standard, setStandard] = useState([]);
   const [subjectCompletion, setSubjectCompletion] = useState({});
   const learningPathRef = useRef(null);
   const { login, logout } = useUser();
   const [loadingMock, setLoadingMock] = useState(false);
 
+  // useEffect(() => {
+  //   const storedUser = JSON.parse(localStorage.getItem("currentUser"));
+  //   if (storedUser) {
+  //     let stdData = storedUser.standards;
+  //     if ((!stdData || stdData.length === 0) && storedUser.coursetype) {
+  //       if (storedUser.coursetype.includes("11")) stdData = ["11th"];
+  //       else if (storedUser.coursetype.includes("12")) stdData = ["12th"];
+  //     }
+  //     if (stdData) setStandard(stdData);
+  //   }
+  // }, []);
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("currentUser"));
     if (storedUser) {
-      let stdData = storedUser.standards;
+      // Prioritize selectedStandard, then standards, then coursetype
+      let stdData = storedUser.selectedStandard || storedUser.standards;
+
       if ((!stdData || stdData.length === 0) && storedUser.coursetype) {
         if (storedUser.coursetype.includes("11")) stdData = ["11th"];
         else if (storedUser.coursetype.includes("12")) stdData = ["12th"];
       }
-      if (stdData) setStandard(stdData);
+
+      // Force it into an array format if it's a single string
+      if (stdData) setStandard(Array.isArray(stdData) ? stdData : [stdData]);
     }
   }, []);
+
+  // ✅ HELPER: Determines if we should show "11th", "12th", or "11th & 12th"
+  const getDisplayStandardText = () => {
+    const has11 = standard.includes("11th");
+    const has12 = standard.includes("12th");
+
+    if (has11 && has12) return "11th & 12th";
+    if (has11) return "11th";
+    if (has12) return "12th";
+    return "11th & 12th"; // Default fallback
+  };
+
+  const displayStandardText = getDisplayStandardText();
 
   // Load Progress on Mount
   useEffect(() => {
@@ -105,7 +134,6 @@ const Subjects = () => {
     }
   }, []);
 
-  // Listen for storage updates (Instant update when coming back from NeetLearn)
   useEffect(() => {
     const handleStorageChange = () => {
       const storedUser = JSON.parse(localStorage.getItem("currentUser"));
@@ -139,7 +167,6 @@ const Subjects = () => {
       }).catch(console.error)
   }, [login, logout, navigate])
 
-  // ✅ FIX: Calculate Progress based on 8 parts (4 subjects * 2 standards)
   const calculateProgress = () => {
     let completedCount = 0;
     const course = "NEET";
@@ -167,19 +194,10 @@ const Subjects = () => {
     return (completedCount / totalMilestones) * 100;
   };
 
-  // ✅ Normalize subjects to check if BOTH 11th & 12th are done for certification badge
+
+
   const normalizedSubjects = subjectList.map((sub) => {
-    const course = "NEET";
-    const key11 = `${course}_11th_${sub.name}`;
-    const key12 = `${course}_12th_${sub.name}`;
-
-    const is11Completed = subjectCompletion?.[key11] === 100 || subjectCompletion?.[key11] === true || subjectCompletion?.[key11] === "completed";
-    const is12Completed = subjectCompletion?.[key12] === 100 || subjectCompletion?.[key12] === true || subjectCompletion?.[key12] === "completed";
-
-    return {
-      ...sub,
-      certified: is11Completed && is12Completed, // Badge only if BOTH are done
-    };
+    return sub;
   });
 
   const progressPercentage = calculateProgress();
@@ -259,7 +277,7 @@ const Subjects = () => {
     <div className="subjects-page">
       <aside className="sidebar">
         <h2>NEET</h2>
-        <p><strong>Course:</strong> Full Syllabus (11th & 12th)</p>
+        <p><strong>Course:</strong> Full Syllabus ({displayStandardText})</p>
         <span className="badge certified">Certified</span>
         <span className="badge limited">Limited Access Only</span>
       </aside>
@@ -269,7 +287,6 @@ const Subjects = () => {
           <h3>My Completion Progress</h3>
           <div className="progress-header">
             <div className="progress-info">
-              {/* Show how many full subjects (11+12) are certified */}
               <p>{normalizedSubjects.filter((s) => s.certified).length} of {normalizedSubjects.length} subjects fully completed</p>
 
               <div className="progress-bar-container">
@@ -295,7 +312,7 @@ const Subjects = () => {
               <p className="subtext">
                 {progressPercentage === 100
                   ? "You've completed all subjects!"
-                  : "Complete 11th & 12th for all subjects to earn your certificate"}
+                  : `Complete the ${displayStandardText} syllabus to earn your certificate`}
               </p>
             </div>
 
@@ -310,36 +327,30 @@ const Subjects = () => {
           </div>
         </section>
 
+
         <section className="learning-path" ref={learningPathRef}>
           <h3>Learning Path</h3>
-          <div className="timeline">
+
+          <div className="subjects-row">
             {normalizedSubjects.map((subject, index) => (
-              <div key={subject.name} className="timeline-item">
-                <div className="timeline-dot"></div>
-                <div className="timeline-content">
-                  <div className={`subject-card subject-card-${index}`}>
-                    <img src={subject.image} alt={subject.name} className="subject-thumbnail" />
-                    <div className="neet-subject-info">
-                      <span className="course-number">Course {index + 1}</span>
-                      <h4 className="subject-title">{subject.name}</h4>
-                      {/* Certified Badge only shows if BOTH 11 and 12 are complete */}
-                      {subject.certified && <span className="certified-badge">Certified</span>}
-                    </div>
-                    <button
-                      className="continue-btn"
-                      onClick={() => {
-                        navigate("/NeetLearn", {
-                          state: {
-                            subject: subject.name,
-                            selectedClass: "Both",
-                          },
-                        })
-                      }}
-                    >
-                      {subject.certified ? "Study Again" : "Start Learning"}
-                    </button>
-                  </div>
-                </div>
+              <div key={subject.name} className={`subject-card subject-card-${index}`}>
+                <img src={subject.image} alt={subject.name} className="subject-thumbnail" loading="eager" />
+
+                <h4 className="subject-title">{subject.name}</h4>
+
+                <button
+                  className="continue-btn"
+                  onClick={() => {
+                    navigate("/NeetLearn", {
+                      state: {
+                        subject: subject.name,
+                        selectedClass: "Both",
+                      },
+                    })
+                  }}
+                >
+                  Start Learning
+                </button>
               </div>
             ))}
           </div>
@@ -350,7 +361,7 @@ const Subjects = () => {
             <div className="mock-text-content">
               <h3 style={{ margin: "0 0 8px 0", color: "#2c3e50", fontSize: "1.5rem" }}>Full Syllabus Mock Test</h3>
               <p style={{ margin: "0 0 10px 0", color: "#555" }}>
-                Take a comprehensive exam combining Physics, Chemistry, Botany, and Zoology from Class 11 and 12.
+                Take a comprehensive exam combining Physics, Chemistry, Botany, and Zoology from Class {displayStandardText}.
               </p>
               <div style={{ display: "flex", gap: "15px", fontSize: "0.9rem", color: "#666", fontWeight: "500" }}>
                 <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>⏱️ 180 Mins</span>
