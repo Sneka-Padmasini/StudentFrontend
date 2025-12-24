@@ -44,6 +44,11 @@ const LoginPage = () => {
         return;
       }
 
+      if (data.sessionId) {
+        localStorage.setItem("currentSessionId", data.sessionId);
+        console.log("Session ID saved:", data.sessionId);
+      }
+
       // Normalize standards from selectedCourse object and selectedStandard array
       let standards = [];
 
@@ -71,7 +76,20 @@ const LoginPage = () => {
         courseName: data.courseName || "",
         subjects: data.subjects || [],
         selectedCourse: data.selectedCourse || {},
-        standards: data.standards || []
+        standards: data.standards || [],
+
+
+        photo: data.photo || "",
+        dob: data.dob || "",
+        gender: data.gender || "",
+        isVerified: data.isVerified || false,
+        plan: data.plan || "",
+        startDate: data.startDate || "",
+        endDate: data.endDate || "",
+        paymentId: data.paymentId || "",
+        payerId: data.payerId || ""
+
+
       };
 
 

@@ -22,9 +22,31 @@ const Navbar = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null); // ✅ ref for dynamic positioning
 
+  // const handleLogout = () => {
+  //   fetch(`${API_BASE_URL}/api/logout`, {
+  //     method: "GET",
+  //     credentials: "include",
+  //   })
+  //     .then((resp) => resp.json())
+  //     .then((data) => {
+  //       if (data.message === "Logged out successfully") {
+  //         localStorage.clear();
+  //         logout();
+  //         setCoursesOpen(false);
+  //         setUserDropdownOpen(false);
+  //         navigate("/login");
+  //       }
+  //     })
+  //     .catch(console.log);
+  // };
+
   const handleLogout = () => {
+    const sessionId = localStorage.getItem("currentSessionId");
+
     fetch(`${API_BASE_URL}/api/logout`, {
-      method: "GET",
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId: sessionId }), // Fixed: send as object
       credentials: "include",
     })
       .then((resp) => resp.json())

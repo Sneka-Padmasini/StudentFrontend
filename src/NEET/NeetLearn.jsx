@@ -26,8 +26,7 @@ const restoreKeys = (obj) => {
 const getFlatList = (units) => {
   let list = [];
   units.forEach((unit, unitIndex) => {
-    const std = unit.std; // Capture std (11th or 12th)
-
+    const std = unit.std;
     const collectItems = (subs) => {
       subs.forEach(sub => {
         list.push({ type: 'lesson', data: sub, unitIndex, std });
@@ -38,7 +37,7 @@ const getFlatList = (units) => {
           sub.test.forEach(t => {
             list.push({
               type: 'test',
-              data: { ...sub, unitName: `Assessment - ${sub.unitName}`, test: [t] },
+              data: { ...sub, unitName: `Assessment - ${sub.unitName}`, test: [t], isUnitTest: false },
               unitIndex,
               std
             });
@@ -55,7 +54,7 @@ const getFlatList = (units) => {
       unit.test.forEach(t => {
         list.push({
           type: 'test',
-          data: { ...unit, unitName: `Assessment - ${unit.unitName}`, test: [t] },
+          data: { ...unit, unitName: `Assessment - ${unit.unitName}`, test: [t], isUnitTest: true },
           unitIndex,
           std
         });
@@ -135,11 +134,6 @@ const SubtopicTree = ({ subtopics, onClick, selectedTitle, parentIndex, level = 
     e.stopPropagation();
     const isUnlocked = isTopicUnlocked ? isTopicUnlocked(sub.unitName) : true;
     if (isUnlocked) {
-      // onClick(sub, parentIndex);
-      // const hasChildren = (sub.units && sub.units.length > 0) || (sub.test && sub.test.length > 0);
-      // if (hasChildren) {
-      //   setExpandedSub((prev) => (prev === idx ? null : idx));
-      // }
       const hasChildren = (sub.units && sub.units.length > 0) || (sub.test && sub.test.length > 0);
 
       if (hasChildren) {
@@ -155,7 +149,7 @@ const SubtopicTree = ({ subtopics, onClick, selectedTitle, parentIndex, level = 
   };
 
   const handleTestClick = (test, idx, sub) => {
-    const testSubtopic = { ...sub, unitName: `Assessment - ${sub.unitName}`, test: [test] };
+    const testSubtopic = { ...sub, unitName: `Assessment - ${sub.unitName}`, test: [test], isUnitTest: false };
     onClick(testSubtopic, parentIndex);
   };
 
@@ -208,7 +202,7 @@ const SubtopicTree = ({ subtopics, onClick, selectedTitle, parentIndex, level = 
                       onClick={() => isTestUnlocked && handleTestClick(test, tIdx, sub)}
                     >
                       {!isTestUnlocked && <span>🔒 </span>}
-                      📝 {test.testName} - Assessment
+                      📝 {test.testName} - Practice Session
                     </div>
                   )
                 })}
@@ -277,33 +271,7 @@ const NeetLearn = () => {
     const timer = setTimeout(scrollToTop, 50);
 
     return () => clearTimeout(timer);
-  }, [selectedSubtopic, subject]); // Runs whenever the topic changes
-
-  // useEffect(() => {
-  //   const getAllSubjectDetails = async () => {
-  //     const subjectName = subject;
-  //     const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-  //     let courseName = "professional";
-  //     if (currentUser?.coursetype && currentUser.coursetype.toLowerCase().includes("school")) {
-  //       courseName = "local";
-  //     }
-
-  //     try {
-  //       const res11 = await fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/11`, { credentials: "include" });
-  //       const data11 = await res11.json();
-  //       const units11 = Array.isArray(data11) ? data11.map(u => ({ ...u, std: "11th" })) : [];
-
-  //       const res12 = await fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/12`, { credentials: "include" });
-  //       const data12 = await res12.json();
-  //       const units12 = Array.isArray(data12) ? data12.map(u => ({ ...u, std: "12th" })) : [];
-
-  //       setFetchedUnits([...units11, ...units12]);
-  //     } catch (err) {
-  //       setFetchedUnits([]);
-  //     }
-  //   };
-  //   getAllSubjectDetails();
-  // }, [subject]);
+  }, [selectedSubtopic, subject]);
 
   useEffect(() => {
     const getAllSubjectDetails = async () => {
@@ -316,7 +284,7 @@ const NeetLearn = () => {
       }
 
       // ✅ FIX: Determine which standards to show based on User Profile
-      let allowedStds = ["11th", "12th"]; // Default to Both if unknown
+      let allowedStds = ["11th", "12th"];
 
       // Check different possible property names from your backend/storage
       if (currentUser.standards && currentUser.standards.length > 0) {
@@ -594,6 +562,20 @@ const NeetLearn = () => {
     (selectedSubtopic.test && selectedSubtopic.test.length > 0 && selectedSubtopic.unitName.startsWith("Assessment"))
   );
 
+  const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+  const userData = storedUser.user || storedUser;
+
+  // Get the full name string from the available keys
+  const fullName =
+    userData.userName ||
+    userData.firstname ||
+    userData.firstName ||
+    userData.name ||
+    "Student";
+
+  // Split by space and take the first item
+  const userName = fullName.trim().split(" ")[0];
+
   // 2. If EITHER Mock Mode OR Unit Quiz is active, render the FULL SCREEN View
   if (isMockMode || isUnitQuizActive) {
     let quizProps = {};
@@ -607,7 +589,8 @@ const NeetLearn = () => {
         onBack: () => navigate("/Neet"),
         onMarkComplete: () => { alert("Mock Test Completed!"); navigate("/Neet"); },
         isAlreadyComplete: false,
-        isMock: true
+        isMock: true,
+        userName: userName
       };
     } else {
       // Configuration for UNIT/TOPIC Test
@@ -617,22 +600,24 @@ const NeetLearn = () => {
       const isAlreadyComplete = completedSubtopics[topicKey]?.[selectedSubtopic.unitName] === true;
 
       quizProps = {
-        key: selectedSubtopic.unitName, // Important to reset state on new test
         topicTitle: topicTitle,
         subtopicTitle: selectedSubtopic.unitName,
         test: selectedSubtopic.test || [],
+        isUnitTest: selectedSubtopic.isUnitTest,
         // On Back: Clear selection to return to sidebar view
         onBack: () => { setShowTopics(true); setSelectedSubtopic(null); },
         onMarkComplete: markSubtopicComplete,
+        onNextTopic: handleNextLesson,
         isAlreadyComplete: isAlreadyComplete,
-        isMock: false
+        isMock: false,
+        userName: userName
       };
     }
 
     // Render BOTH in the same full-screen wrapper
     return (
       <div className="neet-mock-test-wrapper" style={{ marginTop: "60px" }}>
-        <NeetQuiz {...quizProps} />
+        <NeetQuiz key={selectedSubtopic.unitName} {...quizProps} />
       </div>
     );
   }
@@ -689,7 +674,6 @@ const NeetLearn = () => {
                           {topic.units && (
                             <SubtopicTree
                               subtopics={topic.units}
-                              // onClick={(sub) => { setSelectedSubtopic(sub); if (isMobile) setShowTopics(false); }}
                               onClick={(sub, idx, keepMenuOpen) => {
                                 setSelectedSubtopic(sub);
                                 if (isMobile && !keepMenuOpen) setShowTopics(false);
@@ -702,7 +686,7 @@ const NeetLearn = () => {
                           {topic.test && topic.test.length > 0 && (
                             <ul className="subtopics-list">
                               {topic.test.map((test, tIdx) => {
-                                const testSubtopic = { ...topic, unitName: `Assessment - ${topic.unitName}`, test: [test] };
+                                const testSubtopic = { ...topic, unitName: `Assessment - ${topic.unitName}`, test: [test], isUnitTest: true };
                                 const testName = `Assessment - ${topic.unitName}`;
                                 const isTestUnlocked = isSubtopicUnlocked(testName);
                                 return (
@@ -774,5 +758,7 @@ const NeetLearn = () => {
     </div>
   );
 };
+
+// end of NeetLearn component
 
 export default NeetLearn;

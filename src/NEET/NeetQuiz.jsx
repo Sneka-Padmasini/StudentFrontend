@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./NeetQuiz.css";
-import { FaCheckCircle } from "react-icons/fa";
+import { FaCheckCircle, FaVolumeUp, FaVolumeMute } from "react-icons/fa";
 import katex from "katex";
 import parse from "html-react-parser";
 import "katex/dist/katex.min.css";
@@ -8,12 +8,9 @@ import "katex/dist/katex.min.css";
 const shuffleArray = (array) => {
   let currentIndex = array.length,
     randomIndex;
-  // While there remain elements to shuffle.
   while (currentIndex !== 0) {
-    // Pick a remaining element.
     randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex--;
-    // And swap it with the current element.
     [array[currentIndex], array[randomIndex]] = [
       array[randomIndex],
       array[currentIndex],
@@ -22,14 +19,13 @@ const shuffleArray = (array) => {
   return array;
 };
 
-const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isAlreadyComplete, isMock }) => {
+const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isAlreadyComplete, isMock, isUnitTest, onNextTopic, userName = "Student" }) => {
   const [questions, setQuestions] = useState([]);
   const [userAnswers, setUserAnswers] = useState([]);
   const [submitted, setSubmitted] = useState(false);
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
-  // CHANGED: 180 minutes = 10800 seconds
   const [timeRemaining, setTimeRemaining] = useState(10800);
 
   const [hasStarted, setHasStarted] = useState(false);
@@ -38,6 +34,88 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
   const [isTrackerOpen, setIsTrackerOpen] = useState(true);
 
 
+  // --- NEW SPEECH SETUP ---
+  const synth = window.speechSynthesis;
+  const [voice, setVoice] = useState(null);
+  const [isMuted, setIsMuted] = useState(false);
+
+  // ✅ CONDITION: Only allow voice if it's NOT a Mock and NOT a "Unit Test"
+  const isVoiceEnabled = !isMock && !isUnitTest;
+
+  // 1. Load Voice (Prefer Indian Female)
+  useEffect(() => {
+    if (!isVoiceEnabled) return;
+
+    const loadVoices = () => {
+      const voices = synth.getVoices();
+      const preferredVoice = voices.find(
+        (v) => (v.lang.includes("en-IN") || v.name.includes("India")) && v.name.includes("Female")
+      ) || voices.find((v) => v.lang.includes("en-IN")) || voices[0];
+      setVoice(preferredVoice);
+    };
+    synth.onvoiceschanged = loadVoices;
+    loadVoices();
+    return () => synth.cancel();
+  }, [isVoiceEnabled]);
+
+  // 2. Helper to clean text
+  const cleanTextForSpeech = (html) => {
+    if (!html) return "";
+    return html
+      .replace(/<[^>]+>/g, "")
+      .replace(/\$\$/g, "")
+      .replace(/\$/g, "")
+      .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "$1 over $2") // Read fractions
+      .replace(/_/g, " sub ")   // Read underscore as "sub"
+      .replace(/\^/g, " power ")// Read caret as "power"
+      .replace(/\s+/g, " ")     // Collapse multiple spaces
+      .replace(/\\/g, "")
+      .trim();
+  };
+
+  // 3. Speak Function
+  const speakText = (text) => {
+    if (!isVoiceEnabled || isMuted) {
+      synth.cancel();
+      return;
+    }
+    synth.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    if (voice) utterance.voice = voice;
+    synth.speak(utterance);
+  };
+
+  // ✅ 4. Add Toggle Mute Function
+  const toggleMute = () => {
+    setIsMuted(prev => !prev);
+    if (!isMuted) {
+      synth.cancel();
+    }
+  };
+
+  // ✅ AUTO-READ: Reads question when index changes (with Intro)
+  useEffect(() => {
+    if (hasStarted && isVoiceEnabled && !isMuted && questions.length > 0) {
+      const currentQ = questions[currentQIndex];
+      const textToRead = cleanTextForSpeech(currentQ.question);
+
+      if (currentQIndex === 0) {
+        // Safe check for the name
+        const validName = (userName && userName !== "undefined" && userName !== "null") ? userName : "Student";
+
+        if (!submitted) {
+          speakText(`Hello ${validName}, Let's do some practice. ${textToRead}`);
+        } else {
+          speakText(textToRead);
+        }
+      } else {
+        speakText(textToRead);
+      }
+    }
+    if (isMuted) {
+      synth.cancel();
+    }
+  }, [currentQIndex, hasStarted, isVoiceEnabled, isMuted, userName, submitted]);
 
   // ✅ SCROLL FIX: Ensure quiz starts at the top when title changes
   useEffect(() => {
@@ -47,36 +125,6 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
   }, [subtopicTitle, hasStarted]);
 
 
-  // useEffect(() => {
-  //   const allQuestions = test?.[0]?.questionsList || [];
-  //   let finalQuestionList = [];
-
-  //   if (isMock) {
-  //     finalQuestionList = allQuestions;
-  //   } else {
-  //     const shuffledQuestions = shuffleArray([...allQuestions]);
-  //     const MAX_QUESTIONS = 180;
-  //     finalQuestionList = shuffledQuestions.slice(0, MAX_QUESTIONS);
-  //   }
-
-  //   setQuestions(finalQuestionList);
-  //   setUserAnswers(Array(finalQuestionList.length).fill(""));
-  //   setSubmitted(false);
-  //   setCurrentQIndex(0);
-
-  //   if (isMock) {
-  //     setTimeRemaining(10800);
-  //   } else {
-
-  //     setTimeRemaining(finalQuestionList.length * 60);
-  //   }
-
-  //   setHasStarted(false);
-  //   setShowConfirmation(false);
-  //   setIsComplete(false);
-  //   setShowResultPopup(false);
-
-  // }, [subtopicTitle, isMock, test]); 
 
   useEffect(() => {
     const rawQuestions = test?.[0]?.questionsList || [];
@@ -84,7 +132,6 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
 
     // 1. ✅ GET USER STANDARDS FROM LOCAL STORAGE
     const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-    // Support both 'selectedStandard' (from registration) and 'standards' (from DB)
     const userStandards = currentUser.selectedStandard || currentUser.standards || [];
 
     // 2. ✅ APPLY FILTERING LOGIC (If user is not 'Both')
@@ -93,17 +140,14 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
 
     // Only filter if we have specific data. If user has BOTH or NEITHER, show all.
     if (has11th && !has12th) {
-      // User is ONLY 11th -> Keep only Class 11 questions
       filteredQuestions = rawQuestions.filter(q =>
         q.class === "11" || q.std === "11" || q.class === 11 || q.std === 11
       );
     } else if (!has11th && has12th) {
-      // User is ONLY 12th -> Keep only Class 12 questions
       filteredQuestions = rawQuestions.filter(q =>
         q.class === "12" || q.std === "12" || q.class === 12 || q.std === 12
       );
     }
-    // If (has11th && has12th), we keep 'filteredQuestions' as 'rawQuestions' (Show All)
 
     let finalQuestionList = [];
 
@@ -112,7 +156,6 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
       finalQuestionList = filteredQuestions;
     } else {
       const shuffledQuestions = shuffleArray([...filteredQuestions]);
-      // Limit regular tests to 180 questions max just in case
       const MAX_QUESTIONS = 180;
       finalQuestionList = shuffledQuestions.slice(0, MAX_QUESTIONS);
     }
@@ -124,13 +167,10 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
 
     // === UPDATED TIMING LOGIC ===
     if (isMock) {
-      // Full Mock Exams: Fixed 180 minutes (10800 seconds)
       setTimeRemaining(10800);
     } else {
-      // Unit/Topic Tests: 1 minute per question
       setTimeRemaining(finalQuestionList.length * 60);
     }
-    // ============================
 
     setHasStarted(false);
     setShowConfirmation(false);
@@ -139,13 +179,19 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
 
   }, [subtopicTitle, isMock, test]);
 
+  useEffect(() => {
+    if (isVoiceEnabled) {
+      setHasStarted(true);
+    }
+  }, [isVoiceEnabled]);
+
   const parseTextWithFormulas = (texts) => {
     if (!texts) return null;
 
     // 1. Clean up the input string
     let text = texts
       .replace(/\\\\/g, "\\")
-      .replace(/<\s*br\s*\/?\s*>/gi, "<br/>") // Fix malformed breaks
+      .replace(/<\s*br\s*\/?\s*>/gi, "<br/>")
       .replace(/\r?\n/g, "<br/>")
       .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
 
@@ -202,40 +248,59 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     setIsComplete(isAlreadyComplete);
   }, [isAlreadyComplete, subtopicTitle]);
 
+
   const handleOptionChange = (selected) => {
     const updatedAnswers = [...userAnswers];
     updatedAnswers[currentQIndex] = selected;
     setUserAnswers(updatedAnswers);
+
+    // ✅ Voice Logic check
+    if (isVoiceEnabled && !isMuted) {
+      const currentQ = questions[currentQIndex];
+      const correctAns = currentQ[`option${Number(currentQ.correctIndex) + 1}`];
+      const explanationText = cleanTextForSpeech(currentQ.explanation || "No explanation available.");
+
+      if (selected === correctAns) {
+        speakText("Correct Answer! " + explanationText);
+      } else {
+        speakText(`Wrong Answer. ${explanationText}`);
+      }
+    }
   };
 
-  // Helper function to calculate NEET Score (+4 for correct, -1 for wrong)
+  // ✅ UPDATE SCORE CALCULATION
   const calculateNEETScore = () => {
     return questions.reduce((acc, q, i) => {
       const correctAnswer = q[`option${Number(q.correctIndex) + 1}`];
       const userAnswer = userAnswers[i];
 
-      if (!userAnswer) {
-        return acc; // 0 marks for unattempted
-      }
+      if (!userAnswer) return acc;
+
       if (userAnswer === correctAnswer) {
-        return acc + 4; // +4 marks for correct
+        return acc + (isVoiceEnabled ? 1 : 4);
       } else {
-        return acc - 1; // -1 mark for wrong
+        return acc + (isVoiceEnabled ? 0 : -1);
       }
     }, 0);
   };
 
+  // ✅ 2. UPDATE HANDLE SUBMIT
   const handleSubmit = () => {
+    if (synth.speaking) synth.cancel();
     setSubmitted(true);
     setShowConfirmation(false);
     sessionStorage.setItem(`answers-neet-${subtopicTitle}`, JSON.stringify(userAnswers));
     sessionStorage.setItem(`quizData-neet-${subtopicTitle}`, JSON.stringify(questions));
 
     const finalScore = calculateNEETScore();
-    const maxMarks = questions.length * 4; // Should be 720 if 180 questions
-    const percentage = ((finalScore / maxMarks) * 100).toFixed(2);
 
-    if (parseFloat(percentage) >= 90) {
+    const maxMarks = questions.length * (isVoiceEnabled ? 1 : 4);
+
+    const percentage = maxMarks > 0 ? ((finalScore / maxMarks) * 100).toFixed(2) : 0;
+
+    const passingScore = isVoiceEnabled ? 100 : 90;
+
+    if (parseFloat(percentage) >= passingScore) {
       console.log("🎯 Perfect score! Marking as complete...");
       setIsComplete(true);
       if (onMarkComplete) {
@@ -273,7 +338,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
 
   // Calculate stats for display
   const finalScore = calculateNEETScore();
-  const maxMarks = questions.length * 4;
+  const maxMarks = questions.length * (isVoiceEnabled ? 1 : 4);
   const percentage = maxMarks > 0 ? ((finalScore / maxMarks) * 100).toFixed(2) : 0;
 
   if (!currentQuestion) {
@@ -352,14 +417,26 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
   const feedback = getResultFeedback(percentage);
 
 
+  const showSolutionNow = submitted || (isVoiceEnabled && userAnswers[currentQIndex]);
 
+  // ✅ NEW: Handle finishing a Topic Test (No popup, direct exit)
+  const handlePracticeFinish = () => {
+    if (synth.speaking) synth.cancel();
 
+    if (onMarkComplete) {
+      onMarkComplete();
+    }
+
+    if (onNextTopic) {
+      onNextTopic();
+    } else if (onBack) {
+      onBack();
+    }
+  };
 
   return (
     <div className="quiz-wrapper">
       <div className="quiz-container">
-
-        {/* 1. Header (Always visible in Green Box) */}
         <h2>{subtopicTitle}</h2>
 
         {/* For Developer testing */}
@@ -380,14 +457,14 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
 
 
 
-        {!hasStarted ? (
+        {!hasStarted && !isVoiceEnabled ? (
           // --- START SCREEN ---
           <div className="start-screen">
             <p><strong>Total Questions:</strong> {questions.length}</p>
-            <p><strong>Total Marks:</strong> {questions.length * 4}</p>
+            <p><strong>Total Marks:</strong> {questions.length * (isVoiceEnabled ? 1 : 4)}</p>
             <p><strong>Time Limit:</strong> {isMock ? "180" : questions.length} minutes</p>
             <p style={{ fontSize: "1rem", color: "#666", marginTop: "10px" }}>
-              Pattern: +4 for Correct, -1 for Wrong, 0 for Unattempted.
+              Pattern: {isVoiceEnabled ? "+1 for Correct, No Negative Marks." : "+4 for Correct, -1 for Wrong, 0 for Unattempted."}
             </p>
             <button className="start-btn" onClick={() => setHasStarted(true)}>Start Assessment</button>
             <button className="back-btn" onClick={onBack}>Back to Topics</button>
@@ -397,53 +474,59 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
             {/* --- ACTIVE QUIZ UI --- */}
 
             {/* 2. Timer Bar */}
-            <div className="timer">
-              <p>Time Remaining: {formatTime(timeRemaining)}</p>
-            </div>
+            {!isVoiceEnabled && (
+              <div className="timer">
+                <p>Time Remaining: {formatTime(timeRemaining)}</p>
+              </div>
+            )}
 
             {/* 3. Main Layout (Split View: Tracker + Content) */}
             <div className="quiz-main-layout">
 
               {/* A. Tracker Toggle Button */}
-              <button
-                className="tracker-toggle-btn"
-                onClick={() => setIsTrackerOpen(prev => !prev)}
-                title={isTrackerOpen ? "Close Tracker" : "Open Tracker"}
-              >
-                {isTrackerOpen ? "⟨⟨" : "⟩⟩"}
-              </button>
+              {!isVoiceEnabled && (
+                <>
+                  <button
+                    className="tracker-toggle-btn"
+                    onClick={() => setIsTrackerOpen(prev => !prev)}
+                    title={isTrackerOpen ? "Close Tracker" : "Open Tracker"}
+                  >
+                    {isTrackerOpen ? "⟨⟨" : "⟩⟩"}
+                  </button>
 
-              {/* B. Tracker Sidebar (Left) */}
-              {isTrackerOpen && (
-                <div className="tracker-panel">
-                  <div className="tracker-header">Question Navigator</div>
+                  {/* B. Tracker Sidebar (Left) */}
+                  {isTrackerOpen && (
+                    <div className="tracker-panel">
+                      <div className="tracker-header">Question Navigator</div>
 
-                  <div className="tracker-legend">
-                    <span><i className="dot answered"></i> Answered</span>
-                    <span><i className="dot skipped"></i> Skipped</span>
-                    <span><i className="dot current"></i> Current</span>
-                  </div>
+                      <div className="tracker-legend">
+                        <span><i className="dot answered"></i> Answered</span>
+                        <span><i className="dot skipped"></i> Skipped</span>
+                        <span><i className="dot current"></i> Current</span>
+                      </div>
 
-                  <div className="tracker-grid">
-                    {questions.map((_, index) => {
-                      const isAnswered = userAnswers[index] !== "";
-                      const isCurrent = index === currentQIndex;
-                      let status = "skipped";
-                      if (isAnswered) status = "answered";
-                      if (isCurrent) status += " current";
+                      <div className="tracker-grid">
+                        {questions.map((_, index) => {
+                          const isAnswered = userAnswers[index] !== "";
+                          const isCurrent = index === currentQIndex;
+                          let status = "skipped";
+                          if (isAnswered) status = "answered";
+                          if (isCurrent) status += " current";
 
-                      return (
-                        <button
-                          key={index}
-                          className={`tracker-dot ${status}`}
-                          onClick={() => setCurrentQIndex(index)}
-                        >
-                          {index + 1}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                          return (
+                            <button
+                              key={index}
+                              className={`tracker-dot ${status}`}
+                              onClick={() => setCurrentQIndex(index)}
+                            >
+                              {index + 1}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* C. Right Side Content (Question + Nav) */}
@@ -451,11 +534,31 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
 
                 {/* Scrollable Question Area */}
                 <div className="quiz-question-scroll">
-                  {/* Wrapper ensures content respects parent width */}
                   <div className="quiz-question-wrapper">
 
                     <div className="question-text">
-                      <span style={{ marginRight: '10px', fontWeight: 'bold' }}>Q.{currentQIndex + 1}</span>
+                      <span style={{ marginRight: '10px', fontWeight: 'bold' }}>
+                        Q.{currentQIndex + 1}
+
+                        {isVoiceEnabled && (
+                          <button
+                            onClick={toggleMute}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              marginLeft: "10px",
+                              color: isMuted ? "#999" : "#006400",
+                              fontSize: "1.2rem",
+                              verticalAlign: "middle"
+                            }}
+                            title={isMuted ? "Unmute" : "Mute"}
+                          >
+                            {isMuted ? <FaVolumeMute /> : <FaVolumeUp />}
+                          </button>
+                        )}
+
+                      </span>
                       {parseTextWithFormulas(currentQuestion.question)}
 
                       {currentQuestion.questionImages?.map((url, idx) => (
@@ -484,8 +587,11 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                         const optImage = currentQuestion[`option${num}Image`];
                         const correctAnswer = currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`];
                         const isSelected = userAnswers[currentQIndex] === optText;
-                        const isCorrect = submitted && optText === correctAnswer;
-                        const isIncorrect = submitted && isSelected && optText !== correctAnswer;
+
+                        const showColors = submitted || (isVoiceEnabled && isSelected);
+
+                        const isCorrect = showColors && optText === correctAnswer;
+                        const isIncorrect = showColors && isSelected && optText !== correctAnswer;
 
                         return (
                           <label
@@ -498,7 +604,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                               value={optText}
                               checked={isSelected}
                               onChange={() => handleOptionChange(optText)}
-                              disabled={submitted}
+                              disabled={submitted || (isVoiceEnabled && userAnswers[currentQIndex])}
                             />
                             <div className="option-content">
                               <span className="option-text-inner">{parseTextWithFormulas(optText)}</span>
@@ -510,14 +616,16 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                     </div>
 
                     {/* Feedback Message (Correct/Wrong) */}
-                    {submitted && userAnswers[currentQIndex] !== "" && (
+                    {showSolutionNow && userAnswers[currentQIndex] !== "" && (
                       <p className={`feedback-msg ${userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`] ? "correct" : "incorrect"}`}>
-                        {userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`] ? "Well Done! (+4) 🌟" : "Nice Try! Keep Rising! (-1) 💪"}
+                        {userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`]
+                          ? ` ${isVoiceEnabled ? "Well Done!" : "Well Done! (+4)"} 🌟`
+                          : `${isVoiceEnabled ? "Nice Try! Keep Rising!" : "Nice Try! Keep Rising! (-1)"} 💪`}
                       </p>
                     )}
 
-                    {/* --- RESTORED EXPLANATION LOGIC --- */}
-                    {submitted && (
+                    {/* ✅ EXPLANATION BOX (Uses showSolutionNow) */}
+                    {showSolutionNow && (
                       (currentQuestion.explanation ||
                         (currentQuestion.solutionImages && currentQuestion.solutionImages.some(url => url !== "NO_SOLUTION_IMAGE")))
                     ) && (
@@ -538,21 +646,32 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                           )}
                         </div>
                       )}
-                    {/* --- END RESTORED LOGIC --- */}
 
                   </div>
                 </div>
 
-                {/* Footer Buttons (Fixed at bottom right panel) */}
+
+                {/* Footer Buttons */}
                 <div className="quiz-question-footer">
                   <div className="navigation-buttons">
                     <button onClick={handlePrevious} disabled={currentQIndex === 0} className="nav-btn">Previous</button>
 
+                    {/* Logic for Next / Complete / Submit Buttons */}
                     {currentQIndex < questions.length - 1 ? (
                       <button onClick={handleNext} className="nav-btn">Next</button>
-                    ) : !submitted ? (
-                      <button onClick={() => setShowConfirmation(true)} className="submit-btn">Submit</button>
-                    ) : null}
+                    ) : (
+                      <>
+                        {isVoiceEnabled ? (
+                          <button onClick={handlePracticeFinish} className="submit-btn" style={{ backgroundColor: "#4CAF50" }}>
+                            {isComplete ? "Next Topic" : "Complete"}
+                          </button>
+                        ) : (
+                          !submitted && (
+                            <button onClick={() => setShowConfirmation(true)} className="submit-btn">Submit</button>
+                          )
+                        )}
+                      </>
+                    )}
                   </div>
 
                   {showConfirmation && (
@@ -564,8 +683,8 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                   )}
                 </div>
 
-              </div> {/* End quiz-content */}
-            </div> {/* End quiz-main-layout */}
+              </div>
+            </div>
           </>
         )}
 
@@ -578,7 +697,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
       </div>
 
       {/* Result Popup Overlay */}
-      {submitted && showResultPopup && (
+      {submitted && showResultPopup && !isVoiceEnabled && (
         <div className="result-popup">
           <div className="result-popup-content modern-result">
             <div className="result-header">
@@ -596,9 +715,9 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
               <p className="gauge-percentage" style={{ color: feedback.color }}>{percentage}% Score</p>
 
               {/* Unlock Logic Display */}
-              {parseFloat(percentage) < 90 ? (
+              {parseFloat(percentage) < (isVoiceEnabled ? 100 : 90) ? (
                 <p style={{ color: "#d32f2f", fontSize: "0.9rem", marginTop: "5px", fontWeight: "bold" }}>
-                  🔒 Score 90% to unlock the next lesson
+                  🔒 Score {isVoiceEnabled ? "100%" : "90%"} to unlock the next lesson
                 </p>
               ) : (
                 <p style={{ color: "#388e3c", fontSize: "0.9rem", marginTop: "5px", fontWeight: "bold" }}>
@@ -633,6 +752,6 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
   );
 };
 
-// end 
+// end of NeetQuiz component
 
 export default NeetQuiz;
