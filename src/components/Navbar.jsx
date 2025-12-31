@@ -292,9 +292,9 @@ const Navbar = () => {
                     </div>
                   </li>
 
-                  <li className="detail-item"><strong>Mobile:</strong> {currentUser.phoneNumber || "-"}</li>
+                  {/* <li className="detail-item"><strong>Mobile:</strong> {currentUser.phoneNumber || "-"}</li>
                   <li className="detail-item"><strong>Courses:</strong> {selectedCourse.length ? selectedCourse.join(", ") : "-"}</li>
-                  <li className="detail-item"><strong>Standards:</strong> {selectedStandard.length ? selectedStandard.join(", ") : "-"}</li>
+                  <li className="detail-item"><strong>Standards:</strong> {selectedStandard.length ? selectedStandard.join(", ") : "-"}</li> */}
 
                   <li className="action-item">
                     <button
@@ -306,6 +306,20 @@ const Navbar = () => {
                       }}
                     >
                       🪙 Upgrade Plan
+                    </button>
+                  </li>
+
+                  {/* --- 3. NEW Profile Button (Navigates to separate page) --- */}
+                  <li className="action-item">
+                    <button
+                      className="upgrade-btn small-btn"
+                      style={{ marginTop: "5px" }}
+                      onClick={() => {
+                        setUserDropdownOpen(false); // Close dropdown
+                        navigate("/profile");       // ✅ Go to new Profile page
+                      }}
+                    >
+                      👤 Profile
                     </button>
                   </li>
 

@@ -48,7 +48,7 @@ const RegistrationFlow = () => {
   const [selectedCourses, setSelectedCourses] = useState(["NEET"]);
   const [selectedStandards, setSelectedStandards] = useState(["11th", "12th"]);
 
-  const [dailyHours, setDailyHours] = useState(3);
+  // const [dailyHours, setDailyHours] = useState(3);
   const [calcMessage, setCalcMessage] = useState("");
 
   // Dropdowns
@@ -137,17 +137,17 @@ const RegistrationFlow = () => {
 
   useEffect(() => { window.scrollTo(0, 0); }, [step]);
 
-  useEffect(() => {
-    if (dailyHours) {
-      fetch(`${API_BASE_URL}/api/calculate-plan`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ hours: parseInt(dailyHours) })
-      })
-        .then(res => res.json())
-        .then(data => setCalcMessage(data.message));
-    }
-  }, [dailyHours]);
+  // useEffect(() => {
+  //   if (dailyHours) {
+  //     fetch(`${API_BASE_URL}/api/calculate-plan`, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ hours: parseInt(dailyHours) })
+  //     })
+  //       .then(res => res.json())
+  //       .then(data => setCalcMessage(data.message));
+  //   }
+  // }, [dailyHours]);
 
 
   // --- HELPER FUNCTIONS ---
@@ -274,7 +274,7 @@ const RegistrationFlow = () => {
       formData.append('selectedStandard', JSON.stringify(user.selectedStandard));
       formData.append('plan', user.plan);
 
-      formData.append('comfortableDailyHours', user.comfortableDailyHours || "3");
+      // formData.append('comfortableDailyHours', user.comfortableDailyHours || "3");
 
       formData.append('startDate', user.startDate);
       formData.append('endDate', user.endDate);
@@ -332,13 +332,13 @@ const RegistrationFlow = () => {
         firstname: currentUser.firstName,
         lastname: currentUser.lastName,
         email: currentUser.email,
-        comfortableDailyHours: dailyHours,
+        // comfortableDailyHours: dailyHours,
       };
       localStorage.setItem("upgradingUser", JSON.stringify(updatedUser));
     } else {
       // New: Load from Step 1
       updatedUser = JSON.parse(localStorage.getItem("registeredUser") || "{}");
-      updatedUser.comfortableDailyHours = dailyHours;
+      // updatedUser.comfortableDailyHours = dailyHours;
       updatedUser.dob = dob;
       updatedUser.gender = gender;
       updatedUser.selectedCourses = selectedCourses;
@@ -674,11 +674,11 @@ const RegistrationFlow = () => {
                         </div>
                       )}
 
-                      <div className="input-group">
+                      {/* <div className="input-group">
                         <label>Comfortable Study Hours/Day:</label>
                         <input type="number" value={dailyHours} onChange={e => setDailyHours(e.target.value)} />
                         <p style={{ fontSize: "12px", color: "green" }}>{calcMessage}</p>
-                      </div>
+                      </div> */}
 
                       <div className="student-navigation-buttons">
                         <button type="button" onClick={() => (isUpgrade ? navigate("/home") : setStep(1))}>

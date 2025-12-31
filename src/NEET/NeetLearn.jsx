@@ -235,6 +235,7 @@ const NeetLearn = () => {
 
   // Reference for the scrolling container
   const contentRef = useRef(null);
+  const { currentUser } = useUser();
 
   useEffect(() => {
     let storedUserId = localStorage.getItem("userId");
@@ -576,12 +577,13 @@ const NeetLearn = () => {
   // Split by space and take the first item
   const userName = fullName.trim().split(" ")[0];
 
-  // 2. If EITHER Mock Mode OR Unit Quiz is active, render the FULL SCREEN View
-  if (isMockMode || isUnitQuizActive) {
-    let quizProps = {};
 
+
+  let quizProps = {};
+
+  if (isMockMode || isUnitQuizActive) {
     if (isMockMode) {
-      // Configuration for MOCK Test
+      // --- MOCK TEST CONFIG ---
       quizProps = {
         topicTitle: "Full Syllabus",
         subtopicTitle: `NEET Mock Test - ${mockData.length} Questions`,
@@ -593,31 +595,56 @@ const NeetLearn = () => {
         userName: userName
       };
     } else {
-      // Configuration for UNIT/TOPIC Test
+
+
       const topicTitle = fetchedUnits[expandedTopic]?.unitName;
       const standard = fetchedUnits[expandedTopic]?.std;
       const topicKey = `NEET_${standard}_${subject}_${topicTitle}`;
       const isAlreadyComplete = completedSubtopics[topicKey]?.[selectedSubtopic.unitName] === true;
+
+
+      // const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+
+      // // Use the stored severity. Default to "Medium" (80%) if missing.
+      // const userSeverity = storedUser.severity || "Medium";
+
+      // console.log("🔍 NeetLearn using Severity:", userSeverity);
+
+      const effectiveUser = currentUser || {};
+
+      // Get severity from the live user object. Default to "Medium".
+      const userSeverity = effectiveUser.severity || "Medium";
+
+      console.log("🔍 NeetLearn using Severity:", userSeverity);
 
       quizProps = {
         topicTitle: topicTitle,
         subtopicTitle: selectedSubtopic.unitName,
         test: selectedSubtopic.test || [],
         isUnitTest: selectedSubtopic.isUnitTest,
-        // On Back: Clear selection to return to sidebar view
-        onBack: () => { setShowTopics(true); setSelectedSubtopic(null); },
+
+        // On Back: Clear selection so we stay on the page with sidebar open
+        onBack: () => {
+          setSelectedSubtopic(null);
+          if (isMobile) setShowTopics(true);
+        },
         onMarkComplete: markSubtopicComplete,
         onNextTopic: handleNextLesson,
         isAlreadyComplete: isAlreadyComplete,
         isMock: false,
-        userName: userName
+        userName: userName,
+        severity: userSeverity // ✅ Now uses the reactive value
       };
     }
+  }
 
-    // Render BOTH in the same full-screen wrapper
+  // -------------------------------------------------------------
+  // 2. CHECK IF WE NEED FULL SCREEN
+
+  if (isMockMode || (isUnitQuizActive && selectedSubtopic?.isUnitTest === true)) {
     return (
       <div className="neet-mock-test-wrapper" style={{ marginTop: "60px" }}>
-        <NeetQuiz key={selectedSubtopic.unitName} {...quizProps} />
+        <NeetQuiz key={selectedSubtopic?.unitName || "mock"} {...quizProps} />
       </div>
     );
   }
@@ -718,34 +745,43 @@ const NeetLearn = () => {
       )}
 
       {/* ✅ ADDED REF to explanation container */}
+
+
       <div className="explanation-container" ref={contentRef}>
 
         {selectedSubtopic ? (
-          (() => {
-            const topicTitle = fetchedUnits[expandedTopic]?.unitName;
-            const standard = fetchedUnits[expandedTopic]?.std;
-            const topicKey = `NEET_${standard}_${subject}_${topicTitle}`;
-            const isAlreadyComplete = completedSubtopics[topicKey]?.[selectedSubtopic.unitName] === true;
+          // CHECK: Is this a Quiz (Practice Session)?
+          isUnitQuizActive ? (
+            // Render Quiz Here. Wrapper ensures proper sizing.
+            <div style={{ width: '100%', minHeight: '100%' }}>
+              <NeetQuiz key={selectedSubtopic.unitName} {...quizProps} />
+            </div>
+          ) : (
+            // OTHERWISE: Render Explanation
+            (() => {
+              const topicTitle = fetchedUnits[expandedTopic]?.unitName;
+              const standard = fetchedUnits[expandedTopic]?.std;
+              const topicKey = `NEET_${standard}_${subject}_${topicTitle}`;
+              const isAlreadyComplete = completedSubtopics[topicKey]?.[selectedSubtopic.unitName] === true;
+              const componentKey = selectedSubtopic.unitName || "default-key";
 
-            // ✅ CRITICAL FIX: Add KEY prop here to force complete re-render when topic changes
-            const componentKey = selectedSubtopic.unitName || "default-key";
-
-            return (
-              <NeetExplanation
-                key={componentKey}
-                topicTitle={topicTitle}
-                subtopicTitle={selectedSubtopic.unitName}
-                explanation={selectedSubtopic.explanation || ""}
-                imageUrls={selectedSubtopic.imageUrls || []}
-                videoUrl={selectedSubtopic?.videoUrl || selectedSubtopic?.video_url || selectedSubtopic?.aiVideoUrl || ""}
-                onBack={() => setShowTopics(true)}
-                onNext={handleNextLesson}
-                onPrevious={handlePreviousLesson}
-                onMarkComplete={markSubtopicComplete}
-                isAlreadyComplete={isAlreadyComplete}
-              />
-            );
-          })()
+              return (
+                <NeetExplanation
+                  key={componentKey}
+                  topicTitle={topicTitle}
+                  subtopicTitle={selectedSubtopic.unitName}
+                  explanation={selectedSubtopic.explanation || ""}
+                  imageUrls={selectedSubtopic.imageUrls || []}
+                  videoUrl={selectedSubtopic?.videoUrl || selectedSubtopic?.video_url || selectedSubtopic?.aiVideoUrl || ""}
+                  onBack={() => setShowTopics(true)}
+                  onNext={handleNextLesson}
+                  onPrevious={handlePreviousLesson}
+                  onMarkComplete={markSubtopicComplete}
+                  isAlreadyComplete={isAlreadyComplete}
+                />
+              );
+            })()
+          )
         ) : (
           <div className="no-explanation">
             <h2>Welcome to {subject}</h2>
@@ -760,5 +796,10 @@ const NeetLearn = () => {
 };
 
 // end of NeetLearn component
+
+
+
+
+
 
 export default NeetLearn;

@@ -501,3 +501,102 @@
     writing-mode: horizontal-tb;
   }
 }
+
+
+/* 1. Wrapper: Reset properties to fit smoothly */
+.Neet-container .explanation-container .quiz-wrapper {
+  padding: 0 !important;
+  height: 100% !important;
+  background: transparent !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+}
+
+/* 2. Container (The Card): Fixed Height & Positioning */
+.Neet-container .explanation-container .quiz-container {
+  /* Positioning & Spacing */
+  width: 96% !important;
+  margin: 30px auto 40px auto !important;
+  /* Fixes sticking to top (30px gap) */
+  padding: 0 !important;
+  /* Remove padding here, add to inner scroll area */
+
+  /* FIXED HEIGHT: Prevents resizing when questions change */
+  height: 650px !important;
+  min-height: 650px !important;
+  max-height: 85vh !important;
+
+  /* FLEX LAYOUT: Anchors footer to bottom */
+  display: flex !important;
+  flex-direction: column !important;
+
+  /* Visuals */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  background-color: #f3fdf5 !important;
+  /* Light green tint */
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+/* 3. Internal Layout: Force children to fill height */
+.Neet-container .explanation-container .quiz-main-layout,
+.Neet-container .explanation-container .quiz-content {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+/* 4. SCROLL AREA: Takes all available space & scrolls if needed */
+.Neet-container .explanation-container .quiz-question-scroll {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 25px 30px !important;
+  /* Content padding */
+}
+
+/* 5. FOOTER: Fixed at bottom */
+.Neet-container .explanation-container .quiz-question-footer {
+  flex-shrink: 0 !important;
+  /* Never shrinks */
+  background-color: #f3fdf5 !important;
+  border-top: 1px solid #c8e6c9 !important;
+  padding: 15px !important;
+  margin-top: auto !important;
+  /* Pushes to bottom */
+  width: 100% !important;
+}
+
+/* 6. FIX BUTTONS: Stop them from expanding excessively */
+.Neet-container .explanation-container .quiz-container button {
+  width: auto !important;
+  min-width: 120px !important;
+  max-width: 200px !important;
+  margin: 0 10px !important;
+  display: inline-flex !important;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 7. Center Navigation Buttons */
+.Neet-container .explanation-container .navigation-buttons {
+  display: flex !important;
+  justify-content: center !important;
+  width: 100% !important;
+}
+
+/* 8. Fix Speaker Icon Alignment */
+.Neet-container .explanation-container .question-text {
+  display: block !important;
+}
+
+.Neet-container .explanation-container .question-text button {
+  width: auto !important;
+  min-width: auto !important;
+  margin-left: 8px !important;
+  padding: 4px !important;
+  background: transparent !important;
+  border: none !important;
+}

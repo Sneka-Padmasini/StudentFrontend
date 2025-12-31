@@ -141,7 +141,7 @@
 
 .option-label:hover {
   background-color: #dce3e8;
-  transform: scale(1.01);
+  /* transform: scale(1.01); */
 }
 
 .option-label input[type="radio"] {

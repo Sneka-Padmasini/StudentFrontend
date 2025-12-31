@@ -19,7 +19,7 @@ const shuffleArray = (array) => {
   return array;
 };
 
-const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isAlreadyComplete, isMock, isUnitTest, onNextTopic, userName = "Student" }) => {
+const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isAlreadyComplete, isMock, isUnitTest, onNextTopic, userName = "Student", severity = "Medium" }) => {
   const [questions, setQuestions] = useState([]);
   const [userAnswers, setUserAnswers] = useState([]);
   const [submitted, setSubmitted] = useState(false);
@@ -73,7 +73,8 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
       .trim();
   };
 
-  // 3. Speak Function
+
+
   const speakText = (text) => {
     if (!isVoiceEnabled || isMuted) {
       synth.cancel();
@@ -82,6 +83,10 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     synth.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     if (voice) utterance.voice = voice;
+
+    // ✅ ADDED: Increase speed slightly (Default is 1, 1.1 or 1.2 is faster)
+    utterance.rate = 1.1;
+
     synth.speak(utterance);
   };
 
@@ -284,7 +289,41 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     }, 0);
   };
 
-  // ✅ 2. UPDATE HANDLE SUBMIT
+
+  // const getPassingScore = () => {
+  //   if (isVoiceEnabled) return 100;
+
+  //   // Normalize input to handle potential nulls or different cases
+  //   const safeSeverity = (severity || "").toString();
+
+  //   // Check for "Competent" OR "Low" (Target: 70%)
+  //   if (safeSeverity === "Low" || safeSeverity.includes("Competent")) return 70;
+
+  //   // Check for "Expert" OR "High" (Target: 90%)
+  //   if (safeSeverity === "High" || safeSeverity.includes("Expert")) return 90;
+
+  //   // Default for "Medium", "Proficient" (Target: 80%)
+  //   return 80;
+  // };
+
+  const getPassingScore = () => {
+    if (isVoiceEnabled) return 100;
+
+    // Normalize input to handle potential nulls
+    const safeSeverity = (severity || "Medium").toString();
+
+    // Check for "Competent" OR "Low" (Target: 70%)
+    if (safeSeverity === "Low" || safeSeverity.includes("Competent")) return 70;
+
+    // Check for "Expert" OR "High" (Target: 90%)
+    if (safeSeverity === "High" || safeSeverity.includes("Expert")) return 90;
+
+    // Default for "Medium", "Proficient" (Target: 80%)
+    return 80;
+  };
+
+  const passingScore = getPassingScore();
+
   const handleSubmit = () => {
     if (synth.speaking) synth.cancel();
     setSubmitted(true);
@@ -293,14 +332,13 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     sessionStorage.setItem(`quizData-neet-${subtopicTitle}`, JSON.stringify(questions));
 
     const finalScore = calculateNEETScore();
-
     const maxMarks = questions.length * (isVoiceEnabled ? 1 : 4);
-
     const percentage = maxMarks > 0 ? ((finalScore / maxMarks) * 100).toFixed(2) : 0;
 
-    const passingScore = isVoiceEnabled ? 100 : 90;
+    // ✅ FIX: Call getPassingScore() right here to ensure we use the specific severity for this render
+    const requiredScore = getPassingScore();
 
-    if (parseFloat(percentage) >= passingScore) {
+    if (parseFloat(percentage) >= requiredScore) {
       console.log("🎯 Perfect score! Marking as complete...");
       setIsComplete(true);
       if (onMarkComplete) {
@@ -310,6 +348,29 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
 
     setShowResultPopup(true);
   };
+
+  // const handleSubmit = () => {
+  //   if (synth.speaking) synth.cancel();
+  //   setSubmitted(true);
+  //   setShowConfirmation(false);
+  //   sessionStorage.setItem(`answers-neet-${subtopicTitle}`, JSON.stringify(userAnswers));
+  //   sessionStorage.setItem(`quizData-neet-${subtopicTitle}`, JSON.stringify(questions));
+
+  //   const finalScore = calculateNEETScore();
+  //   const maxMarks = questions.length * (isVoiceEnabled ? 1 : 4);
+  //   const percentage = maxMarks > 0 ? ((finalScore / maxMarks) * 100).toFixed(2) : 0;
+
+  //   // ✅ Use the calculated passing score
+  //   if (parseFloat(percentage) >= passingScore) {
+  //     console.log("🎯 Perfect score! Marking as complete...");
+  //     setIsComplete(true);
+  //     if (onMarkComplete) {
+  //       onMarkComplete();
+  //     }
+  //   }
+
+  //   setShowResultPopup(true);
+  // };
 
   const handleMarkComplete = () => {
     console.log("🔄 Manually marking test as complete");
@@ -715,9 +776,10 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
               <p className="gauge-percentage" style={{ color: feedback.color }}>{percentage}% Score</p>
 
               {/* Unlock Logic Display */}
-              {parseFloat(percentage) < (isVoiceEnabled ? 100 : 90) ? (
+
+              {parseFloat(percentage) < passingScore ? (
                 <p style={{ color: "#d32f2f", fontSize: "0.9rem", marginTop: "5px", fontWeight: "bold" }}>
-                  🔒 Score {isVoiceEnabled ? "100%" : "90%"} to unlock the next lesson
+                  🔒 Score {passingScore}% to unlock the next lesson
                 </p>
               ) : (
                 <p style={{ color: "#388e3c", fontSize: "0.9rem", marginTop: "5px", fontWeight: "bold" }}>
@@ -753,5 +815,10 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
 };
 
 // end of NeetQuiz component
+
+
+
+
+
 
 export default NeetQuiz;

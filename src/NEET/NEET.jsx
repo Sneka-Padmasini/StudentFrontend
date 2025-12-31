@@ -8,6 +8,7 @@ import zoologyImg from "../assets/zoology.jpg";
 import botanyImg from "../assets/botany.jpg";
 import { useUser } from "../components/UserContext";
 import { API_BASE_URL } from "../config";
+import StudyGoalModal from "../components/StudyGoalModal";
 
 const subjectList = [
   { name: "Physics", image: physicsImg, certified: false },
@@ -77,21 +78,14 @@ const Subjects = () => {
   const learningPathRef = useRef(null);
   const { login, logout } = useUser();
   const [loadingMock, setLoadingMock] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isSessionChecking, setIsSessionChecking] = useState(true);
 
-  // useEffect(() => {
-  //   const storedUser = JSON.parse(localStorage.getItem("currentUser"));
-  //   if (storedUser) {
-  //     let stdData = storedUser.standards;
-  //     if ((!stdData || stdData.length === 0) && storedUser.coursetype) {
-  //       if (storedUser.coursetype.includes("11")) stdData = ["11th"];
-  //       else if (storedUser.coursetype.includes("12")) stdData = ["12th"];
-  //     }
-  //     if (stdData) setStandard(stdData);
-  //   }
-  // }, []);
+
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("currentUser"));
     if (storedUser) {
+      setCurrentUser(storedUser);
       // Prioritize selectedStandard, then standards, then coursetype
       let stdData = storedUser.selectedStandard || storedUser.standards;
 
@@ -146,26 +140,60 @@ const Subjects = () => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
+
+
   useEffect(() => {
-    fetch(`${API_BASE_URL}/checkSession`, {
+    // 1. Fetch from the correct API endpoint
+    fetch(`${API_BASE_URL}/api/checkSession`, {
       method: "GET",
       credentials: 'include'
-    }).then(resp => resp.json())
+    })
+      .then(resp => {
+        if (!resp.ok) {
+          throw new Error("Session check failed");
+        }
+        return resp.json();
+      })
       .then(data => {
-        if (data.loggedIn === true) {
-          login(data.user)
-          localStorage.setItem('currentUser', JSON.stringify(data.user));
-        }
-        if (data.loggedIn === false) {
-          const existingUser = localStorage.getItem('currentUser')
-          if (existingUser) {
-            localStorage.clear();
-            logout();
-            navigate("/login");
+        // 2. Check for success 
+        if (data.status === "pass" || data.loggedIn === true) {
+          const userData = data;
+          console.log("Session User Data:", userData);
+
+          // 3. Update State (This triggered the loop before)
+          login(userData);
+          localStorage.setItem('currentUser', JSON.stringify(userData));
+          setCurrentUser(userData);
+
+          // Standards Logic
+          let stdData = userData.selectedStandard || userData.standards;
+          if ((!stdData || stdData.length === 0) && userData.coursetype) {
+            if (userData.coursetype.includes("11")) stdData = ["11th"];
+            else if (userData.coursetype.includes("12")) stdData = ["12th"];
           }
+          if (stdData) setStandard(Array.isArray(stdData) ? stdData : [stdData]);
+
+          // Progress Logic
+          const userId = userData.id || userData._id || userData.userId;
+          if (userId) {
+            loadSubjectCompletionFromServer(userId, setSubjectCompletion, "NEET");
+          }
+
+        } else {
+          // Session invalid
+          localStorage.clear();
+          logout();
+          navigate("/login");
         }
-      }).catch(console.error)
-  }, [login, logout, navigate])
+      })
+      .catch(err => {
+        console.error("Session Check Error:", err);
+      })
+      .finally(() => {
+        // ✅ CRITICAL FIX: Stop loading once the server response is handled
+        setIsSessionChecking(false);
+      });
+  }, []);
 
   const calculateProgress = () => {
     let completedCount = 0;
@@ -273,8 +301,25 @@ const Subjects = () => {
     }
   };
 
+  const handleGoalUpdate = (newHours) => {
+    if (currentUser) {
+      const updatedUser = { ...currentUser, comfortableDailyHours: newHours };
+      setCurrentUser(updatedUser);
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+    }
+  };
+
   return (
     <div className="subjects-page">
+      {/* 
+      {currentUser && (
+        <StudyGoalModal user={currentUser} onUpdate={handleGoalUpdate} />
+      )} */}
+
+      {currentUser && !isSessionChecking && (
+        <StudyGoalModal user={currentUser} onUpdate={handleGoalUpdate} />
+      )}
+
       <aside className="sidebar">
         <h2>NEET</h2>
         <p><strong>Course:</strong> Full Syllabus ({displayStandardText})</p>
@@ -289,24 +334,26 @@ const Subjects = () => {
             <div className="progress-info">
               <p>{normalizedSubjects.filter((s) => s.certified).length} of {normalizedSubjects.length} subjects fully completed</p>
 
+
               <div className="progress-bar-container">
+                {/* The Track (Background Rail) */}
                 <div
                   className="progress-bar"
-                  style={{
-                    width: `${safeProgress}%`,
-                    backgroundColor:
-                      safeProgress === 100
-                        ? "#4CAF50"
-                        : safeProgress > 50
-                          ? "#FFEB3B"
-                          : "#B0BEC5",
-                  }}
                   title={`Completed: ${Math.round(safeProgress)}%`}
                 >
-                  <div className="progress-filled">
-                    <span className="progress-percentage">{Math.round(safeProgress)}%</span>
-                  </div>
+                  {/* The Moving Fill */}
+                  <div
+                    className="progress-filled"
+                    style={{
+                      width: `${safeProgress}%`,
+                      // Theme Logic: Dark Green normally, Bright Green if 100%
+                      backgroundColor: safeProgress === 100 ? "#08c534" : "#006400",
+                    }}
+                  ></div>
                 </div>
+
+                {/* Text is outside to prevent overlap */}
+                <span className="progress-percentage">{Math.round(safeProgress)}%</span>
               </div>
 
               <p className="subtext">
