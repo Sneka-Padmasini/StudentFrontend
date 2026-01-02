@@ -274,6 +274,8 @@ const NeetLearn = () => {
     return () => clearTimeout(timer);
   }, [selectedSubtopic, subject]);
 
+
+
   useEffect(() => {
     const getAllSubjectDetails = async () => {
       const subjectName = subject;
@@ -284,47 +286,60 @@ const NeetLearn = () => {
         courseName = "local";
       }
 
-      // ✅ FIX: Determine which standards to show based on User Profile
-      let allowedStds = ["11th", "12th"];
+      // 1. CHECK CACHE FIRST (Instant Load)
+      const cacheKey = `neetData_${courseName}_${subjectName}`;
+      const cachedData = sessionStorage.getItem(cacheKey);
+      if (cachedData) {
+        setFetchedUnits(JSON.parse(cachedData));
+        // We continue to fetch in background to update if needed, or just return here.
+        // For max speed, we return here.
+        return;
+      }
 
-      // Check different possible property names from your backend/storage
+      // Determine which standards to show
+      let allowedStds = ["11th", "12th"];
       if (currentUser.standards && currentUser.standards.length > 0) {
         allowedStds = currentUser.standards;
       } else if (currentUser.selectedStandard && currentUser.selectedStandard.length > 0) {
         allowedStds = currentUser.selectedStandard;
       } else if (currentUser.coursetype) {
-        // Fallback: Infer from course type string if array is missing
         if (currentUser.coursetype.includes("11")) allowedStds = ["11th"];
         else if (currentUser.coursetype.includes("12")) allowedStds = ["12th"];
       }
 
-      let combinedUnits = [];
+      // 2. PARALLEL FETCHING (Ask for both at the same time)
+      const fetchPromises = [];
 
-      // 1. Fetch Class 11 ONLY if user has '11th' in their standards
       if (allowedStds.includes("11th")) {
-        try {
-          const res11 = await fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/11`, { credentials: "include" });
-          const data11 = await res11.json();
-          const units11 = Array.isArray(data11) ? data11.map(u => ({ ...u, std: "11th" })) : [];
-          combinedUnits = [...combinedUnits, ...units11];
-        } catch (err) {
-          console.error("Error fetching 11th:", err);
-        }
+        fetchPromises.push(
+          fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/11`, { credentials: "include" })
+            .then(res => res.json())
+            .then(data => (Array.isArray(data) ? data.map(u => ({ ...u, std: "11th" })) : []))
+            .catch(err => { console.error("Error fetching 11th:", err); return []; })
+        );
       }
 
-      // 2. Fetch Class 12 ONLY if user has '12th' in their standards
       if (allowedStds.includes("12th")) {
-        try {
-          const res12 = await fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/12`, { credentials: "include" });
-          const data12 = await res12.json();
-          const units12 = Array.isArray(data12) ? data12.map(u => ({ ...u, std: "12th" })) : [];
-          combinedUnits = [...combinedUnits, ...units12];
-        } catch (err) {
-          console.error("Error fetching 12th:", err);
-        }
+        fetchPromises.push(
+          fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${subjectName}/12`, { credentials: "include" })
+            .then(res => res.json())
+            .then(data => (Array.isArray(data) ? data.map(u => ({ ...u, std: "12th" })) : []))
+            .catch(err => { console.error("Error fetching 12th:", err); return []; })
+        );
       }
 
-      setFetchedUnits(combinedUnits);
+      try {
+        const results = await Promise.all(fetchPromises);
+        // Flatten the results array
+        const combinedUnits = results.flat();
+
+        setFetchedUnits(combinedUnits);
+
+        // 3. SAVE TO CACHE
+        sessionStorage.setItem(cacheKey, JSON.stringify(combinedUnits));
+      } catch (error) {
+        console.error("Error in parallel fetch:", error);
+      }
     };
 
     getAllSubjectDetails();
@@ -574,10 +589,15 @@ const NeetLearn = () => {
     userData.name ||
     "Student";
 
-  // Split by space and take the first item
+
+
   const userName = fullName.trim().split(" ")[0];
 
+  const effectiveUser = currentUser || {};
+  const userSeverity = effectiveUser.severity || "Medium";
+  const userNameForQuiz = userName || "Student";
 
+  console.log("🔍 NeetLearn using Severity:", userSeverity);
 
   let quizProps = {};
 
@@ -592,38 +612,22 @@ const NeetLearn = () => {
         onMarkComplete: () => { alert("Mock Test Completed!"); navigate("/Neet"); },
         isAlreadyComplete: false,
         isMock: true,
-        userName: userName
+        userName: userNameForQuiz,
+        severity: userSeverity
       };
     } else {
-
-
+      // --- UNIT TEST CONFIG ---
       const topicTitle = fetchedUnits[expandedTopic]?.unitName;
       const standard = fetchedUnits[expandedTopic]?.std;
       const topicKey = `NEET_${standard}_${subject}_${topicTitle}`;
-      const isAlreadyComplete = completedSubtopics[topicKey]?.[selectedSubtopic.unitName] === true;
-
-
-      // const storedUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-
-      // // Use the stored severity. Default to "Medium" (80%) if missing.
-      // const userSeverity = storedUser.severity || "Medium";
-
-      // console.log("🔍 NeetLearn using Severity:", userSeverity);
-
-      const effectiveUser = currentUser || {};
-
-      // Get severity from the live user object. Default to "Medium".
-      const userSeverity = effectiveUser.severity || "Medium";
-
-      console.log("🔍 NeetLearn using Severity:", userSeverity);
+      const isAlreadyComplete = completedSubtopics[topicKey]?.[selectedSubtopic?.unitName] === true;
 
       quizProps = {
         topicTitle: topicTitle,
-        subtopicTitle: selectedSubtopic.unitName,
-        test: selectedSubtopic.test || [],
-        isUnitTest: selectedSubtopic.isUnitTest,
+        subtopicTitle: selectedSubtopic?.unitName,
+        test: selectedSubtopic?.test || [],
+        isUnitTest: selectedSubtopic?.isUnitTest,
 
-        // On Back: Clear selection so we stay on the page with sidebar open
         onBack: () => {
           setSelectedSubtopic(null);
           if (isMobile) setShowTopics(true);
@@ -632,19 +636,21 @@ const NeetLearn = () => {
         onNextTopic: handleNextLesson,
         isAlreadyComplete: isAlreadyComplete,
         isMock: false,
-        userName: userName,
-        severity: userSeverity // ✅ Now uses the reactive value
+        userName: userNameForQuiz,
+        severity: userSeverity // ✅ Correctly passed
       };
     }
   }
 
-  // -------------------------------------------------------------
   // 2. CHECK IF WE NEED FULL SCREEN
-
   if (isMockMode || (isUnitQuizActive && selectedSubtopic?.isUnitTest === true)) {
     return (
       <div className="neet-mock-test-wrapper" style={{ marginTop: "60px" }}>
-        <NeetQuiz key={selectedSubtopic?.unitName || "mock"} {...quizProps} />
+
+        <NeetQuiz
+          key={`${selectedSubtopic?.unitName || "mock"}-${userSeverity}`}
+          {...quizProps}
+        />
       </div>
     );
   }

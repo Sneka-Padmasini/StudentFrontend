@@ -205,7 +205,7 @@ const Navbar = () => {
             to="/contact-us"
             onClick={() => setMenuOpen(false)}
           >
-            Contact
+            {currentUser ? "Support" : "Enquiry"}
           </Link>
         </li>
 

@@ -179,78 +179,147 @@ const NeetExplanation = ({
   const hasMedia = (imageUrls && imageUrls.length > 0) || (videoUrl && typeof videoUrl === 'string' && videoUrl.trim() !== "" && videoUrl !== "null");
   const hasExplanation = explanation && explanation.trim().length > 0;
 
+  const hasVideo = videoUrl && typeof videoUrl === 'string' && videoUrl.trim() !== "" && videoUrl !== "null";
+
+
   return (
     <div className="explanation-wrapper-inner">
-
-      {/* 1. WRAP CONTENT IN SCROLL AREA */}
       <div className="explanation-scroll-area">
         <div className="explanation-content">
           <h2>{subtopicTitle}</h2>
 
-          {/* ... existing video logic ... */}
-          {videoUrl && typeof videoUrl === 'string' && videoUrl.trim() !== "" && videoUrl !== "null" && (
-            <div className="ai-video-container">
-              {/* ... video code ... */}
-              <h5>AI Generated Video</h5>
-              <video key={videoUrl} controls>
-                <source src={videoUrl} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          )}
+          {/* ✅ FIX 1: Add dynamic class here using 'hasVideo' */}
+          <div className={`split-layout-container ${!hasVideo ? 'no-video-layout' : ''}`}>
 
-          <div className="explanation-text-with-controls">
-            {/* ... existing text/image logic ... */}
-            {hasExplanation ? (
-              <div className="explanation-text">
-                {parseTextWithFormulas(explanation)}
-              </div>
-            ) : (
-              !hasMedia && (
-                <div className="explanation-text" style={{ fontStyle: "italic", color: "#666" }}>
-                  No explanation available.
+            {/* Left Side: Video */}
+            {hasVideo && (
+              <div className="split-video-side">
+                <div className="ai-video-container">
+                  <video key={videoUrl} controls>
+                    <source src={videoUrl} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
                 </div>
-              )
-            )}
-            {/* Display all images */}
-            {imageUrls && imageUrls.length > 0 && (
-              <div className="explanation-images">
-                {/* ... existing image map ... */}
-                {imageUrls.map((url, index) => (
-                  // <img key={index} src={url} alt={`Unit Image ${index + 1}`} style={{ maxWidth: "100%", margin: "10px 0", borderRadius: "10px", display: "block" }} />
-                  <img key={index} src={url} alt={`Unit Image ${index + 1}`} className="explanation-img-item" />
-                ))}
               </div>
             )}
+
+            {/* ✅ FIX 2: Use '!hasVideo' instead of '!videoUrl' to ensure string "null" is handled */}
+            <div className={`split-text-side ${!hasVideo ? 'full-width' : ''}`}>
+              <div className="explanation-text-with-controls">
+                {hasExplanation ? (
+                  <div className="explanation-text">
+                    {parseTextWithFormulas(explanation)}
+                  </div>
+                ) : (
+                  !hasMedia && (
+                    <div className="explanation-text" style={{ fontStyle: "italic", color: "#666" }}>
+                      No explanation available.
+                    </div>
+                  )
+                )}
+
+                {imageUrls && imageUrls.length > 0 && (
+                  <div className="explanation-images">
+                    {imageUrls.map((url, index) => (
+                      <img key={index} src={url} alt={`Unit Image ${index + 1}`} className="explanation-img-item" />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
           </div>
-
-
         </div>
       </div>
-      {/* END OF SCROLL AREA */}
 
-      {/* 2. BUTTONS ARE NOW OUTSIDE THE SCROLL AREA (FIXED AT BOTTOM) */}
+      {/* Footer Buttons (Keep as is) */}
       <div className="explanation-footer">
         <div className="nav-container">
           <button onClick={onPrevious} className="nav-btn prev-btn">
             <FaArrowLeft /> Previous
           </button>
-
-          <button
-            onClick={() => { if (onNext) onNext(); }}
-            className="nav-btn next-btn"
-          >
+          <button onClick={() => { if (onNext) onNext(); }} className="nav-btn next-btn">
             {isComplete ? "Next" : "Complete"} <FaArrowRight />
           </button>
         </div>
-
-        <button onClick={handleBack} className="back-btn">
-          Back to Topics
-        </button>
+        <button onClick={handleBack} className="back-btn">Back to Topics</button>
       </div>
-
     </div>
   );
+
+  // return (
+  //   <div className="explanation-wrapper-inner">
+
+  //     <div className="explanation-scroll-area">
+  //       <div className="explanation-content">
+  //         <h2>{subtopicTitle}</h2>
+
+  //         {/* ✅ NEW: Split Layout Container */}
+  //         <div className="split-layout-container">
+
+  //           {videoUrl && typeof videoUrl === 'string' && videoUrl.trim() !== "" && videoUrl !== "null" ? (
+  //             <div className="split-video-side">
+  //               <div className="ai-video-container">
+  //                 <video key={videoUrl} controls>
+  //                   <source src={videoUrl} type="video/mp4" />
+  //                   Your browser does not support the video tag.
+  //                 </video>
+  //               </div>
+  //             </div>
+  //           ) : null}
+
+  //           <div className={`split-text-side ${!videoUrl ? 'full-width' : ''}`}>
+  //             <div className="explanation-text-with-controls">
+  //               {hasExplanation ? (
+  //                 <div className="explanation-text">
+  //                   {parseTextWithFormulas(explanation)}
+  //                 </div>
+  //               ) : (
+  //                 !hasMedia && (
+  //                   <div className="explanation-text" style={{ fontStyle: "italic", color: "#666" }}>
+  //                     No explanation available.
+  //                   </div>
+  //                 )
+  //               )}
+
+  //               {imageUrls && imageUrls.length > 0 && (
+  //                 <div className="explanation-images">
+  //                   {imageUrls.map((url, index) => (
+  //                     <img key={index} src={url} alt={`Unit Image ${index + 1}`} className="explanation-img-item" />
+  //                   ))}
+  //                 </div>
+  //               )}
+  //             </div>
+  //           </div>
+
+  //         </div>
+
+  //       </div>
+  //     </div>
+
+
+  //     {/* 2. BUTTONS ARE NOW OUTSIDE THE SCROLL AREA (FIXED AT BOTTOM) */}
+  //     <div className="explanation-footer">
+  //       <div className="nav-container">
+  //         <button onClick={onPrevious} className="nav-btn prev-btn">
+  //           <FaArrowLeft /> Previous
+  //         </button>
+
+  //         <button
+  //           onClick={() => { if (onNext) onNext(); }}
+  //           className="nav-btn next-btn"
+  //         >
+  //           {isComplete ? "Next" : "Complete"} <FaArrowRight />
+  //         </button>
+  //       </div>
+
+  //       <button onClick={handleBack} className="back-btn">
+  //         Back to Topics
+  //       </button>
+  //     </div>
+
+  //   </div>
+  // );
   //   <div className="explanation-container">
   //     <div className="explanation-content">
   //       <h2>{subtopicTitle}</h2>

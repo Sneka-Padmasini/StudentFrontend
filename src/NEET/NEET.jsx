@@ -45,25 +45,36 @@ const extractQuestionsFromUnits = (units) => {
   return questions;
 };
 
+
 // Helper to fetch completion for BOTH 11th and 12th
 const loadSubjectCompletionFromServer = async (userId, setSubjectCompletion, course) => {
   try {
     const stds = ["11th", "12th"];
-    let combinedCompletion = {};
 
-    // 1. Load from LocalStorage FIRST for immediate UI update
+    // 1. Load from LocalStorage FIRST (Instant UI)
     const local11 = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_11th`) || "{}");
     const local12 = JSON.parse(localStorage.getItem(`subjectCompletion_${course}_12th`) || "{}");
-    combinedCompletion = { ...local11, ...local12 };
+    let combinedCompletion = { ...local11, ...local12 };
 
-    // 2. Fetch from API and Merge
-    for (const std of stds) {
-      const res = await fetch(`${API_BASE_URL}/api/progress/${userId}?course=${encodeURIComponent(course)}&standard=${std}`);
-      const data = await res.json();
+    // Set immediate state so user sees something while network loads
+    setSubjectCompletion(combinedCompletion);
+
+    // 2. Parallel API Fetch
+    const promises = stds.map(std =>
+      fetch(`${API_BASE_URL}/api/progress/${userId}?course=${encodeURIComponent(course)}&standard=${std}`)
+        .then(res => res.json())
+        .catch(err => ({ subjectCompletion: {} })) // Handle error per request
+    );
+
+    const results = await Promise.all(promises);
+
+    // 3. Merge Results
+    results.forEach(data => {
       if (data?.subjectCompletion) {
         combinedCompletion = { ...combinedCompletion, ...data.subjectCompletion };
       }
-    }
+    });
+
     setSubjectCompletion(combinedCompletion);
   } catch (err) {
     console.error("❌ Error loading subject progress:", err);
@@ -224,8 +235,20 @@ const Subjects = () => {
 
 
 
+  // ✅ FIX: Update 'certified' status based on actual completion state
   const normalizedSubjects = subjectList.map((sub) => {
-    return sub;
+    const course = "NEET";
+    const key11 = `${course}_11th_${sub.name}`;
+    const key12 = `${course}_12th_${sub.name}`;
+
+    const val11 = subjectCompletion?.[key11];
+    const val12 = subjectCompletion?.[key12];
+
+    const is11Done = val11 === 100 || val11 === true || val11 === "completed";
+    const is12Done = val12 === 100 || val12 === true || val12 === "completed";
+
+    // A subject is "Fully Completed" (Certified) only if BOTH 11th & 12th are done
+    return { ...sub, certified: is11Done && is12Done };
   });
 
   const progressPercentage = calculateProgress();
@@ -256,19 +279,34 @@ const Subjects = () => {
     let finalExamQuestions = [];
 
     try {
-      const subjectPromises = subjectConfig.map(async (sub) => {
-        let subjectPool = [];
-        const stdPromises = standardsToFetch.map(stdNum =>
+
+      const allPromises = subjectConfig.flatMap(sub =>
+        standardsToFetch.map(stdNum =>
           fetch(`${API_BASE_URL}/api/getAllUnits/${courseName}/${sub.name}/${stdNum}`, { credentials: "include" })
             .then(res => res.json())
-            .then(data => (Array.isArray(data) ? data : []))
-        );
-        const stdResults = await Promise.all(stdPromises);
-        stdResults.forEach(data => {
-          subjectPool = [...subjectPool, ...extractQuestionsFromUnits(data)];
+            .then(data => ({
+              subject: sub.name,
+              data: Array.isArray(data) ? data : []
+            }))
+            .catch(() => ({ subject: sub.name, data: [] }))
+        )
+      );
+
+      const allResults = await Promise.all(allPromises);
+
+      // Process data in memory (much faster than waiting for network)
+      subjectConfig.forEach(sub => {
+        let subjectPool = [];
+
+        // Filter results specific to this subject
+        const relevantResults = allResults.filter(r => r.subject === sub.name);
+
+        relevantResults.forEach(res => {
+          subjectPool = [...subjectPool, ...extractQuestionsFromUnits(res.data)];
         });
+
         const shuffledPool = shuffleArray([...subjectPool]);
-        return shuffledPool.slice(0, sub.count);
+        finalExamQuestions = [...finalExamQuestions, ...shuffledPool.slice(0, sub.count)];
       });
 
       const results = await Promise.all(subjectPromises);

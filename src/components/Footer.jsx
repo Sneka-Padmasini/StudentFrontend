@@ -1,16 +1,21 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import {FaFacebook, FaInstagram, FaYoutube } from "react-icons/fa";
+import { FaFacebook, FaInstagram, FaYoutube } from "react-icons/fa";
 import "./Footer.css";
+// ✅ FIX: Import directly from the same folder
+import { useUser } from "./UserContext";
 
 const Footer = () => {
+  const { currentUser } = useUser();
+
   return (
     <footer className="footer">
       <p className="foot">@2025, Padmasini innovations Pvt Ltd. All rights reserved</p>
       <p className="foot">
-        For any enquiry:&nbsp;
+        {currentUser ? "Need help? " : "For any enquiry: "}
+
         <Link to="/contact-us" className="footer-link">
-          Contact Us
+          {currentUser ? "Contact Support" : "Contact Us"}
         </Link>
       </p>
 

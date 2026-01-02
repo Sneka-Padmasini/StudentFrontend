@@ -33,6 +33,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
   const [showResultPopup, setShowResultPopup] = useState(false);
   const [isTrackerOpen, setIsTrackerOpen] = useState(true);
 
+  const [feedbackMap, setFeedbackMap] = useState({});
 
   // --- NEW SPEECH SETUP ---
   const synth = window.speechSynthesis;
@@ -253,23 +254,45 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     setIsComplete(isAlreadyComplete);
   }, [isAlreadyComplete, subtopicTitle]);
 
+  const getRandomMsg = (type) => {
+    const correctPhrases = [
+      "Well Done!", "Excellent Work!", "Spot On!", "Great Answer!",
+      "You Nailed It!", "Correct!", "Fantastic!"
+    ];
+    const wrongPhrases = [
+      "Nice Try! Keep Rising!", "Good Attempt!", "Don't Give Up!",
+      "Keep Trying!", "Learning in Progress!", "Almost There!"
+    ];
+
+    const list = type === 'correct' ? correctPhrases : wrongPhrases;
+    return list[Math.floor(Math.random() * list.length)];
+  };
+
 
   const handleOptionChange = (selected) => {
     const updatedAnswers = [...userAnswers];
     updatedAnswers[currentQIndex] = selected;
     setUserAnswers(updatedAnswers);
 
+    const currentQ = questions[currentQIndex];
+    const correctAns = currentQ[`option${Number(currentQ.correctIndex) + 1}`];
+    const isCorrect = selected === correctAns;
+
+    // ✅ NEW: Generate a random phrase for this specific question attempt
+    const randomPhrase = getRandomMsg(isCorrect ? 'correct' : 'wrong');
+
+    // ✅ NEW: Save this phrase to state mapped by Question Index
+    setFeedbackMap(prev => ({
+      ...prev,
+      [currentQIndex]: randomPhrase
+    }));
+
     // ✅ Voice Logic check
     if (isVoiceEnabled && !isMuted) {
-      const currentQ = questions[currentQIndex];
-      const correctAns = currentQ[`option${Number(currentQ.correctIndex) + 1}`];
       const explanationText = cleanTextForSpeech(currentQ.explanation || "No explanation available.");
 
-      if (selected === correctAns) {
-        speakText("Correct Answer! " + explanationText);
-      } else {
-        speakText(`Wrong Answer. ${explanationText}`);
-      }
+      // ✅ NEW: Use the random phrase in speech
+      speakText(`${randomPhrase}. ${explanationText}`);
     }
   };
 
@@ -290,21 +313,7 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
   };
 
 
-  // const getPassingScore = () => {
-  //   if (isVoiceEnabled) return 100;
 
-  //   // Normalize input to handle potential nulls or different cases
-  //   const safeSeverity = (severity || "").toString();
-
-  //   // Check for "Competent" OR "Low" (Target: 70%)
-  //   if (safeSeverity === "Low" || safeSeverity.includes("Competent")) return 70;
-
-  //   // Check for "Expert" OR "High" (Target: 90%)
-  //   if (safeSeverity === "High" || safeSeverity.includes("Expert")) return 90;
-
-  //   // Default for "Medium", "Proficient" (Target: 80%)
-  //   return 80;
-  // };
 
   const getPassingScore = () => {
     if (isVoiceEnabled) return 100;
@@ -349,28 +358,6 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
     setShowResultPopup(true);
   };
 
-  // const handleSubmit = () => {
-  //   if (synth.speaking) synth.cancel();
-  //   setSubmitted(true);
-  //   setShowConfirmation(false);
-  //   sessionStorage.setItem(`answers-neet-${subtopicTitle}`, JSON.stringify(userAnswers));
-  //   sessionStorage.setItem(`quizData-neet-${subtopicTitle}`, JSON.stringify(questions));
-
-  //   const finalScore = calculateNEETScore();
-  //   const maxMarks = questions.length * (isVoiceEnabled ? 1 : 4);
-  //   const percentage = maxMarks > 0 ? ((finalScore / maxMarks) * 100).toFixed(2) : 0;
-
-  //   // ✅ Use the calculated passing score
-  //   if (parseFloat(percentage) >= passingScore) {
-  //     console.log("🎯 Perfect score! Marking as complete...");
-  //     setIsComplete(true);
-  //     if (onMarkComplete) {
-  //       onMarkComplete();
-  //     }
-  //   }
-
-  //   setShowResultPopup(true);
-  // };
 
   const handleMarkComplete = () => {
     console.log("🔄 Manually marking test as complete");
@@ -423,57 +410,47 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
   };
 
 
-  // 🎨 Helper: Get motivational message & color based on percentage
+
+  // 🎨 Helper: Get RANDOM motivational message based on percentage
   const getResultFeedback = (percentage) => {
     const p = parseFloat(percentage);
-    if (p === 100) return { message: "Excellent! You are a Champion! 🏆", color: "#4CAF50", emoji: "🌟" };
-    if (p >= 90) return { message: "Awesome! Almost There! 🚀", color: "#2196F3", emoji: "🔥" };
-    if (p >= 80) return { message: "Good Job! Push Harder! 💪", color: "#FF9800", emoji: "⚡" };
-    if (p >= 70) return { message: "Good Try! Work More! 🌱", color: "#FFC107", emoji: "📈" };
-    if (p >= 50) return { message: "Set a Goal! Work Hard! 🎯", color: "#FF5722", emoji: "📝" };
-    return { message: "Don't Give Up! Continue Learning! ⏳", color: "#F44336", emoji: "📚" };
+
+    // Helper to pick random
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    if (p === 100) return {
+      message: pick(["Excellent! You are a Champion! 🏆", "Perfection! Outstanding Performance! 🌟", "Flawless Victory! You nailed it! 💎"]),
+      color: "#4CAF50",
+      emoji: "🌟"
+    };
+    if (p >= 90) return {
+      message: pick(["Awesome! Almost There! 🚀", "Incredible Job! So Close! 🔥", "Superb! Just a little more! 💫"]),
+      color: "#2196F3",
+      emoji: "🔥"
+    };
+    if (p >= 80) return {
+      message: pick(["Good Job! Push Harder! 💪", "Great Effort! Keep it up! ⚡", "Solid Score! You're doing well! 🚀"]),
+      color: "#FF9800",
+      emoji: "⚡"
+    };
+    if (p >= 70) return {
+      message: pick(["Good Try! Work More! 🌱", "Nice Attempt! Keep practicing! 📈", "Not Bad! You're improving! 🌿"]),
+      color: "#FFC107",
+      emoji: "📈"
+    };
+    if (p >= 50) return {
+      message: pick(["Set a Goal! Work Hard! 🎯", "Keep Studying! You can do this! 📝", "Focus and Try Again! 🧐"]),
+      color: "#FF5722",
+      emoji: "📝"
+    };
+    return {
+      message: pick(["Don't Give Up! Continue Learning! ⏳", "Failure is part of learning! 📚", "Keep pushing! Your time will come! 🕰️"]),
+      color: "#F44336",
+      emoji: "📚"
+    };
   };
 
-  // 🎨 Helper: Get motivational message & color based on percentage from env file 
-  // const getResultFeedback = (percentage) => {
-  //   const p = parseFloat(percentage);
 
-  //   if (p === 100) return {
-  //     message: import.meta.env.VITE_FEEDBACK_MSG_100 || "Excellent! You are a Champion! 🏆",
-  //     color: "#4CAF50",
-  //     emoji: "🌟"
-  //   };
-
-  //   if (p >= 90) return {
-  //     message: import.meta.env.VITE_FEEDBACK_MSG_90 || "Awesome! Almost There! 🚀",
-  //     color: "#2196F3",
-  //     emoji: "🔥"
-  //   };
-
-  //   if (p >= 80) return {
-  //     message: import.meta.env.VITE_FEEDBACK_MSG_80 || "Good Job! Push Harder! 💪",
-  //     color: "#FF9800",
-  //     emoji: "⚡"
-  //   };
-
-  //   if (p >= 70) return {
-  //     message: import.meta.env.VITE_FEEDBACK_MSG_70 || "Good Try! Work More! 🌱",
-  //     color: "#FFC107",
-  //     emoji: "📈"
-  //   };
-
-  //   if (p >= 50) return {
-  //     message: import.meta.env.VITE_FEEDBACK_MSG_50 || "Set a Goal! Work Hard! 🎯",
-  //     color: "#FF5722",
-  //     emoji: "📝"
-  //   };
-
-  //   return {
-  //     message: import.meta.env.VITE_FEEDBACK_MSG_FAIL || "Don't Give Up! Continue Learning! ⏳",
-  //     color: "#F44336",
-  //     emoji: "📚"
-  //   };
-  // };
 
   const feedback = getResultFeedback(percentage);
 
@@ -679,9 +656,18 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                     {/* Feedback Message (Correct/Wrong) */}
                     {showSolutionNow && userAnswers[currentQIndex] !== "" && (
                       <p className={`feedback-msg ${userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`] ? "correct" : "incorrect"}`}>
-                        {userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`]
-                          ? ` ${isVoiceEnabled ? "Well Done!" : "Well Done! (+4)"} 🌟`
-                          : `${isVoiceEnabled ? "Nice Try! Keep Rising!" : "Nice Try! Keep Rising! (-1)"} 💪`}
+
+                        {/* ✅ NEW: Display the random message stored in feedbackMap */}
+                        {feedbackMap[currentQIndex] || (userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`] ? "Well Done!" : "Nice Try!")}
+
+                        {/* Show points if NOT voice enabled */}
+                        {!isVoiceEnabled && (
+                          userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`]
+                            ? " (+4)"
+                            : " (-1)"
+                        )}
+
+                        {userAnswers[currentQIndex] === currentQuestion[`option${Number(currentQuestion.correctIndex) + 1}`] ? " 🌟" : " 💪"}
                       </p>
                     )}
 
@@ -735,11 +721,19 @@ const NeetQuiz = ({ topicTitle, subtopicTitle, test, onBack, onMarkComplete, isA
                     )}
                   </div>
 
+
+
                   {showConfirmation && (
                     <div className="confirmation-popup">
                       <p>Are you sure you want to submit your answers?</p>
-                      <button onClick={handleSubmit} className="confirm-btn">Yes</button>
-                      <button onClick={() => setShowConfirmation(false)} className="cancel-btn">No</button>
+
+                      {/* ✅ ADD THIS WRAPPER DIV */}
+                      <div className="popup-buttons">
+                        <button onClick={handleSubmit} className="confirm-btn">Yes</button>
+                        <button onClick={() => setShowConfirmation(false)} className="cancel-btn">No</button>
+                      </div>
+                      {/* ✅ END WRAPPER DIV */}
+
                     </div>
                   )}
                 </div>

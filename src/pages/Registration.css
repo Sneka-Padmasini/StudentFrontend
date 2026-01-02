@@ -528,7 +528,7 @@
   border: 1px solid #ccc;
   border-radius: 10px;
   padding: 20px;
-  animation: fadeInUp 0.6s ease forwards;
+  animation: none;
 }
 
 .payment-options-modal h3 {
@@ -784,4 +784,101 @@
   flex-shrink: 0 !important;
   /* prevent shrinking */
   vertical-align: middle !important;
+}
+
+
+
+/* ================= GST SUMMARY BOX ================= */
+/* .gst-summary-box {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-bottom: 20px;
+  text-align: left;
+  max-width: 400px;
+  margin: 0 auto 20px auto;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.gst-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  color: #333;
+}
+
+.gst-row.sub-text {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.gst-divider {
+  border-top: 1px solid #ccc;
+  margin: 10px 0;
+}
+
+.gst-row.total-row {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #0e651f;
+  margin-bottom: 0;
+} */
+
+/* ================= GST SUMMARY BOX (Static & Visible) ================= */
+.gst-summary-box {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-bottom: 20px;
+  text-align: left;
+  max-width: 400px;
+  margin: 0 auto 20px auto;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+
+  /* 🔴 CRITICAL FIX: Kill animations but FORCE visibility */
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+  /* Ensures it doesn't disappear */
+  visibility: visible !important;
+}
+
+/* ✅ Also stop the rows/text inside from sliding */
+.gst-summary-box * {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+.gst-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  color: #333;
+}
+
+.gst-row.sub-text {
+  font-size: 0.9rem;
+  color: #555;
+  font-weight: 500;
+  display: flex;
+}
+
+.gst-divider {
+  border-top: 1px solid #ccc;
+  margin: 10px 0;
+}
+
+.gst-row.total-row {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #0e651f;
+  /* Padmasini Green */
+  margin-bottom: 0;
 }

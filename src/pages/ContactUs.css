@@ -3,10 +3,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 100vh;
+  justify-content: flex-start;
+  /* Changed from 'center' to 'flex-start' so it starts at the top */
+  min-height: 100vh;
+  /* Changed to min-height to allow scrolling on small screens */
   font-family: Arial, sans-serif;
-  margin-top: 100px;
+  margin-top: 60px;
+  /* Reduced from 100px to 40px (adjust this if it's too close to your navbar) */
+  padding-bottom: 50px;
+  /* Adds some breathing room at the bottom */
 }
 
 /* Heading */
@@ -16,7 +21,7 @@
   font-size: 24px;
   padding: 10px 20px;
   border-radius: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 0px;
   text-align: center;
 }
 
@@ -26,12 +31,13 @@
   max-width: 600px;
   /* Increased width */
   background: linear-gradient(to bottom, #d1fad7, #cbd7c3);
-  flex: 1;
-  padding: 40px 40px;
+  /* flex: 1; */
+  height: auto;
+  padding: 20px 30px 15px 30px;
   /* Increased padding */
   border-radius: 16px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-  margin: 20px auto;
+  margin: 10px auto;
 }
 
 /* Form Layout */
@@ -66,8 +72,12 @@ form textarea:hover {
 
 /* Textarea Specifics */
 form textarea {
-  height: 120px;
+  height: 60px;
+  /* ✅ Reduced from 120px to 60px */
   resize: vertical;
+  /* Allows user to expand if needed */
+  min-height: 40px;
+  /* Prevents it from becoming too small */
 }
 
 /* Placeholder styling */
@@ -290,4 +300,46 @@ form textarea::placeholder {
     width: 20px;
     height: 20px;
   }
+}
+
+/* Dropdown Styling */
+form select {
+  width: 100%;
+  padding: 14px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+  background-color: white;
+  cursor: pointer;
+}
+
+form select:hover {
+  border-color: #00ff26;
+}
+
+/* File Input Container */
+.file-input-container {
+  margin: 10px 0;
+  width: 100%;
+}
+
+.file-label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 14px;
+  color: #555;
+  font-weight: 500;
+}
+
+/* File Input Styling */
+form input[type="file"] {
+  padding: 10px;
+  background-color: #f9f9f9;
+  border: 1px dashed #ccc;
+}
+
+form input[type="file"]:hover {
+  background-color: #f1fff3;
+  border-color: #28a745;
 }

@@ -12,8 +12,8 @@ const Profile = () => {
 
     // Form State
     const [formData, setFormData] = useState({
-        comfortableDailyHours: "",
-        severity: "Medium",
+        comfortableDailyHours: currentUser?.comfortableDailyHours || "",
+        severity: currentUser?.severity || "Medium",
     });
 
     // Sync state with user data
@@ -49,21 +49,22 @@ const Profile = () => {
             const data = await response.json();
 
             if (response.ok) {
-                // 1. Create the Master User Object with new values
+                // 2. Prepare updated user object
                 const updatedUser = {
                     ...currentUser,
                     comfortableDailyHours: parseInt(formData.comfortableDailyHours),
-                    severity: formData.severity // Ensure this is sending the string (e.g., "Proficient")
+                    severity: formData.severity
                 };
 
-                // 2. CRITICAL: Update Local Storage FIRST (Persists data)
+                // 3. Update Storage & Context synchronously
                 localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-
-                // 3. Update Context (Updates app state)
                 login(updatedUser);
 
                 setIsEditing(false);
-                alert("Profile updated successfully!");
+
+                // 4. Force Hard Reload to sync Backend Session
+                alert("Profile updated successfully! Refreshing data...");
+                window.location.href = window.location.href;
             } else {
                 alert(data.message || "Failed to update profile");
             }
@@ -89,21 +90,6 @@ const Profile = () => {
                 <div className="profile-card">
                     <div className="card-header-row">
                         <h1>My Profile</h1>
-
-                        {!isEditing ? (
-                            <button className="edit-btn" onClick={() => setIsEditing(true)}>
-                                <FaUserEdit /> Edit
-                            </button>
-                        ) : (
-                            <div className="edit-actions">
-                                <button className="cancel-btn" onClick={() => setIsEditing(false)} disabled={loading}>
-                                    <FaTimes /> Cancel
-                                </button>
-                                <button className="save-btn" onClick={handleSave} disabled={loading}>
-                                    <FaSave /> {loading ? "Saving..." : "Save"}
-                                </button>
-                            </div>
-                        )}
                     </div>
 
                     <hr className="divider" />
@@ -143,8 +129,29 @@ const Profile = () => {
                     <hr className="divider" />
 
                     {/* --- Editable Preference Section --- */}
+
                     <div className="profile-section">
-                        <h3 className="section-title">Study Preferences</h3>
+                        {/* ✅ UPDATED HEADER WITH BUTTONS */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                            <h3 className="section-title" style={{ margin: 0, borderBottom: 'none' }}>Study Preferences</h3>
+
+                            {!isEditing ? (
+                                <button className="edit-btn" style={{ padding: '6px 12px', fontSize: '0.85rem' }} onClick={() => setIsEditing(true)}>
+                                    <FaUserEdit /> Edit
+                                </button>
+                            ) : (
+                                <div className="edit-actions">
+                                    <button className="cancel-btn" style={{ padding: '6px 12px', fontSize: '0.85rem' }} onClick={() => setIsEditing(false)} disabled={loading}>
+                                        <FaTimes />
+                                    </button>
+                                    <button className="save-btn" style={{ padding: '6px 12px', fontSize: '0.85rem' }} onClick={handleSave} disabled={loading}>
+                                        <FaSave /> Save
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ borderBottom: '2px solid #e9fdec', marginBottom: '20px' }}></div>
 
                         <div className="detail-row">
                             <span className="label">Comfortable Study Hours (Daily):</span>

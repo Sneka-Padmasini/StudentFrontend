@@ -211,23 +211,34 @@
 /* src/Pages/PricingPage.css */
 
 /* Add this new class for the strikethrough effect */
+/* src/Pages/PricingPage.css */
+
 .original-price {
     text-decoration: line-through;
-    color: #999;
-    /* Grey color to show it's inactive */
-    font-size: 1rem;
-    /* Smaller than the main price */
+
+    /* 🔴 1. Text Color: Sets the number to Red */
+    color: #dc3545;
+
+    /* ⚫ 2. Line Color: Sets the cut line to Grey (or use #000 for black) */
+    text-decoration-color: #555;
+
+    /* Optional: Thickness */
+    text-decoration-thickness: 2px;
+
+    font-size: 1.1rem;
     margin-bottom: -5px;
-    /* Pull it closer to the main price */
-    font-weight: 500;
+    font-weight: 600;
+    opacity: 0.9;
 }
 
-/* Update price-amount slightly to align well with the strikethrough above it */
+/* Updated: Offer price is BIGGER */
 .price-amount {
-    font-size: 1.5em;
-    font-weight: bold;
+    font-size: 1.9em;
+    /* 🟢 Increased from 1.5em to 1.9em */
+    font-weight: 800;
+    /* Extra bold */
     color: var(--padmasini-green);
-    line-height: 1.2;
+    line-height: 1.1;
 }
 
 /* Ensure the text descriptions stay aligned */

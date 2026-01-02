@@ -1,67 +1,373 @@
+/* OVERLAY */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(5px);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 2000;
-    /* High z-index to stay on top */
 }
 
-.modal-content {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    text-align: center;
+/* WIZARD CARD - DESKTOP DEFAULT */
+.wizard-modal {
+    background: #ffffff;
     width: 90%;
-    max-width: 400px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    animation: fadeIn 0.3s ease;
+    max-width: 450px;
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: popIn 0.3s ease-out;
 }
 
-.goal-input-container {
-    margin: 20px 0;
+/* HEADER */
+.wizard-header {
+    background: #f8f9fa;
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+}
+
+.wizard-header h2 {
+    margin: 0 0 10px 0;
+    font-size: 1.4rem;
+    color: #333;
+}
+
+/* PROGRESS DOTS */
+.step-indicators {
     display: flex;
     justify-content: center;
+    gap: 8px;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    background: #ddd;
+    border-radius: 50%;
+    transition: background 0.3s ease;
+}
+
+.dot.active {
+    background: #006400;
+    /* Theme Green */
+}
+
+/* BODY CONTENT */
+.wizard-body {
+    padding: 30px 25px;
+    text-align: center;
+    min-height: 280px;
+    display: flex;
     align-items: center;
+    justify-content: center;
+}
+
+.step-content {
+    width: 100%;
+}
+
+.icon-badge {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    display: inline-block;
+    background: #f0fdf4;
+    width: 70px;
+    height: 70px;
+    line-height: 70px;
+    border-radius: 50%;
+}
+
+.step-content h3 {
+    margin: 10px 0;
+    font-size: 1.3rem;
+    color: #006400;
+}
+
+.step-content p {
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+/* PREMIUM NOTE STYLE */
+.premium-note {
+    color: #2e7d32 !important;
+    background: #e8f5e9;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem !important;
+    margin-bottom: 15px !important;
+    border: 1px solid #c8e6c9;
+}
+
+/* STEP 1 INPUT */
+.input-group-large {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     gap: 10px;
 }
 
-.goal-input-container input {
-    padding: 10px;
-    font-size: 18px;
+.input-group-large input {
     width: 80px;
+    font-size: 2rem;
     text-align: center;
-    border: 2px solid #28a745;
-    border-radius: 5px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 5px;
+    color: #333;
+    outline: none;
+    transition: border-color 0.2s;
 }
 
-.save-goal-btn {
-    background: #28a745;
+.input-group-large input:focus {
+    border-color: #006400;
+}
+
+/* STEP 2 INSIGHT */
+.insight-box {
+    background: #fff8e1;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #ffe0b2;
+}
+
+.big-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #e65100;
+    margin-bottom: 5px;
+}
+
+.sub-text {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+/* STEP 3 DROPDOWN & SCORE */
+.select-wrapper {
+    position: relative;
+    max-width: 320px;
+    margin: 0 auto 10px auto;
+}
+
+.severity-dropdown {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+    cursor: pointer;
+    background: white;
+    font-weight: 500;
+    color: #333;
+}
+
+.severity-dropdown:focus {
+    border-color: #006400;
+}
+
+.score-display {
+    font-size: 1rem;
+    color: #333;
+    margin: 10px 0;
+    background: #f0fdf4;
+    display: inline-block;
+    padding: 5px 15px;
+    border-radius: 20px;
+    border: 1px solid #c8e6c9;
+}
+
+.score-display strong {
+    color: #006400;
+    font-size: 1.1rem;
+}
+
+.hint-box {
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 6px;
+    color: #555;
+    font-size: 0.8rem;
+    border: 1px dashed #ccc;
+    margin-top: 10px;
+}
+
+/* FOOTER BUTTONS */
+.wizard-footer {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #eee;
+}
+
+.nav-btn {
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.back-btn {
+    background: #f1f1f1;
+    color: #555;
+    border: 1px solid transparent;
+}
+
+.back-btn:hover {
+    background: #e0e0e0;
+}
+
+.next-btn {
+    background: #006400;
     color: white;
     border: none;
-    padding: 10px 25px;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
 }
 
-.save-goal-btn:hover {
-    background: #218838;
+.next-btn:hover {
+    background: #004d00;
+}
+
+.finish-btn {
+    background: linear-gradient(135deg, #006400, #008000);
+    color: white;
+    border: none;
+    padding: 10px 30px;
+    box-shadow: 0 4px 10px rgba(0, 100, 0, 0.2);
+}
+
+.finish-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(0, 100, 0, 0.3);
+}
+
+/* ANIMATIONS */
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.4s ease-out;
 }
 
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(-20px);
+        transform: translateX(10px);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateX(0);
+    }
+}
+
+/* ========================================= */
+/* ✅ MOBILE OPTIMIZATIONS (The Fix) */
+/* ========================================= */
+@media (max-width: 480px) {
+    .wizard-modal {
+        width: 90%;
+        /* Slight margin on sides */
+        max-width: 100%;
+        border-radius: 12px;
+    }
+
+    /* Header Compact */
+    .wizard-header {
+        padding: 15px;
+    }
+
+    .wizard-header h2 {
+        font-size: 1.2rem;
+        margin-bottom: 8px;
+    }
+
+    /* Body Compact */
+    .wizard-body {
+        padding: 15px 15px;
+        /* Reduce padding significantly */
+        min-height: auto;
+        /* Remove fixed height to fit content naturally */
+    }
+
+    /* Smaller Icon */
+    .icon-badge {
+        width: 50px;
+        height: 50px;
+        line-height: 50px;
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+    }
+
+    /* Smaller Titles */
+    .step-content h3 {
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+    }
+
+    /* Smaller Text */
+    .step-content p,
+    .premium-note {
+        font-size: 0.85rem !important;
+        margin-bottom: 15px;
+    }
+
+    /* Input Size Fix */
+    .input-group-large input {
+        width: 60px;
+        font-size: 1.5rem;
+        padding: 5px;
+    }
+
+    .input-group-large span {
+        font-size: 0.9rem;
+    }
+
+    /* Insight Box Compact */
+    .insight-box {
+        padding: 15px;
+    }
+
+    .big-number {
+        font-size: 1.5rem;
+    }
+
+    /* Dropdown Compact */
+    .severity-dropdown {
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+
+    /* Footer Compact */
+    .wizard-footer {
+        padding: 15px;
+    }
+
+    .nav-btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
     }
 }

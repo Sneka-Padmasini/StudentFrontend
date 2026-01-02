@@ -17,8 +17,9 @@
 .explanation-scroll-area {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
-  padding-bottom: 80px;
+
+  /* ✅ FIX: Set Top Padding to 0 (Right/Left are 20px, Bottom is 80px) */
+  padding: 0 20px 80px 20px;
 }
 
 .explanation-content {
@@ -547,5 +548,117 @@
   .nav-btn {
     width: 100%;
     max-width: 100%;
+  }
+}
+
+
+/* ========================================= */
+/* ✅ DESKTOP LAYOUT (Laptop Friendly) */
+/* ========================================= */
+
+/* 1. Split Container (Video Mode) */
+.split-layout-container {
+  display: flex;
+  flex-direction: row;
+  gap: 30px;
+  align-items: flex-start;
+  margin-top: 15px;
+
+  /* ✅ FIX: Increased subtraction from 200px to 260px to make the box shorter */
+  height: calc(80vh - 260px);
+
+  min-height: 400px;
+  overflow: hidden;
+}
+
+/* 2. Video Side */
+.split-video-side {
+  flex: 0 0 45%;
+  /* Slightly narrower video column */
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  /* Align video to top */
+}
+
+.Neet-container .explanation-container .ai-video-container video {
+  width: 100%;
+  height: auto;
+  /* ✅ FIX 4: Reduce Max Height of video so it doesn't overpower the screen */
+  max-height: 50vh;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  background: #000;
+}
+
+/* 3. Text Side (The Box) */
+.split-text-side {
+  flex: 1;
+  height: 100%;
+  overflow-y: auto;
+  /* Internal Scroll */
+
+  /* ✅ Box Styling (Only applies when video exists) */
+  background: #ffffff;
+  padding: 25px;
+  padding-right: 15px;
+  /* Space for scrollbar */
+  border-radius: 16px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* ========================================= */
+/* 🛑 NO VIDEO CASE (Restores Old Style) */
+/* ========================================= */
+
+/* Reset container to normal flow */
+.split-layout-container.no-video-layout {
+  display: block;
+  height: auto;
+  overflow: visible;
+  margin-top: 0;
+}
+
+/* Remove ALL box styling when no video */
+.split-text-side.full-width {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* ========================================= */
+/* 📱 MOBILE RESPONSIVENESS */
+/* ========================================= */
+@media (max-width: 1024px) {
+  .split-layout-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: auto;
+    overflow: visible;
+  }
+
+  .split-video-side {
+    flex: none;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Remove box styling on mobile too */
+  .split-text-side {
+    width: 100%;
+    height: auto;
+    overflow-y: visible;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
   }
 }

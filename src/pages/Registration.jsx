@@ -233,10 +233,7 @@ const RegistrationFlow = () => {
     const user = JSON.parse(localStorage.getItem(storageKey) || "{}");
 
     if (isUpgrade) {
-      // ==========================================
-      // ✅ UPGRADE PATH (PUT Request)
-      // ==========================================
-      // We use JSON body for upgrade to preserve progress
+
       try {
         const response = await fetch(`${API_BASE_URL}/api/upgradePlan/${user.email}`, {
           method: 'PUT',
@@ -374,19 +371,31 @@ const RegistrationFlow = () => {
     }
   };
 
-  // --- PAYMENT HANDLERS ---
+
+
   const displayRazorpay = async () => {
     if (isPaying) return;
     setIsPaying(true);
 
-    const price = getPlanPrice(selectedPlan);
+    // 1. Get Base Price
+    const basePrice = getPlanPrice(selectedPlan);
+
+    // 2. Calculate GST (9% CGST + 9% SGST = 18% Total)
+    const gstRate = 0.18;
+    const gstAmount = basePrice * gstRate;
+    const totalPrice = basePrice + gstAmount;
+
+    // Optional: Log to verify
+    console.log(`Base: ${basePrice}, GST: ${gstAmount}, Total: ${totalPrice}`);
+
     const storageKey = isUpgrade ? "upgradingUser" : "registeredUser";
     const user = JSON.parse(localStorage.getItem(storageKey) || "{}");
 
     try {
+      // 3. Send TOTAL PRICE to Backend
       const orderResponse = await fetch(`${API_BASE_URL}/api/payment/create-order`, {
         method: 'POST',
-        body: JSON.stringify({ amount: price, plan: selectedPlan }),
+        body: JSON.stringify({ amount: basePrice, plan: selectedPlan }), // Changed from 'totalPrice' to 'basePrice'
         headers: { 'Content-Type': 'application/json' }
       });
 
@@ -399,13 +408,12 @@ const RegistrationFlow = () => {
       const orderData = await orderResponse.json();
       const options = {
         key: RAZORPAY_KEY_ID,
-        amount: orderData.amount,
+        amount: orderData.amount, // This is already in paise from backend
         currency: orderData.currency,
         name: "Padmasini Learning",
-        description: `${selectedPlan} Plan`,
+        description: `${selectedPlan} Plan (Inc. GST)`, // Updated description
         order_id: orderData.id,
         handler: async function (response) {
-          // Verification
           const verifyRes = await fetch(`${API_BASE_URL}/api/payment/verify`, {
             method: 'POST',
             body: JSON.stringify({
@@ -419,23 +427,13 @@ const RegistrationFlow = () => {
           });
 
           if (verifyRes.ok) {
-            const verifyData = await verifyRes.json(); // ✅ Parse JSON response
-
-            // ✅ Pass the retrieved payerId (UPI ID) to the success handler
+            const verifyData = await verifyRes.json();
             handleSuccessfulPayment(response.razorpay_payment_id, verifyData.payerId);
           } else {
             alert("Payment Verification Failed");
             setIsPaying(false);
           }
         },
-
-        //   if (verifyRes.ok) {
-        //     handleSuccessfulPayment(response.razorpay_payment_id);
-        //   } else {
-        //     alert("Payment Verification Failed");
-        //     setIsPaying(false);
-        //   }
-        // },
         prefill: {
           name: `${user.firstname} ${user.lastname}`,
           email: user.email,
@@ -458,26 +456,6 @@ const RegistrationFlow = () => {
     }
   };
 
-  // const handleSuccessfulPayment = (paymentId) => {
-  //   setPaymentSuccess(true);
-  //   setIsPaying(false);
-
-  //   const storageKey = isUpgrade ? "upgradingUser" : "registeredUser";
-  //   const user = JSON.parse(localStorage.getItem(storageKey) || "{}");
-
-  //   // ✅ Set Payment & Date Details
-  //   user.plan = selectedPlan;
-  //   user.startDate = new Date().toISOString().split("T")[0];
-  //   user.endDate = calculateEndDate(selectedPlan);
-  //   user.paymentId = paymentId;
-  //   user.paymentMethod = "Razorpay";
-  //   user.amountPaid = getPlanPrice(selectedPlan).toString();
-
-  //   localStorage.setItem(storageKey, JSON.stringify(user));
-
-  //   // ✅ Trigger Final API Call
-  //   sendUserDetails();
-  // };
 
   // ✅ Accept payerId as 2nd argument
   const handleSuccessfulPayment = (paymentId, payerId) => {
@@ -674,11 +652,7 @@ const RegistrationFlow = () => {
                         </div>
                       )}
 
-                      {/* <div className="input-group">
-                        <label>Comfortable Study Hours/Day:</label>
-                        <input type="number" value={dailyHours} onChange={e => setDailyHours(e.target.value)} />
-                        <p style={{ fontSize: "12px", color: "green" }}>{calcMessage}</p>
-                      </div> */}
+
 
                       <div className="student-navigation-buttons">
                         <button type="button" onClick={() => (isUpgrade ? navigate("/home") : setStep(1))}>
@@ -702,17 +676,30 @@ const RegistrationFlow = () => {
           {step === 3 && (
             <div className="payment-section">
               <h2>{isUpgrade ? "Upgrade Plan" : `Pay for ${selectedPlan} Plan`}</h2>
-              <p className="plan-summary">
-                {/* Selected Plan: {selectedPlan} ({selectedPlan === 'monthly' ? '₹1000' : '₹10000'}) */}
-                Selected Plan: {selectedPlan} ({selectedPlan === 'monthly' ? '₹3000' : '₹33000'})
-              </p>
+
+              {/* ✅ NEW: GST Breakdown UI (Clean Class Version) */}
+              <div className="gst-summary-box">
+                <div className="gst-row">
+                  <span>Plan Amount:</span>
+                  <span>₹{getPlanPrice(selectedPlan)}</span>
+                </div>
+                <div className="gst-row sub-text">
+                  <span>CGST (9%):</span>
+                  <span>₹{(getPlanPrice(selectedPlan) * 0.09).toFixed(2)}</span>
+                </div>
+                <div className="gst-row sub-text">
+                  <span>SGST (9%):</span>
+                  <span>₹{(getPlanPrice(selectedPlan) * 0.09).toFixed(2)}</span>
+                </div>
+                <div className="gst-divider"></div>
+                <div className="gst-row total-row">
+                  <span>Total Payable:</span>
+                  <span>₹{(getPlanPrice(selectedPlan) * 1.18).toFixed(2)}</span>
+                </div>
+              </div>
 
               <div className="payment-selection">
                 {/* Apply promo code */}
-                {/* <div className="promo-section">
-                  <input type="text" placeholder="Enter Promo Code" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} />
-                  <button onClick={() => alert("Promo Applied: " + promoCode)}>Apply</button>
-                </div> */}
 
                 <div className="razorpay-button-wrapper">
                   {!paymentSuccess ? (

@@ -88,8 +88,6 @@ const PricingPage = () => {
                     </button>
                 </div>
 
-                {/* Plan 2: Paid Plans */}
-                {/* ... inside PricingPage.jsx ... */}
 
                 {/* Plan 2: Paid Plans */}
                 <div className="pricing-card">

@@ -9,39 +9,91 @@ const ContactUs = () => {
     email: "",
     phone: "",
     enquiry: "",
+    category: "", // Default category
+    file: null,
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // ✅ NEW STATE
 
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    // ✅ FIX 1: The key in your browser is "currentUser"
+    const storedUser = localStorage.getItem("currentUser");
+
+    if (storedUser) {
+      setIsLoggedIn(true);
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        console.log("Logged in user found:", parsedUser);
+
+        setFormData((prev) => ({
+          ...prev,
+          // ✅ FIX 2: Map the keys exactly as they appear in your data
+          name: parsedUser.userName || "",
+          email: parsedUser.email || "",
+          phone: parsedUser.phoneNumber || "",
+        }));
+      } catch (e) {
+        console.error("Error parsing user details", e);
+      }
+    }
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    const maxSizeInMB = 20; // Set your limit here (e.g. 20MB)
+
+    if (file) {
+      if (file.size > maxSizeInMB * 1024 * 1024) {
+        alert(`File size exceeds ${maxSizeInMB}MB. Please upload a smaller file.`);
+        e.target.value = null; // Reset input
+        return;
+      }
+      setFormData({ ...formData, file: file });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true); // Start loading
+    setSubmitting(true);
+
+    const dataToSend = new FormData();
+    dataToSend.append("name", formData.name);
+    dataToSend.append("email", formData.email);
+    dataToSend.append("phone", formData.phone);
+    dataToSend.append("category", formData.category);
+    dataToSend.append("enquiry", formData.enquiry);
+
+    if (formData.file) {
+      dataToSend.append("file", formData.file);
+    }
 
     try {
-      const response = await fetch("/send-email", {
+      // ✅ FIX: Use the full path /api/send-email
+      // The proxy in vite.config.js will forward this to http://localhost:8080/api/send-email
+      const response = await fetch("/api/send-email", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+        body: dataToSend,
       });
 
       if (response.ok) {
         setSubmitted(true);
       } else {
-        alert("Failed to send email. Please try again.");
+        // Try to read the error message from backend
+        const errorData = await response.json();
+        alert("Failed: " + (errorData.message || "Unknown error"));
       }
     } catch (err) {
       console.error("Request error:", err);
-      alert("Server not reachable.");
+      alert("Server connection failed. Is the backend running?");
     } finally {
-      setSubmitting(false); // Stop loading
+      setSubmitting(false);
     }
   };
 
@@ -57,7 +109,7 @@ const ContactUs = () => {
 
   return (
     <div className="contact-container">
-      <h2>Contact Us</h2>
+      <h2>{isLoggedIn ? "For Support" : "For Enquiry"}</h2>
       <div className="contact-form-box">
         <form onSubmit={handleSubmit}>
           <input
@@ -85,9 +137,68 @@ const ContactUs = () => {
             onChange={handleChange}
             required
           />
-          <textarea
+
+
+          {/* Category Dropdown */}
+          <select
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            required
+            className="form-select"
+          >
+            <option value="" disabled>Select Category</option>
+
+            {/* ✅ CONDITIONAL OPTIONS */}
+            {isLoggedIn ? (
+              /* Support Options (Logged In) */
+              <>
+                <option value="Video">Video Issue</option>
+                <option value="Test">Test/Quiz Issue</option>
+                <option value="Lesson">Lesson Content</option>
+                <option value="Payment">Payment/Subscription</option>
+                <option value="Others">Others</option>
+              </>
+            ) : (
+              /* Enquiry Options (Not Logged In) */
+              <>
+                <option value="General">General Enquiry</option>
+                <option value="Courses">Course Details</option>
+                <option value="Pricing">Pricing & Plans</option>
+                <option value="LoginIssue">Registration Issue</option>
+                <option value="Others">Others</option>
+              </>
+            )}
+
+
+          </select>
+
+          {/* File Upload Input */}
+          <div className="file-input-container">
+            <label htmlFor="file-upload" className="file-label">
+              Upload Screenshot or Video (Max 20MB)
+            </label>
+            <input
+              id="file-upload"
+              type="file"
+              name="file"
+              accept="image/*,video/*" // Accepts images and videos
+              onChange={handleFileChange}
+              className="form-file"
+            />
+          </div>
+
+          {/* <textarea
             name="enquiry"
             placeholder="Enquiry"
+            value={formData.enquiry}
+            onChange={handleChange}
+            required
+          /> */}
+          <textarea
+            name="enquiry"
+            // ✅ UPDATED PLACEHOLDER
+            placeholder={isLoggedIn ? "Describe your issue..." : "Type your enquiry..."}
             value={formData.enquiry}
             onChange={handleChange}
             required

@@ -307,6 +307,23 @@
   background-color: #c82333;
 }
 
+/* Add this to NeetQuiz.css */
+.popup-buttons {
+  display: flex;
+  justify-content: center;
+  /* Aligns them in the center */
+  gap: 20px;
+  /* Adds space between Yes and No */
+  width: 100%;
+}
+
+/* Optional: Ensure buttons don't shrink */
+.confirmation-popup .confirm-btn,
+.confirmation-popup .cancel-btn {
+  min-width: 80px;
+  /* Makes them look uniform */
+}
+
 /* Timer */
 .timer {
   font-size: 20px;
