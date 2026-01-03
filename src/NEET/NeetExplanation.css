@@ -30,6 +30,17 @@
   padding: 10px 20px;
 }
 
+.full-width-active .explanation-content {
+  max-width: 1200px;
+  /* Increased from 850px */
+  transition: max-width 0.3s ease;
+}
+
+/* Also adjust the split container to stretch */
+.full-width-active .split-layout-container {
+  max-width: 100%;
+}
+
 /* 3. Style the Fixed Footer */
 .explanation-footer {
   flex-shrink: 0;
@@ -461,6 +472,12 @@
   max-width: 500px;
 }
 
+/* Fix: Remove top margin when inside split view so it aligns with text box */
+.split-video-side .ai-video-container {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 .ai-video-container video {
   width: 100%;
   height: auto;
@@ -582,14 +599,17 @@
   /* Align video to top */
 }
 
+
 .Neet-container .explanation-container .ai-video-container video {
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   height: auto;
-  /* ✅ FIX 4: Reduce Max Height of video so it doesn't overpower the screen */
   max-height: 50vh;
+  display: block;
+  margin: 0 auto;
   border-radius: 12px;
+  background-color: transparent;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  background: #000;
 }
 
 /* 3. Text Side (The Box) */

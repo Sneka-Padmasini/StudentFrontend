@@ -14,17 +14,21 @@
 
 /* ========== TOPICS LIST ========== */
 .Neet-container .topics-list {
-  width: 50%;
-  max-width: 520px;
+  width: 30%;
+  /* Reduced from 50% */
+  max-width: 350px;
+  /* Reduced from 520px to make it compact */
+  min-width: 280px;
+  /* Added to ensure it doesn't get too small */
   background-color: #ffffff;
-  /* white card */
   border-radius: 12px;
   padding: 20px;
   overflow-y: auto;
   height: calc(100vh - 60px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  /* margin-top: 20px; */
   margin-top: 0;
+  transition: all 0.3s ease;
+  /* Added smooth transition for open/close */
 }
 
 .Neet-container .topics-list ul {

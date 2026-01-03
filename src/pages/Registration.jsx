@@ -137,29 +137,12 @@ const RegistrationFlow = () => {
 
   useEffect(() => { window.scrollTo(0, 0); }, [step]);
 
-  // useEffect(() => {
-  //   if (dailyHours) {
-  //     fetch(`${API_BASE_URL}/api/calculate-plan`, {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ hours: parseInt(dailyHours) })
-  //     })
-  //       .then(res => res.json())
-  //       .then(data => setCalcMessage(data.message));
-  //   }
-  // }, [dailyHours]);
 
 
   // --- HELPER FUNCTIONS ---
   const validateEmail = (email) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(email);
   const validateMobile = (mobile) => /^[0-9]{10}$/.test(mobile);
 
-  // const calculateEndDate = (plan) => {
-  //   const startDate = new Date();
-  //   let days = plan === "trial" ? 10 : plan === "monthly" ? 30 : plan === "yearly" ? 365 : 0;
-  //   const endDate = new Date(startDate.getTime() + days * 24 * 60 * 60 * 1000);
-  //   return endDate.toISOString().split("T")[0];
-  // }
 
   const calculateEndDate = (plan) => {
     // 1. Determine how many days to add
@@ -215,25 +198,92 @@ const RegistrationFlow = () => {
   const toggleCourse = (c) => setSelectedCourses(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c]);
   const toggleStandard = (s) => setSelectedStandards(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
 
+
   // --- STEP 1 SUBMIT (New Users Only) ---
   const handleStepOneSubmit = (e) => {
     e.preventDefault();
-    if (!validateEmail(email)) return setEmailError("Please enter a valid email address.");
-    if (!validateMobile(mobile)) return setMobileError("Please enter a valid 10-digit mobile number.");
-    if (password !== confirmPassword) return alert("Passwords do not match!");
 
+    // 1. Reset Errors
+    setEmailError("");
+    setMobileError("");
+
+    // 2. Validate Email Pattern
+    if (!validateEmail(email)) {
+      setEmailError("Invalid email format (e.g., student@example.com)");
+      return;
+    }
+
+    // This checks if the domain is 'gmail.co', 'yahoo.co', etc.
+    const domain = email.split("@")[1];
+    const typoDomains = ["gmail.co", "yahoo.co", "hotmail.co", "outlook.co"];
+
+    if (domain && typoDomains.includes(domain.toLowerCase())) {
+      setEmailError(`Did you mean @${domain.replace('.co', '.com')}? Please check your email.`);
+      return;
+    }
+
+    // Check for spaces in email
+    if (email.includes(" ")) {
+      setEmailError("Email cannot contain spaces.");
+      return;
+    }
+
+    // 3. Validate Mobile Pattern (Strict: Only digits, exactly 10)
+    const mobileRegex = /^[0-9]{10}$/;
+    if (!mobileRegex.test(mobile)) {
+      setMobileError("Mobile number must be exactly 10 digits and contain no alphabets.");
+      return;
+    }
+
+    // 4. Validate Password Match
+    if (password !== confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+
+    // 5. 🔥 CRITICAL FIX: Prevent going to next step if email is not verified
+    if (!isVerified) {
+      alert("❌ You must verify your email using the OTP before proceeding.");
+      return;
+    }
+
+    // 6. Save and Proceed
     localStorage.setItem("registeredUser", JSON.stringify({ firstname, lastname, email, mobile, password, confirmPassword }));
     setStep(2);
   };
 
+  // ✅ NEW HELPER: Check if user exists before payment to prevent money loss
+  const checkUserExists = async (emailToCheck) => {
+    try {
+      // We use the forgot-password endpoint. 
+      // If it returns 200 (OK), user exists. 
+      // If 404, user does not exist.
+      const res = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailToCheck })
+      });
+
+      if (res.ok) {
+        return true; // User exists
+      }
+      return false; // User does not exist (404)
+    } catch (error) {
+      console.error("Check user error", error);
+      return false;
+    }
+  };
+
+
+
   // --- FINAL API SUBMIT (Handles Both Register & Upgrade) ---
-  const sendUserDetails = async () => {
-    // ✅ Decide which storage key to use
+  // ✅ Added 'customSuccessMessage' parameter
+  const sendUserDetails = async (customSuccessMessage = null) => {
     const storageKey = isUpgrade ? "upgradingUser" : "registeredUser";
     const user = JSON.parse(localStorage.getItem(storageKey) || "{}");
 
     if (isUpgrade) {
-
+      // ... (Keep existing Upgrade logic same) ...
       try {
         const response = await fetch(`${API_BASE_URL}/api/upgradePlan/${user.email}`, {
           method: 'PUT',
@@ -241,11 +291,10 @@ const RegistrationFlow = () => {
           body: JSON.stringify(user)
         });
         const data = await response.json();
-
         if (response.ok) {
           alert("Plan Upgraded Successfully! Please Login again to refresh details.");
           localStorage.removeItem("upgradingUser");
-          localStorage.clear(); // Force re-login
+          localStorage.clear();
           navigate('/login');
         } else {
           alert(data.message || "Upgrade Failed");
@@ -254,10 +303,9 @@ const RegistrationFlow = () => {
         console.error(error);
         alert("Upgrade error");
       }
-
     } else {
       // ==========================================
-      // ✅ NEW REGISTRATION PATH (POST Request)
+      // ✅ NEW REGISTRATION PATH
       // ==========================================
       const formData = new FormData();
       formData.append('firstname', user.firstname);
@@ -270,9 +318,6 @@ const RegistrationFlow = () => {
       formData.append('selectedCourses', JSON.stringify(user.selectedCourses));
       formData.append('selectedStandard', JSON.stringify(user.selectedStandard));
       formData.append('plan', user.plan);
-
-      // formData.append('comfortableDailyHours', user.comfortableDailyHours || "3");
-
       formData.append('startDate', user.startDate);
       formData.append('endDate', user.endDate);
       formData.append('paymentId', user.paymentId || "");
@@ -288,12 +333,18 @@ const RegistrationFlow = () => {
           body: formData,
         });
         const data = await response.json();
-        if (response.ok) {
+
+        // 🔥 FIX: Check status "pass" BEFORE showing success alert
+        if (response.ok && data.status === "pass") {
           localStorage.removeItem("registeredUser");
-          alert(data.message || "Registration Successful!");
+
+          // Show the Trial message OR the standard message here, only on success
+          alert(customSuccessMessage || data.message || "Registration Successful!");
+
           navigate('/Login');
         } else {
-          alert(data.error || "Registration failed");
+          // Show error if email exists
+          alert(data.message || data.error || "Registration failed");
         }
       } catch (error) {
         alert("Something went wrong");
@@ -302,14 +353,13 @@ const RegistrationFlow = () => {
   };
 
   // --- STEP 2 SUBMIT (Validation & Direction) ---
-  const handleFinalSubmit = (e) => {
+  const handleFinalSubmit = async (e) => { // ✅ Made async
     e.preventDefault();
 
     // 1. Validate Selection
     if (selectedCourses.length === 0 || selectedStandards.length === 0) {
       return alert("Please select your course and standard.");
     }
-    // For new users, validate extra fields
     if (!isUpgrade && (!dob || !gender)) {
       return alert("Please fill in all required fields.");
     }
@@ -317,7 +367,6 @@ const RegistrationFlow = () => {
     // 2. Prepare Data Object
     let updatedUser;
     if (isUpgrade) {
-      // Upgrade: Merge new selection with existing user basics
       const currentUser = JSON.parse(localStorage.getItem("currentUser"));
       updatedUser = {
         ...currentUser,
@@ -325,17 +374,13 @@ const RegistrationFlow = () => {
         gender: gender || currentUser.gender,
         selectedCourses: selectedCourses,
         selectedStandard: selectedStandards,
-        // Ensure keys match backend expectations
         firstname: currentUser.firstName,
         lastname: currentUser.lastName,
         email: currentUser.email,
-        // comfortableDailyHours: dailyHours,
       };
       localStorage.setItem("upgradingUser", JSON.stringify(updatedUser));
     } else {
-      // New: Load from Step 1
       updatedUser = JSON.parse(localStorage.getItem("registeredUser") || "{}");
-      // updatedUser.comfortableDailyHours = dailyHours;
       updatedUser.dob = dob;
       updatedUser.gender = gender;
       updatedUser.selectedCourses = selectedCourses;
@@ -344,16 +389,21 @@ const RegistrationFlow = () => {
       localStorage.setItem("registeredUser", JSON.stringify(updatedUser));
     }
 
-    // 3. Handle Plan Logic (Trial vs Paid)
+    // 3. Handle Plan Logic
     if (planFromURL === 'trial') {
-      // ✅ Block Upgrade to Trial (One time only)
       if (isUpgrade) {
         alert("❌ You cannot use the Free Trial again. Please select a paid plan.");
         navigate("/pricing?upgrade=true");
         return;
       }
 
-      // Activate Trial for New User
+      // ✅ FIX: Check if user exists BEFORE trying to register for trial
+      const userExists = await checkUserExists(updatedUser.email);
+      if (userExists) {
+        alert("User with this email already exists! Please Login.");
+        return;
+      }
+
       updatedUser.plan = "trial";
       updatedUser.startDate = new Date().toISOString().split("T")[0];
       updatedUser.endDate = calculateEndDate('trial');
@@ -362,8 +412,9 @@ const RegistrationFlow = () => {
       updatedUser.amountPaid = "0";
 
       localStorage.setItem("registeredUser", JSON.stringify(updatedUser));
-      alert(`Registration Completed! Starting your 10-day Free Trial!`);
-      sendUserDetails();
+
+      // ✅ FIX: Removed premature alert. Passed message to sendUserDetails
+      sendUserDetails("Registration Completed! Starting your 10-day Free Trial!");
 
     } else {
       // Paid Plan -> Go to Step 3
@@ -372,30 +423,43 @@ const RegistrationFlow = () => {
   };
 
 
-
   const displayRazorpay = async () => {
     if (isPaying) return;
-    setIsPaying(true);
 
-    // 1. Get Base Price
-    const basePrice = getPlanPrice(selectedPlan);
-
-    // 2. Calculate GST (9% CGST + 9% SGST = 18% Total)
-    const gstRate = 0.18;
-    const gstAmount = basePrice * gstRate;
-    const totalPrice = basePrice + gstAmount;
-
-    // Optional: Log to verify
-    console.log(`Base: ${basePrice}, GST: ${gstAmount}, Total: ${totalPrice}`);
-
+    // 1. Get User Data First
     const storageKey = isUpgrade ? "upgradingUser" : "registeredUser";
     const user = JSON.parse(localStorage.getItem(storageKey) || "{}");
 
+    // 🔥 CRITICAL FIX: Check if User Exists BEFORE Payment
+    // We only check for new registrations (!isUpgrade)
+    if (!isUpgrade) {
+      setIsPaying(true); // Disable button while checking
+      const userExists = await checkUserExists(user.email);
+      setIsPaying(false); // Enable logic for next steps
+
+      if (userExists) {
+        alert("This email is already registered. Please Login to upgrade or renew.");
+        return; // 🛑 STOP HERE. Do not open Payment Gateway.
+      }
+    }
+
+    setIsPaying(true); // Disable button again for actual payment
+
+    // 2. Get Base Price
+    const basePrice = getPlanPrice(selectedPlan);
+
+    // 3. Calculate GST (9% CGST + 9% SGST = 18% Total)
+    const gstRate = 0.18;
+    // const gstAmount = basePrice * gstRate; // (Uncomment if needed for display)
+    // const totalPrice = basePrice + gstAmount;
+
     try {
-      // 3. Send TOTAL PRICE to Backend
+      // 4. Send TOTAL PRICE to Backend
       const orderResponse = await fetch(`${API_BASE_URL}/api/payment/create-order`, {
         method: 'POST',
-        body: JSON.stringify({ amount: basePrice, plan: selectedPlan }), // Changed from 'totalPrice' to 'basePrice'
+        // Note: Ensure your backend expects 'amount' as basePrice or totalPrice. 
+        // Usually, GST calculation happens on backend or you send total here.
+        body: JSON.stringify({ amount: basePrice, plan: selectedPlan }),
         headers: { 'Content-Type': 'application/json' }
       });
 
@@ -408,10 +472,10 @@ const RegistrationFlow = () => {
       const orderData = await orderResponse.json();
       const options = {
         key: RAZORPAY_KEY_ID,
-        amount: orderData.amount, // This is already in paise from backend
+        amount: orderData.amount, // Amount in paise
         currency: orderData.currency,
         name: "Padmasini Learning",
-        description: `${selectedPlan} Plan (Inc. GST)`, // Updated description
+        description: `${selectedPlan} Plan (Inc. GST)`,
         order_id: orderData.id,
         handler: async function (response) {
           const verifyRes = await fetch(`${API_BASE_URL}/api/payment/verify`, {
@@ -456,7 +520,6 @@ const RegistrationFlow = () => {
     }
   };
 
-
   // ✅ Accept payerId as 2nd argument
   const handleSuccessfulPayment = (paymentId, payerId) => {
     setPaymentSuccess(true);
@@ -479,10 +542,24 @@ const RegistrationFlow = () => {
     sendUserDetails();
   };
 
+
   // OTP Logic (Only needed for new users)
   const sendOtp = async (e) => {
     e.preventDefault();
-    if (!email || !validateEmail(email)) return setEmailError("Invalid Email");
+    setEmailError(""); // Clear previous errors
+
+    // 1. Basic Validation
+    if (!email || !validateEmail(email)) {
+      return setEmailError("Invalid Email");
+    }
+
+    // 2. 🔥 NEW: TYPO GUARD inside OTP Button
+    const domain = email.split("@")[1];
+    const typoDomains = ["gmail.co", "yahoo.co", "hotmail.co", "outlook.co"];
+    if (domain && typoDomains.includes(domain.toLowerCase())) {
+      return setEmailError(`Did you mean @${domain.replace('.co', '.com')}?`);
+    }
+
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/send-otp`, {
@@ -532,6 +609,7 @@ const RegistrationFlow = () => {
         <div className="registration-form">
 
           {/* --- STEP 1: Personal Info (Hide if Upgrading) --- */}
+
           {step === 1 && !isUpgrade && (
             <div className="right-content">
               <h2 className="register-heading">Register Now</h2>
@@ -541,23 +619,64 @@ const RegistrationFlow = () => {
                     <input type="text" placeholder="First Name" value={firstname} onChange={(e) => setUsername(e.target.value)} required className="half-width" />
                     <input type="text" placeholder="Last Name" value={lastname} onChange={(e) => setStudentName(e.target.value)} required className="half-width" />
                   </div>
-                  <input type="email" placeholder="Email Id" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                  {emailError && <span className="error-message">{emailError}</span>}
+
+                  {/* --- EMAIL INPUT --- */}
+                  <input
+                    type="email"
+                    placeholder="Email Id"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      // Reset verification if user changes email
+                      setIsVerified(false);
+                      setOtpSent(false);
+                      setOtp("");
+                      setEmailError("");
+                    }}
+                    required
+                    style={isVerified ? { borderColor: "green", backgroundColor: "#e8f5e9" } : {}}
+                  />
+                  {emailError && <span className="error-message" style={{ color: "red", fontSize: "12px", display: "block", marginTop: "-10px", marginBottom: "10px" }}>{emailError}</span>}
 
                   {!otpSent ? (
-                    <button type="button" onClick={sendOtp} disabled={loading} className="sendOtp">
-                      {loading ? "Sending..." : "Send OTP"}
+                    <button type="button" onClick={sendOtp} disabled={loading || isVerified} className="sendOtp" style={isVerified ? { backgroundColor: "grey", cursor: "not-allowed" } : {}}>
+                      {isVerified ? "Email Verified ✅" : (loading ? "Sending..." : "Send OTP")}
                     </button>
                   ) : (
-                    <>
-                      <input type="text" placeholder="Enter OTP" value={otp} onChange={(e) => setOtp(e.target.value)} disabled={isVerified} />
-                      <button type="button" className={`verifyOtp ${isVerified ? "verified" : ""}`} onClick={verifyOtp} disabled={isVerified}>
-                        {isVerified ? "Verified ✅" : "Verify OTP"}
-                      </button>
-                    </>
+                    !isVerified && (
+                      <>
+                        <input type="text" placeholder="Enter OTP" value={otp} onChange={(e) => setOtp(e.target.value)} />
+                        <button type="button" className="verifyOtp" onClick={verifyOtp}>
+                          Verify OTP
+                        </button>
+                      </>
+                    )
                   )}
+                  {/* Success Message for Email */}
+                  {isVerified && <p style={{ color: "green", fontSize: "14px", marginTop: "-5px", marginBottom: "10px" }}>✅ Email Verified Successfully</p>}
 
-                  <input type="tel" placeholder="Mobile No." value={mobile} onChange={(e) => setMobile(e.target.value)} required />
+                  {/* --- MOBILE INPUT --- */}
+                  <input
+                    type="tel"
+                    placeholder="Mobile No."
+                    value={mobile}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // Prevent alphabets
+                      if (/[a-zA-Z]/.test(val)) {
+                        setMobileError("Alphabets are not allowed in mobile number");
+                      } else {
+                        setMobileError("");
+                      }
+                      // Only set if it's numbers or empty
+                      if (!/[a-zA-Z]/.test(val)) {
+                        setMobile(val);
+                      }
+                    }}
+                    required
+                    maxLength="10"
+                  />
+                  {mobileError && <span className="error-message" style={{ color: "red", fontSize: "12px", display: "block", marginTop: "-10px", marginBottom: "10px" }}>{mobileError}</span>}
 
                   <div className="password-container">
                     <input type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required className="password-input" />
@@ -581,6 +700,7 @@ const RegistrationFlow = () => {
               </div>
             </div>
           )}
+
 
           {/* --- STEP 2: Course & Standard (Common for New & Upgrade) --- */}
           {step === 2 && (

@@ -39,8 +39,20 @@ const LoginPage = () => {
       const data = await resp.json();
       console.log("Response from backend:", data);
 
+      if (data.status === "expired") {
+        alert(data.message);
+
+        // Save the partial user data so Registration page can read it
+        localStorage.setItem("currentUser", JSON.stringify(data));
+
+        // Redirect to Pricing page in 'renew' mode
+        navigate("/pricing?renew=true");
+        return;
+      }
+
+      // 2. Handle Login FAILED (Wrong password/email)
       if (data.status === "failed") {
-        alert("Invalid email or password");
+        alert(data.message || "Invalid email or password");
         return;
       }
 

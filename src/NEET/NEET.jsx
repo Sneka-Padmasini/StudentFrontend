@@ -361,8 +361,8 @@ const Subjects = () => {
       <aside className="sidebar">
         <h2>NEET</h2>
         <p><strong>Course:</strong> Full Syllabus ({displayStandardText})</p>
-        <span className="badge certified">Certified</span>
-        <span className="badge limited">Limited Access Only</span>
+        {/* <span className="badge certified">Certified</span> */}
+        {/* <span className="badge limited">Limited Access Only</span> */}
       </aside>
 
       <main className="content">

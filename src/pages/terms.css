@@ -1,87 +1,100 @@
 /* General container for the Terms page */
-  .terms-container {
+.terms-container {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   min-height: 100vh;
   padding: 20px;
-  margin: 0 auto; /* 🔄 Center horizontally */
+  margin: 0 auto;
   width: 100%;
-  max-width: 1300px;
-  margin-top: 90px; /* Optional: offset if fixed header */
+  margin-top: 90px;
+  box-sizing: border-box;
 }
 
-  
-  /* Content box for the terms */
-  .terms-content {
-  background: linear-gradient(to bottom, #e9fdec, #ffffff);flex: 1;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    max-width: 1500px;
-    width: 100%;
-  }
-  
-  /* Title of the page */
-  .terms-content h1 {
-    font-size: 28px;
-    text-align: center;
-    margin-bottom: 20px;
-    color: #333;
-    
-  }
-  
-  /* Sections inside the content */
-  .terms-content section {
-    margin-bottom: 20px;
-  }
-  
-  .terms-content h2 {
-    font-size: 20px;
-    color: #fefcfc;
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    text-align: left;
-    background-color: #0e651f;
-  }
-  
-  .terms-content p {
-    font-size: 16px;
-    line-height: 1.6;
-    color: #363636;
-  }
-  
-  .terms-content a {
-    color: #007bff;
-    text-decoration: none;
-  }
-  
-  .terms-content a:hover {
-    text-decoration: underline;
-  }
-  
- /* Button Section */
-.agree-button {
-  margin-top: 20px;
+/* Content box for the terms */
+.terms-content {
+  background: linear-gradient(to bottom, #e9fdec, #ffffff);
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  max-width: 1000px;
+  width: 100%;
+}
+
+/* Title of the page */
+.terms-content h1 {
+  font-size: 32px;
+  font-weight: 700;
   text-align: center;
+  margin-bottom: 30px;
+  color: #2c3e50;
+}
+
+/* Sections inside the content */
+.terms-content section {
+  margin-bottom: 25px;
+}
+
+/* The Green Section Headers */
+.terms-content h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #054212;
+  background-color: rgba(34, 139, 34, 0.1);
+  margin-top: 30px;
+  margin-bottom: 15px;
+  padding: 12px 20px;
+  border-left: 5px solid #228B22;
+  border-radius: 0 8px 8px 0;
+  text-align: left;
+}
+
+/* Paragraph Text */
+.terms-content p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #363636;
+  margin-bottom: 15px;
+  padding-left: 5px;
+}
+
+.terms-content a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.terms-content a:hover {
+  text-decoration: underline;
+}
+
+/* Button Section */
+.agree-button {
+  margin-top: 40px;
+  text-align: center;
+  padding-bottom: 20px;
 }
 
 .agree-button button {
-  padding: 12px 24px;
-  background-color: #228B22; /* Green */
+  padding: 14px 35px;
+  background-color: #228B22;
   color: white;
   font-size: 16px;
+  font-weight: bold;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .agree-button button:hover {
-  background-color: #2ecc71; /* Lighter green on hover */
+  background-color: #1e7e1e;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* WhatsApp Chat Button */
+/* --- WhatsApp Chat Button (Kept mostly same) --- */
 .whatsapp-chat-button {
   position: fixed;
   bottom: 20px;
@@ -102,39 +115,45 @@
   animation: bounce 2s infinite;
 }
 
-/* Hover effect */
 .whatsapp-chat-button:hover {
   background-color: #1ebe5d;
   transform: scale(1.05);
-  animation-play-state: paused; /* Pause bounce on hover */
+  animation-play-state: paused;
 }
 
-/* WhatsApp icon size */
 .whatsapp-icon {
   width: 24px;
   height: 24px;
 }
-  /* Responsive design for smaller screens */
-  @media (max-width: 768px) {
-    .terms-container {
-      padding: 10px;
-      margin-top: 90px;
-    }
-  
-    .terms-content {
-      padding: 20px;
-    }
-  
-    .terms-content h1 {
-      font-size: 24px;
-    }
-  
-    .terms-content h2 {
-      font-size: 18px;
-    }
-  
-    .terms-content p {
-      font-size: 14px;
-    }
+
+/* --- Responsive Design --- */
+@media (max-width: 768px) {
+  .terms-container {
+    padding: 15px;
+    margin-top: 80px;
   }
-  
+
+  .terms-content {
+    padding: 20px;
+  }
+
+  .terms-content h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .terms-content h2 {
+    font-size: 18px;
+    padding: 10px;
+    margin-top: 20px;
+  }
+
+  .terms-content p {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .agree-button button {
+    width: 100%;
+  }
+}

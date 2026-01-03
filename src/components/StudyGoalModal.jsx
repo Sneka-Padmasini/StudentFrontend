@@ -22,10 +22,13 @@ const StudyGoalModal = ({ user, onUpdate }) => {
 
         const savedHours = parseInt(user.comfortableDailyHours || 0);
         const savedSeverity = user.severity;
-        const isPaidUser = user.plan && user.plan !== "trial";
+        // to make the trial plan use study goal
+        const isPaidUser = user.plan;
+        // const isPaidUser = user.plan && user.plan !== "trial";
 
-        // Logic: Open if Paid User + Hours are 0 (Not set yet)
-        if (isPaidUser && savedHours === 0) {
+
+        // Open if user has a plan (trial or paid) AND hasn't set hours yet
+        if (user.plan && savedHours === 0) {
             setIsOpen(true);
         }
 

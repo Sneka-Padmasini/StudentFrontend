@@ -656,7 +656,7 @@ const NeetLearn = () => {
   }
 
   return (
-    <div className="Neet-container">
+    <div className={`Neet-container ${!showTopics ? "full-width-active" : ""}`}>
 
       <button className="toggle-btn" onClick={() => setShowTopics(!showTopics)}>
         <FaBars /> {isMobile ? <h2>{subject} Topics</h2> : <span>Topics</span>}
