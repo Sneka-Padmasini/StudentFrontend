@@ -27,7 +27,20 @@ const Terms = () => {
         </section>
 
         <section>
-          <h2>2. Payment and Refund Policy</h2>
+          <h2>2. License and Usage</h2>
+          <p>
+            The Software grants you a limited, non-exclusive, non-transferable license
+            to use its features for educational purposes only.
+          </p>
+          <ul>
+            <li>You may not copy, modify, or distribute the Software without prior written consent.</li>
+            <li>You may not use the Software for unlawful, harmful, or commercial exploitation outside the permitted scope.</li>
+            <li>You may not attempt to reverse-engineer or interfere with the Software’s functionality.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>3. Payment and Refund Policy</h2>
           <p>
             <strong>All sales are final.</strong> Please note that subscription fees,
             course purchases, and other payments made on the Padmasini platform
@@ -38,94 +51,102 @@ const Terms = () => {
         </section>
 
         <section>
-          <h2>3. Content & Syllabus Alignment</h2>
+          <h2>4. Content & Syllabus Alignment</h2>
           <p>
             The study materials, video lectures, and scripts provided on Padmasini
             Learning are <strong>curated to align with the NCERT syllabus guidelines</strong> specifically
-            for NEET preparation. We are committed to providing high-quality educational
-            resources that reflect current examination standards. <br /><br />
-            While we strive for precision and excellence in our content creation,
-            Padmasini Innovations Pvt Ltd assumes no liability for any inadvertent
-            errors, omissions, or technical inaccuracies that may appear in the
-            materials. The content is provided on an "as is" basis to support
+            for NEET preparation.
+            <br /><br />
+            While we strive for precision, Padmasini Innovations Pvt Ltd assumes no liability for any inadvertent
+            errors or omissions. The content is provided on an "as is" basis to support
             your academic journey.
           </p>
         </section>
 
-
         <section>
-          <h2>4. Intellectual Property Rights</h2>
+          <h2>5. AI-Generated Content</h2>
           <p>
-            All content provided on this platform, including but not limited to
-            video lectures, PDF notes, quizzes, and code, is the intellectual
-            property of Padmasini Innovations Pvt Ltd. <br /><br />
-            You agree <strong>not to reproduce, distribute, record (screen record),
-              or share</strong> our content with third parties. Any violation of this
-            clause may result in immediate account termination without refund and
-            potential legal action.
+            Our platform may generate educational content, explanations, or recommendations using
+            artificial intelligence. Such content is provided for informational purposes only.
           </p>
+          <ul>
+            <li>It should not be considered professional, legal, medical, or financial advice.</li>
+            <li>We do not guarantee the accuracy, completeness, or suitability of AI-generated content.</li>
+          </ul>
         </section>
 
         <section>
-          <h2>5. Our Commitment to Your Success</h2>
+          <h2>6. Intellectual Property Rights</h2>
           <p>
-            At Padmasini Learning, we are fully dedicated to empowering your NEET
-            journey with top-tier resources, structured study plans, and expert guidance.
-            <strong>We promise to provide the best possible tools to maximize your potential.</strong>
+            All intellectual property rights in the Software, including its design, algorithms,
+            video lectures, PDF notes, and content, remain the property of Padmasini Innovations Pvt Ltd.
             <br /><br />
-            However, achieving a medical seat is a partnership between our content
-            and your hard work. While we guarantee our commitment to quality, final
-            admission and rank depend on individual student dedication, consistent
-            practice, and exam-day performance.
+            <strong>Strict Prohibition:</strong> You agree <strong>not to reproduce, distribute, record (screen record),
+              or share</strong> our content with third parties. Users retain rights to their own uploaded content
+            but grant the Software a license to use it for improving services.
           </p>
         </section>
 
         <section>
-          <h2>6. User Responsibilities</h2>
+          <h2>7. User Responsibilities</h2>
           <p>
-            You are responsible for maintaining the confidentiality of your
-            account and for all activities that occur under your account.
-            Sharing login credentials with multiple users is strictly prohibited
-            and will lead to account suspension.
+            By using this platform, you agree to the following responsibilities:
           </p>
+          <ul>
+            <li>Provide accurate information when registering.</li>
+            <li><strong>Maintain the confidentiality of your account credentials.</strong> Sharing login credentials with multiple users is strictly prohibited and will lead to account suspension.</li>
+            <li>Ensure that your use of the Software complies with applicable laws and regulations.</li>
+          </ul>
         </section>
 
         <section>
-          <h2>7. Privacy Policy</h2>
+          <h2>8. Data Privacy</h2>
           <p>
-            Your privacy is important to us. Please review our Privacy Policy to
-            understand how we collect, use, and protect your personal information.
+            The Software may collect and process personal data in accordance with our Privacy Policy.
+            By using the Software, you consent to such data collection and processing.
           </p>
         </section>
 
         <section>
-          <h2>8. Limitation of Liability</h2>
+          <h2>9. Limitation of Liability</h2>
           <p>
-            Our liability is limited to the maximum extent allowed by law. We are
-            not liable for any indirect, incidental, or consequential damages
-            arising from server downtime, data loss, or your use of the services.
+            The Software is provided "as is" without warranties of any kind.
+            Padmasini Innovations Pvt Ltd shall not be liable for:
           </p>
+          <ul>
+            <li>Errors or inaccuracies in AI-generated or study content.</li>
+            <li>Losses arising from reliance on the Software.</li>
+            <li>Technical issues, server downtime, or data loss.</li>
+          </ul>
         </section>
 
         <section>
-          <h2>9. Modifications</h2>
+          <h2>10. Termination</h2>
           <p>
-            We reserve the right to modify these Terms at any time. Any changes
-            will be posted on this page with the updated date. Continued use of
-            the app constitutes acceptance of the new terms.
+            Padmasini Innovations Pvt Ltd reserves the right to suspend or terminate your access
+            if you violate these Terms. Upon termination, your license to use the Software
+            will immediately cease.
           </p>
         </section>
 
         <section>
-          <h2>10. Governing Law</h2>
+          <h2>11. Modifications</h2>
           <p>
-            These Terms are governed by the laws of India. Any disputes will be
-            resolved under the exclusive jurisdiction of the courts in India.
+            We may update these Terms from time to time. Continued use of the Software
+            after changes indicates acceptance of the revised Terms. Any changes will be posted on this page.
           </p>
         </section>
 
         <section>
-          <h2>11. Contact Us</h2>
+          <h2>12. Governing Law</h2>
+          <p>
+            These Terms are governed by and construed in accordance with the laws of <strong>India</strong>.
+            Any disputes shall be resolved exclusively in the courts of India.
+          </p>
+        </section>
+
+        <section>
+          <h2>13. Contact Us</h2>
           <p>
             If you have any questions about these Terms and Conditions, please
             contact us at: <br />
@@ -146,23 +167,6 @@ const Terms = () => {
           </button>
         </div>
       </div>
-
-      {/* WhatsApp Button */}
-      {/* <a
-        href="https://wa.me/8248791389"
-        className="whatsapp-chat-button"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Chat with us on WhatsApp"
-      >
-        <img
-          src={whatsappIcon}
-          alt="WhatsApp"
-          className="whatsapp-icon"
-        />
-        <span>Chat with us on whatsapp</span>
-      </a> */}
-
     </div>
   );
 };
